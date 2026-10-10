@@ -50,6 +50,11 @@ body {
 .theme-sumi .w { color: var(--ink); }
 .theme-sumi .k-new { color: var(--accent); }
 .theme-pop .s-h { font-size: .84em; }
+.theme-fude .s-h { font-size: .84em; }
+.theme-fude .w { letter-spacing: -.01em; }
+.theme-dot .w, .theme-dot #caption { text-shadow: 0 0 .16em rgba(120, 255, 170, .38); }
+.theme-dot .s-h { font-size: .9em; }
+.theme-dot .k-new { text-shadow: 0 0 .2em rgba(255, 228, 92, .5); }
 .theme-clear { background: transparent; }
 .theme-clear .w, .theme-clear #caption {
   text-shadow: 0 0 .05em var(--stroke), 0 0 .05em var(--stroke), 0 0 .1em var(--stroke), 0 .05em .16em rgba(0,0,0,.55);

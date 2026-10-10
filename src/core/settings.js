@@ -33,7 +33,22 @@ export const THEMES = {
     strong: 900, light: 500,
     bg: 'transparent', ink: '#ffffff', sub: 'rgba(255,255,255,.78)', accent: '#ffe14d', accent2: '#7fe3ff', stroke: 'rgba(0,0,0,.82)',
   },
+  // ---- Pro 書体（無料版は1日5分までお試し） ----
+  fude: {
+    label: '筆', note: '墨書き・和紙', pro: true,
+    family: '"Yuji Boku"', fallback: MINCHO, gf: 'Yuji+Boku',
+    strong: 900, light: 400, // 1ウェイトのみ。擬似ボールドは作らない
+    bg: '#eee7d8', ink: '#1a1612', sub: '#8e8576', accent: '#bf2a1c', accent2: '#2b4c70', stroke: 'transparent',
+  },
+  dot: {
+    label: 'ドット', note: 'レトロゲーム画面', pro: true,
+    family: '"DotGothic16"', fallback: GOTHIC, gf: 'DotGothic16',
+    strong: 900, light: 400,
+    bg: '#06120b', ink: '#b6ffcc', sub: '#3d7a53', accent: '#ffe45c', accent2: '#ff6bd6', stroke: 'transparent',
+  },
 };
+
+export const DEFAULT_THEME = 'yoru';
 
 export const LAYOUTS = {
   compose: { label: '組版', note: '画面いっぱいに文字を組む' },
