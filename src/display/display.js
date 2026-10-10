@@ -1,9 +1,9 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, loadSettings } from '../core/settings.js?v=202610101851';
-import { createBus } from '../core/bus.js?v=202610101851';
-import { connectObs } from '../core/obs.js?v=202610101851';
-import { runs } from '../core/extract.js?v=202610101851';
+import { THEMES, DEFAULTS, loadSettings } from '../core/settings.js?v=202610102005';
+import { createBus } from '../core/bus.js?v=202610102005';
+import { connectObs } from '../core/obs.js?v=202610102005';
+import { runs } from '../core/extract.js?v=202610102005';
 
 const P = new URLSearchParams(location.search);
 const LOCK = {};
@@ -47,7 +47,7 @@ function applyTheme() {
   };
   for (const k in vars) root.style.setProperty(k, vars[k]);
   document.body.className = `theme-${S.theme} layout-${S.layout}` + (S.reduceMotion ? ' calm' : '') +
-    (S.caption ? ' has-cap' : '') + (EMBED ? ' embed' : '');
+    (S.caption ? ' has-cap' : '') + (EMBED ? ' embed' : '') + (S.credit === false ? '' : ' has-credit');
   if (!LOCAL_FONTS && th.gf && !fontLinks.has(th.gf)) {
     fontLinks.add(th.gf);
     const l = document.createElement('link');
@@ -416,7 +416,7 @@ bus.send({ t: 'hello' });
 
 // 単体デモ：display.html?demo=1
 if (P.get('demo') === '1') {
-  import('../console/demo.js?v=202610101851').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
+  import('../console/demo.js?v=202610102005').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
 }
 
 // 検証用フック

@@ -1,11 +1,11 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, loadSettings, saveSettings } from '../core/settings.js?v=202610101851';
-import { createBus } from '../core/bus.js?v=202610101851';
-import { connectObs } from '../core/obs.js?v=202610101851';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610101851';
-import { Recognizer } from './recognizer.js?v=202610101851';
-import { simulateSpeech } from './demo.js?v=202610101851';
-import { PRO, canUse, currentPlan, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610101851';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, loadSettings, saveSettings } from '../core/settings.js?v=202610102005';
+import { createBus } from '../core/bus.js?v=202610102005';
+import { connectObs } from '../core/obs.js?v=202610102005';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610102005';
+import { Recognizer } from './recognizer.js?v=202610102005';
+import { simulateSpeech } from './demo.js?v=202610102005';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610102005';
 
 const $ = (s) => document.querySelector(s);
 let S = { ...DEFAULTS, ...loadSettings() };
@@ -24,7 +24,7 @@ const clock = () => { if (t0 === null) t0 = performance.now(); return (performan
 function send(m) { bus.send(m); }
 function pushSettings(save = true) {
   if (save) saveSettings(S);
-  send({ t: 'settings', s: S });
+  send({ t: 'settings', s: { ...S, credit: !canUse('credit:hide') } });
 }
 function deliverWords(events) {
   if (paused) return;
@@ -171,15 +171,15 @@ function segButtons(container, entries, key) {
     } else {
       b.textContent = def.label;
     }
-    if (key === 'theme' && def.pro && !canUse('theme:pro') && trialRemainingMs() <= 0) b.classList.add('locked');
+    if (key === 'theme' && def.pro && !canUse('theme:premium') && trialRemainingMs() <= 0) b.classList.add('locked');
     b.addEventListener('click', () => pick(container, entries, key, id, def));
     box.appendChild(b);
   }
   if (key === 'layout') $('#layoutNote').textContent = entries[S[key]] ? entries[S[key]].note : '';
 }
 function pick(container, entries, key, id, def) {
-  if (key === 'theme' && def.pro && !canUse('theme:pro') && trialRemainingMs() <= 0) {
-    toast('今日の Pro 書体のお試し（5分）は終わりました。Pro で続けて使えます');
+  if (key === 'theme' && def.pro && !canUse('theme:premium') && trialRemainingMs() <= 0) {
+    toast('今日の Plus 書体のお試し（5分）は終わりました。Plus（月¥100）で続けて使えます');
     return;
   }
   S[key] = id;
@@ -187,7 +187,7 @@ function pick(container, entries, key, id, def) {
   pushSettings();
 }
 
-// ---- 書体テーマ（標準 / Pro）と、無料版の5分お試し ----
+// ---- 書体テーマ（標準 / Plus）と、Free の5分お試し ----
 const FREE_THEMES = Object.fromEntries(Object.entries(THEMES).filter(([, d]) => !d.pro));
 const PRO_THEMES = Object.fromEntries(Object.entries(THEMES).filter(([, d]) => d.pro));
 function renderThemes() {
@@ -197,13 +197,13 @@ function renderThemes() {
 }
 function updateTrial() {
   const box = $('#trialBox');
-  if (canUse('theme:pro')) { box.hidden = true; return; }
+  if (canUse('theme:premium')) { box.hidden = true; return; }
   const rem = trialRemainingMs();
   const active = !!(THEMES[S.theme] && THEMES[S.theme].pro);
   const mm = Math.floor(rem / 60000), ss = String(Math.floor(rem / 1000) % 60).padStart(2, '0');
   $('#trialFill').style.transform = `scaleX(${(rem / PRO.trialMs).toFixed(4)})`;
   box.classList.toggle('active', active);
-  $('#trialNote').textContent = rem <= 0 ? '今日のお試しは終わりました。Pro で続けて使えます'
+  $('#trialNote').textContent = rem <= 0 ? '今日のお試しは終わりました。Plus（月¥100）で続けて使えます'
     : active ? `お試し中　残り ${mm}:${ss}（終わると「夜」に戻ります）`
     : `無料版は1日5分までお試しできます（残り ${mm}:${ss}）`;
 }
@@ -212,13 +212,13 @@ setInterval(() => {
   const t = performance.now();
   const dt = t - trialLast;
   trialLast = t;
-  if (THEMES[S.theme] && THEMES[S.theme].pro && !canUse('theme:pro')) {
+  if (THEMES[S.theme] && THEMES[S.theme].pro && !canUse('theme:premium')) {
     addTrialUsage(dt);
     if (trialRemainingMs() <= 0) {
       S.theme = DEFAULT_THEME;
       pushSettings();
       renderThemes();
-      toast('Pro 書体のお試し（5分）が終わったので「夜」に戻しました');
+      toast('Plus 書体のお試し（5分）が終わったので「夜」に戻しました');
       return;
     }
   }
@@ -250,7 +250,7 @@ function bindText(id, after) {
   });
 }
 
-if (!THEMES[S.theme] || (THEMES[S.theme].pro && !canUse('theme:pro') && trialRemainingMs() <= 0)) S.theme = DEFAULT_THEME;
+if (!THEMES[S.theme] || (THEMES[S.theme].pro && !canUse('theme:premium') && trialRemainingMs() <= 0)) S.theme = DEFAULT_THEME;
 renderThemes();
 segButtons('#layouts', LAYOUTS, 'layout');
 bindRange('baseSize', 'vSize', (v) => `${v}`);
@@ -269,13 +269,13 @@ engineSel.addEventListener('change', () => {
   if (engineSel.value === 'cloud' && !canUse('engine:cloud')) {
     engineSel.value = 'browser';
     $('#proNote').hidden = false;
-    toast(PRO.available ? '高精度クラウド認識は Pro プランで使えます' : `高精度クラウド認識は Pro（${PRO.price}）で近日公開です`);
+    toast(`高精度クラウド認識は Pro（${PLANS.pro.price}・月${PRO.includedHours}時間つき）の機能です（近日公開）`);
     return;
   }
   $('#proNote').hidden = true;
 });
-if (currentPlan() === 'pro') {
-  $('#planBadge').innerHTML = '<b>PRO</b>';
+if (currentPlan() !== 'free') {
+  $('#planBadge').innerHTML = `<b>${PLANS[currentPlan()].label.toUpperCase()}</b>`;
 }
 
 $('#lang').value = S.lang;

@@ -161,13 +161,15 @@ p { margin: 0; }
 .uses b { color: var(--ink); font-size: var(--s0); }
 
 /* ---- 料金 ---- */
-.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; max-width: 880px; margin: 0 auto 20px; }
-.plan { background: var(--card); border: 1px solid var(--rule); border-radius: 16px; padding: 28px 28px 30px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.plans { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 0 auto 20px; align-items: stretch; }
+.plan-for { color: var(--ink-2); font-size: var(--s-1); margin-top: 8px; }
+.plan-note { color: var(--ink-3); font-size: 12px; line-height: 1.6; }
+.plan { background: var(--card); border: 1px solid var(--rule); border-radius: 16px; padding: 24px 22px 24px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .plan.pro { border: 2px solid var(--ink); box-shadow: var(--shadow); }
 .plan h3 { font-size: var(--s1); font-weight: 900; display: flex; align-items: center; gap: 10px; }
 .badge { font-size: 11px; font-weight: 500; letter-spacing: .08em; color: var(--tally-ink); background: var(--tally); padding: 2px 8px; border-radius: 4px; }
 .price { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
-.price b { font-family: var(--f-display); font-weight: 900; font-size: 52px; line-height: 1; font-variant-numeric: tabular-nums; }
+.price b { font-family: var(--f-display); font-weight: 900; font-size: 42px; line-height: 1; font-variant-numeric: tabular-nums; }
 .price span { color: var(--ink-2); font-size: var(--s-1); }
 .plan ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; flex: 1; }
 .plan li { padding-left: 22px; position: relative; font-size: var(--s-1); line-height: 1.7; }
@@ -195,6 +197,7 @@ p { margin: 0; }
   .specimens { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .uses { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stat:nth-child(2) { border-right: 0; }
   .stat:nth-child(3) { padding-left: 0; }
   .stat:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }

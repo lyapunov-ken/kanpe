@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="styles/lp.css?v=202610101851">
+<link rel="stylesheet" href="styles/lp.css?v=202610102005">
 </head>
 <body>
 <header class="nav" id="top">
@@ -71,7 +71,7 @@
     <div class="stat"><b class="mono">0<small>円</small></b><span>無料版のランニングコスト</span></div>
     <div class="stat"><b class="mono">1<small>秒</small></b><span>話してから文字が出るまでの目標</span></div>
     <div class="stat"><b class="mono">14<small>KB</small></b><span>表示エンジンの大きさ（gzip）</span></div>
-    <div class="stat"><b class="mono">7<small>書体</small></b><span>標準5種＋Pro の「筆」「ドット」</span></div>
+    <div class="stat"><b class="mono">7<small>書体</small></b><span>標準5種＋Plus の「筆」「ドット」</span></div>
   </section>
 
   <section class="section" id="features">
@@ -167,7 +167,7 @@
     <header class="section-head">
       <p class="eyebrow mono">PRICING</p>
       <h2>無料で、ずっと使える。</h2>
-      <p>無料版はブラウザの中だけで動くので、サーバー代がかかりません。認識の精度を上げたいときだけ Pro に。</p>
+      <p>話す・組む・配信に出す、の中心は無料でぜんぶ使えます。見た目にこだわるなら Plus、認識の精度と賢さが欲しいなら Pro に。</p>
     </header>
 
     <div class="plans">
@@ -175,32 +175,69 @@
         <header>
           <h3>Free</h3>
           <p class="price"><b>¥0</b><span>ずっと無料</span></p>
+          <p class="plan-for">まず試したい、ひとり配信に</p>
         </header>
         <ul>
           <li>ブラウザ内蔵の音声認識（Chrome / Edge）</li>
-          <li>書体テーマ5種・レイアウト3種</li>
+          <li>標準の書体5種・レイアウト3種</li>
           <li>カンペ表示・OBS オーバーレイ</li>
           <li>登録キーワード・NG ワード</li>
           <li>文字起こしの TXT / SRT 書き出し</li>
-          <li>日本語・英語</li>
+          <li>Plus 書体を1日5分お試し</li>
         </ul>
+        <p class="plan-note">配信画面の隅に小さく「KANPE」と表示されます</p>
         <a class="btn btn-ink block" href="app.html">無料ではじめる</a>
+      </article>
+
+      <article class="plan">
+        <header>
+          <h3>Plus <span class="badge mono">近日公開</span></h3>
+          <p class="price"><b>¥100</b><span>/ 月（税込）</span></p>
+          <p class="plan-for">見た目を自分らしくしたい人に</p>
+        </header>
+        <ul>
+          <li><b>Plus 書体がすべて使える</b>（「筆」「ドット」ほか毎月追加）</li>
+          <li>配信画面の「KANPE」表示を消せる</li>
+          <li>配色の変更とプリセットの保存</li>
+          <li>追加のエフェクト</li>
+          <li>Free のすべての機能</li>
+        </ul>
+        <p class="plan-note">年払いなら ¥1,000 / 年</p>
+        <button class="btn btn-line block" type="button" disabled>準備中</button>
       </article>
 
       <article class="plan pro">
         <header>
           <h3>Pro <span class="badge mono">近日公開</span></h3>
-          <p class="price"><b>¥100</b><span>/ 月（税込）</span></p>
+          <p class="price"><b>¥980</b><span>/ 月（税込）</span></p>
+          <p class="plan-for">精度と賢さが欲しい配信者に</p>
         </header>
         <ul>
-          <li><b>高精度クラウド認識　月60分つき</b></li>
-          <li>追加の高精度認識は 60分ごとに ¥100</li>
-          <li>登録キーワードを認識ヒントに反映して、固有名詞の誤認識を減らす</li>
-          <li>品詞を見たキーワード抽出で、拾う言葉の精度アップ</li>
-          <li>Pro 書体「筆」「ドット」（無料版でも1日5分お試しできます）</li>
-          <li>Free のすべての機能</li>
+          <li><b>高精度クラウド認識　月5時間つき</b></li>
+          <li>登録キーワードを認識に反映して、固有名詞の誤認識を減らす</li>
+          <li>AI が話の要点やアイデアを短く拾って表示</li>
+          <li>配信後のサマリー（要点・話題の流れ）</li>
+          <li>Plus のすべての機能</li>
         </ul>
+        <p class="plan-note">追加の高精度認識は1時間 ¥200。年払いなら ¥9,800 / 年</p>
         <button class="btn btn-tally block" type="button" disabled>準備中</button>
+      </article>
+
+      <article class="plan">
+        <header>
+          <h3>Business</h3>
+          <p class="price"><b>¥4,980</b><span>/ 月〜</span></p>
+          <p class="plan-for">ウェビナーや社内配信のチームに（5人まで）</p>
+        </header>
+        <ul>
+          <li>チームで共有する NG ワード・用語集・プリセット</li>
+          <li>機密モード（音声を外部に送らない認識）</li>
+          <li>文字起こしの保存期間の設定</li>
+          <li>請求書払い</li>
+          <li>Pro のすべての機能</li>
+        </ul>
+        <p class="plan-note">人数や認識時間に合わせてご相談ください</p>
+        <button class="btn btn-line block" type="button" disabled>準備中</button>
       </article>
     </div>
     <p class="fine center">高精度認識の時間は、話している区間だけを数えます。無料版の音声認識はブラウザの機能を使うため、Chrome では音声が Google のサーバーで処理されます。</p>
@@ -229,8 +266,8 @@
         <p>文字起こしはお使いのブラウザの中にだけ保存されます。KANPE のサーバーには送りません。ただし無料版の音声認識はブラウザ提供元のサービスを使います。社外秘の内容を扱う場合は、NG ワードの設定や Pro の利用をご検討ください。</p>
       </details>
       <details>
-        <summary>Pro はなぜ月100円なのですか？</summary>
-        <p>高精度な認識にはクラウドの音声認識サービスを使うため、話した時間に応じて費用がかかります。誰でも気軽に試せるよう、月60分ぶんを含めた最小のプランを100円にしました。</p>
+        <summary>Plus と Pro は何が違いますか？</summary>
+        <p>Plus（月¥100）は書体や見た目など、使う人が増えても費用がかからない機能をまとめたプランです。Pro（月¥980）は、話した時間に応じて費用がかかるクラウドの高精度認識と AI の要点抽出を含みます。見た目だけなら Plus、精度も欲しいなら Pro を選んでください。</p>
       </details>
     </div>
   </section>
@@ -245,6 +282,6 @@
   <span class="logo small"><span class="tally" aria-hidden="true"></span>KANPE</span>
   <span class="fine">© <span id="year">2026</span> KANPE · 試作版</span>
 </footer>
-<script src="src/lp/lp.js?v=202610101851" defer></script>
+<script src="src/lp/lp.js?v=202610102005" defer></script>
 </body>
 </html>

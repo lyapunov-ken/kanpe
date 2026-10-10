@@ -1,29 +1,42 @@
-// フリーミアムの設定。Pro の決済・ライセンス確認はサーバー側（今後）で行い、ここはその結果を受け取る窓口。
+// フリーミアムの設定。決済・ライセンス確認はサーバー側（今後）で行い、ここはその結果を受け取る窓口。
+// プランは Free → Plus（見た目）→ Pro（精度と賢さ）→ Business（チーム）の順に上位。
+export const PLANS = {
+  free:     { label: 'Free',     price: '¥0',          rank: 0 },
+  plus:     { label: 'Plus',     price: '¥100/月',     rank: 1 },
+  pro:      { label: 'Pro',      price: '¥980/月',     rank: 2 },
+  business: { label: 'Business', price: '¥4,980/月〜', rank: 3 },
+};
+
 export const PRO = {
-  price: '¥100/月',
-  includedMinutes: 60,      // 高精度クラウド認識の月間時間（話している区間のみ計上）
-  extraPrice: '¥100 / 60分',
-  checkoutUrl: '',          // Stripe Payment Link 等を設定すると「Pro にする」から決済へ進む
-  available: false,         // Pro 公開時に true
-  trialMs: 5 * 60 * 1000,   // 無料版で Pro 書体を試せる時間（1日あたり）
+  includedHours: 5,          // Pro の高精度クラウド認識（月・話している区間のみ）
+  extraPrice: '¥200 / 1時間',
+  checkoutUrl: '',           // Stripe Payment Link 等を設定すると「アップグレード」から決済へ進む
+  available: false,          // 有料プラン公開時に true
+  trialMs: 5 * 60 * 1000,    // Free で Plus 書体を試せる時間（1日あたり）
 };
 
 // 現在のプラン。ライセンス確認ができるまでは常に free。
 export function currentPlan() {
   return 'free';
 }
+const atLeast = (plan) => PLANS[currentPlan()].rank >= PLANS[plan].rank;
+
+// 機能ごとに必要なプラン
+export const REQUIRES = {
+  'theme:premium': 'plus',   // Plus 書体（筆・ドット…）
+  'credit:hide': 'plus',     // 配信画面の「KANPE」表示を消す
+  'engine:cloud': 'pro',     // 高精度クラウド認識
+  'ai:ideas': 'pro',         // AI の要点・アイデア抽出
+};
 
 export function canUse(feature) {
-  const pro = currentPlan() === 'pro';
-  switch (feature) {
-    case 'engine:browser': return true;
-    case 'engine:cloud': return pro && PRO.available;
-    case 'theme:pro': return pro;
-    default: return true;
-  }
+  const need = REQUIRES[feature];
+  if (!need) return true;
+  if (feature === 'engine:cloud' && !PRO.available) return false;
+  return atLeast(need);
 }
 
-// ---- Pro 書体のお試し（無料版は1日5分）。記録はこの端末のブラウザにだけ残る ----
+// ---- Plus 書体のお試し（Free は1日5分）。記録はこの端末のブラウザにだけ残る ----
 const TRIAL_KEY = 'kanpe.trial.v1';
 const today = () => new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD（端末の日付）
 function readTrial() {

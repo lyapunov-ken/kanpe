@@ -99,3 +99,13 @@ body {
 
 .calm .w.aging { transition-duration: 1s; }
 @media (prefers-reduced-motion: reduce) { #caption { transition: none; } }
+
+/* Free のクレジット表示（Plus 以上で消える） */
+#credit {
+  position: fixed; right: 2.4vw; bottom: 2.4vh; display: none; align-items: center; gap: .45em;
+  font-family: "Zen Kaku Gothic New", var(--font); font-weight: 900; font-size: max(10px, calc(var(--base) * .28));
+  letter-spacing: .16em; line-height: 1; color: var(--sub); opacity: .75; pointer-events: none;
+}
+#credit i { width: .55em; height: .55em; border-radius: 50%; background: #e0352b; }
+.has-credit #credit { display: flex; }
+.theme-clear #credit { color: #fff; text-shadow: 0 0 .2em rgba(0,0,0,.8); }
