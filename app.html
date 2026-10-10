@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KANPE コンソール</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97&display=swap">
-<link rel="stylesheet" href="styles/console.css?v=202610102303">
+<link rel="stylesheet" href="styles/console.css?v=202610110808">
 </head>
 <body>
 <header class="top">
   <a class="brand" href="index.html" title="KANPE のトップへ"><span class="mark">K</span>KANPE<small>リアルタイムカンペ</small></a>
   <div class="top-right">
     <div class="status"><span id="dot" class="dot"></span><span id="statusText">待機中</span></div>
-    <a id="planBadge" class="plan-badge" href="index.html#pricing"><b>FREE</b><span>アップグレード</span></a>
+    <a id="planBadge" class="plan-badge" href="index.html#pricing"><b>無料プラン</b><span>アップグレード</span></a>
   </div>
 </header>
 
@@ -37,13 +37,13 @@
         <label class="field"><span class="lbl">認識エンジン</span>
           <select id="engine">
             <option value="browser">ブラウザ（無料）</option>
-            <option value="cloud">高精度（Pro）</option>
+            <option value="cloud">高精度（おトク）</option>
           </select>
         </label>
       </div>
       <div id="proNote" class="pro-note" hidden>
-        <b>高精度認識は Pro の機能です</b>
-        <p>固有名詞や専門用語に強いクラウド認識で、拾う言葉の精度が上がります。Pro（月 ¥980・5時間つき）で使えます（近日公開）。</p>
+        <b>高精度認識はおトクプランの機能です</b>
+        <p>固有名詞や専門用語に強いクラウド認識で、拾う言葉の精度が上がります。おトクプラン（月 ¥980・5時間つき）で使えます（近日公開）。</p>
         <a href="index.html#pricing">料金を見る</a>
       </div>
       <div class="field try">
@@ -59,11 +59,11 @@
       <h2>表示</h2>
       <div class="field"><span class="lbl">書体テーマ</span><div id="themes" class="themes" role="radiogroup" aria-label="書体テーマ"></div></div>
       <div class="field pro-themes">
-        <span class="lbl">Plus 書体 <em class="pro-tag">PLUS</em></span>
-        <div id="proThemes" class="themes" role="radiogroup" aria-label="Plus 書体"></div>
+        <span class="lbl">プレミアム書体 <em class="pro-tag">¥100〜</em></span>
+        <div id="proThemes" class="themes" role="radiogroup" aria-label="プレミアム書体"></div>
       </div>
       <div class="field">
-        <span class="lbl">アクセントカラー <em class="pro-tag">PLUS</em></span>
+        <span class="lbl">アクセントカラー <em class="pro-tag">¥100〜</em></span>
         <div id="accents" class="accents" role="radiogroup" aria-label="アクセントカラー"></div>
         <p class="hint">初めて出た言葉の色と下線に使います</p>
       </div>
@@ -141,6 +141,6 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script type="module" src="src/console/console.js?v=202610102303"></script>
+<script type="module" src="src/console/console.js?v=202610110808"></script>
 </body>
 </html>

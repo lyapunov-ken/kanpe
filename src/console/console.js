@@ -1,11 +1,11 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings, saveSettings } from '../core/settings.js?v=202610102303';
-import { createBus } from '../core/bus.js?v=202610102303';
-import { connectObs } from '../core/obs.js?v=202610102303';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610102303';
-import { Recognizer } from './recognizer.js?v=202610102303';
-import { simulateSpeech } from './demo.js?v=202610102303';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610102303';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings, saveSettings } from '../core/settings.js?v=202610110808';
+import { createBus } from '../core/bus.js?v=202610110808';
+import { connectObs } from '../core/obs.js?v=202610110808';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610110808';
+import { Recognizer } from './recognizer.js?v=202610110808';
+import { simulateSpeech } from './demo.js?v=202610110808';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610110808';
 
 const $ = (s) => document.querySelector(s);
 let S = { ...DEFAULTS, ...loadSettings() };
@@ -179,7 +179,7 @@ function segButtons(container, entries, key) {
 }
 function pick(container, entries, key, id, def) {
   if (key === 'theme' && def.pro && !canUse('theme:premium') && trialRemainingMs() <= 0) {
-    toast('お試し期間（1日）は終わりました。Plus 書体は Plus（月¥100）で続けて使えます');
+    toast('お試し期間（1日）は終わりました。プレミアム書体はお手軽プラン（月¥100）で続けて使えます');
     return;
   }
   S[key] = id;
@@ -187,7 +187,7 @@ function pick(container, entries, key, id, def) {
   pushSettings();
 }
 
-// ---- 書体テーマ（標準 / Plus）と、Free の1日お試し ----
+// ---- 書体テーマ（標準 / プレミアム）と、無料プランの1日お試し ----
 const FREE_THEMES = Object.fromEntries(Object.entries(THEMES).filter(([, d]) => !d.pro));
 const PRO_THEMES = Object.fromEntries(Object.entries(THEMES).filter(([, d]) => d.pro));
 function renderThemes() {
@@ -197,10 +197,10 @@ function renderThemes() {
   updateTrial();
 }
 
-// ---- アクセントカラー（Plus。Free は書体と同じ1日のお試し） ----
+// ---- アクセントカラー（お手軽プラン以上。無料プランは書体と同じ1日のお試し） ----
 const accentLocked = () => !canUse('accent:custom') && trialRemainingMs() <= 0;
 function pickAccent(c) {
-  if (c && accentLocked()) { toast('お試し期間（1日）は終わりました。アクセントカラーは Plus（月¥100）で変えられます'); return; }
+  if (c && accentLocked()) { toast('お試し期間（1日）は終わりました。アクセントカラーはお手軽プラン（月¥100）で変えられます'); return; }
   S.accent = c;
   renderAccents();
   updateTrial();
@@ -236,7 +236,7 @@ function renderAccents() {
   const input = document.createElement('input');
   input.type = 'color';
   input.value = S.accent || '#ffd23f';
-  input.addEventListener('click', (e) => { if (accentLocked()) { e.preventDefault(); toast('お試し期間（1日）は終わりました。アクセントカラーは Plus（月¥100）で変えられます'); } });
+  input.addEventListener('click', (e) => { if (accentLocked()) { e.preventDefault(); toast('お試し期間（1日）は終わりました。アクセントカラーはお手軽プラン（月¥100）で変えられます'); } });
   input.addEventListener('change', () => pickAccent(input.value));
   custom.appendChild(input);
   box.appendChild(custom);
@@ -251,9 +251,9 @@ function updateTrial() {
   const left = h > 0 ? `${h}時間${m}分` : `${m}分`;
   $('#trialFill').style.transform = `scaleX(${(rem / PRO.trialMs).toFixed(4)})`;
   box.classList.toggle('active', trialStarted() && rem > 0);
-  $('#trialNote').textContent = rem <= 0 ? `お試し期間（1日）は終わりました。Plus（月¥100）で続けて使えます`
+  $('#trialNote').textContent = rem <= 0 ? `お試し期間（1日）は終わりました。お手軽プラン（月¥100）で続けて使えます`
     : trialStarted() ? `お試し中　残り ${left}（終わると標準の書体と色に戻ります）`
-    : 'Plus 書体とアクセントカラーは、無料版でも1日（24時間）お試しできます。使い始めた時から数えます';
+    : 'プレミアム書体とアクセントカラーは、無料プランでも1日（24時間）お試しできます。使い始めた時から数えます';
 }
 let trialLast = performance.now();
 setInterval(() => {
@@ -267,7 +267,7 @@ setInterval(() => {
       S.accent = '';
       pushSettings();
       renderThemes();
-      toast('Plus 機能のお試し期間（1日）が終わったので、標準の書体と色に戻しました');
+      toast('プレミアム機能のお試し期間（1日）が終わったので、標準の書体と色に戻しました');
       return;
     }
   }
@@ -312,20 +312,20 @@ bindCheck('reduceMotion');
 bindText('registered', () => ex.setDict(S));
 bindText('ng', () => ex.setDict(S));
 
-// ------------------------------------------------------------ 認識エンジン（無料＝ブラウザ / Pro＝高精度クラウド）
+// ------------------------------------------------------------ 認識エンジン（無料＝ブラウザ / おトクプラン＝高精度クラウド）
 const engineSel = $('#engine');
 engineSel.value = 'browser';
 engineSel.addEventListener('change', () => {
   if (engineSel.value === 'cloud' && !canUse('engine:cloud')) {
     engineSel.value = 'browser';
     $('#proNote').hidden = false;
-    toast(`高精度クラウド認識は Pro（${PLANS.pro.price}・月${PRO.includedHours}時間つき）の機能です（近日公開）`);
+    toast(`高精度クラウド認識は${PLANS.pro.label}（${PLANS.pro.price}・月${PRO.includedHours}時間つき）の機能です（近日公開）`);
     return;
   }
   $('#proNote').hidden = true;
 });
 if (currentPlan() !== 'free') {
-  $('#planBadge').innerHTML = `<b>${PLANS[currentPlan()].label.toUpperCase()}</b>`;
+  $('#planBadge').innerHTML = `<b>${PLANS[currentPlan()].label}</b>`;
 }
 
 $('#lang').value = S.lang;

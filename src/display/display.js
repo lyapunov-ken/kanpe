@@ -1,10 +1,10 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610102303';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610102303';
-import { createBus } from '../core/bus.js?v=202610102303';
-import { connectObs } from '../core/obs.js?v=202610102303';
-import { runs } from '../core/extract.js?v=202610102303';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610110808';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610110808';
+import { createBus } from '../core/bus.js?v=202610110808';
+import { connectObs } from '../core/obs.js?v=202610110808';
+import { runs } from '../core/extract.js?v=202610110808';
 
 const P = new URLSearchParams(location.search);
 const LOCK = {};
@@ -414,7 +414,7 @@ const isLocked = (id) => THEMES[id] && THEMES[id].pro && !canUse('theme:premium'
 let picker = null, pickerNote = null, uiTimer = 0;
 
 function setWindowTheme(id) {
-  if (id && isLocked(id)) { notify('Plus 書体のお試し期間（1日）は終わりました'); return; }
+  if (id && isLocked(id)) { notify('プレミアム書体のお試し期間（1日）は終わりました'); return; }
   const url = new URL(location.href);
   if (id) { LOCK.theme = id; url.searchParams.set('theme', id); }
   else { delete LOCK.theme; url.searchParams.delete('theme'); }
@@ -449,7 +449,7 @@ function renderPicker() {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'pk-theme' + (th.pro ? ' plus' : '') + (isLocked(id) ? ' locked' : '');
-    b.title = th.pro ? `${th.label}（Plus 書体）` : th.label;
+    b.title = th.pro ? `${th.label}（プレミアム書体）` : th.label;
     b.setAttribute('aria-pressed', String(S.theme === id));
     const tile = document.createElement('span');
     tile.className = 'pk-tile';
@@ -490,7 +490,7 @@ function renderPicker() {
     b.type = 'button';
     b.className = 'pk-acc' + (accLocked ? ' locked' : '');
     b.style.background = a.c;
-    b.title = `${a.label}（Plus）`;
+    b.title = `${a.label}（お手軽プラン以上）`;
     b.setAttribute('aria-pressed', String(LOCK.accent === a.c));
     b.addEventListener('click', () => setWindowAccent(a.c));
     arow.appendChild(b);
@@ -498,7 +498,7 @@ function renderPicker() {
 }
 
 function setWindowAccent(c) {
-  if (c && !canUse('accent:custom') && trialRemainingMs() <= 0) { notify('Plus 機能のお試し期間（1日）は終わりました'); return; }
+  if (c && !canUse('accent:custom') && trialRemainingMs() <= 0) { notify('プレミアム機能のお試し期間（1日）は終わりました'); return; }
   const url = new URL(location.href);
   if (c) { LOCK.accent = c; url.searchParams.set('accent', c.slice(1)); }
   else { delete LOCK.accent; url.searchParams.delete('accent'); }
@@ -539,7 +539,7 @@ if (SHOW_UI) {
   document.addEventListener('fullscreenchange', renderPicker);
   showUi();
 
-  // この窓で Plus 機能を使い始めたら、Free の1日お試しを開始する（コンソールと共通）
+  // この窓でプレミアム機能を使い始めたら、無料プランの1日お試しを開始する（コンソールと共通）
   let last = performance.now();
   setInterval(() => {
     const t = performance.now();
@@ -551,7 +551,7 @@ if (SHOW_UI) {
       if (trialRemainingMs() <= 0) {
         if (plusTheme) setWindowTheme(null);
         if (LOCK.accent) setWindowAccent(null);
-        notify('Plus 機能のお試し期間（1日）が終わったので、コンソールの設定に戻しました');
+        notify('プレミアム機能のお試し期間（1日）が終わったので、コンソールの設定に戻しました');
       }
     }
   }, 1000);
@@ -574,7 +574,7 @@ bus.send({ t: 'hello' });
 
 // 単体デモ：display.html?demo=1
 if (P.get('demo') === '1') {
-  import('../console/demo.js?v=202610102303').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
+  import('../console/demo.js?v=202610110808').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
 }
 
 // 検証用フック

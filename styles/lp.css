@@ -161,7 +161,7 @@ p { margin: 0; }
 .uses b { color: var(--ink); font-size: var(--s0); }
 
 /* ---- 料金 ---- */
-.plans { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 0 auto 20px; align-items: stretch; }
+.plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; max-width: 1040px; margin: 0 auto 20px; align-items: stretch; }
 .plan-for { color: var(--ink-2); font-size: var(--s-1); margin-top: 8px; }
 .plan-note { color: var(--ink-3); font-size: 12px; line-height: 1.6; }
 .plan { background: var(--card); border: 1px solid var(--rule); border-radius: 16px; padding: 24px 22px 24px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
@@ -197,7 +197,7 @@ p { margin: 0; }
   .specimens { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .uses { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .plans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plans { grid-template-columns: minmax(0, 1fr); max-width: 520px; }
   .stat:nth-child(2) { border-right: 0; }
   .stat:nth-child(3) { padding-left: 0; }
   .stat:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }
