@@ -12,7 +12,7 @@ export const PRO = {
   extraPrice: '¥200 / 1時間',
   checkoutUrl: '',           // Stripe Payment Link 等を設定すると「アップグレード」から決済へ進む
   available: false,          // 有料プラン公開時に true
-  trialMs: 5 * 60 * 1000,    // Free で Plus 書体を試せる時間（1日あたり）
+  trialMs: 24 * 60 * 60 * 1000, // Free で Plus 機能を試せる期間（最初に使ってから1日・1回だけ）
 };
 
 // 現在のプラン。ライセンス確認ができるまでは常に free。
@@ -37,22 +37,24 @@ export function canUse(feature) {
   return atLeast(need);
 }
 
-// ---- Plus 書体のお試し（Free は1日5分）。記録はこの端末のブラウザにだけ残る ----
-const TRIAL_KEY = 'kanpe.trial.v1';
-const today = () => new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD（端末の日付）
+// ---- Plus 機能のお試し（Free は最初に使ってから1日＝24時間、1回だけ）----
+// 記録はこの端末のブラウザにだけ残る。コンソールと別窓で共通にするため毎回ストレージから読む。
+const TRIAL_KEY = 'kanpe.trial.v2';
 function readTrial() {
   try {
     const t = JSON.parse(localStorage.getItem(TRIAL_KEY) || 'null');
-    if (t && t.date === today()) return t;
+    if (t && typeof t.startedAt === 'number') return t;
   } catch { /* noop */ }
-  return { date: today(), usedMs: 0 };
+  return { startedAt: 0 };
 }
-// 複数の窓（コンソールと別窓）で同じ5分を共有するため、毎回ストレージから読む
+export function trialStarted() { return readTrial().startedAt > 0; }
 export function trialRemainingMs() {
-  return Math.max(0, PRO.trialMs - readTrial().usedMs);
+  const { startedAt } = readTrial();
+  if (!startedAt) return PRO.trialMs;            // まだ始まっていない
+  return Math.max(0, startedAt + PRO.trialMs - Date.now());
 }
-export function addTrialUsage(ms) {
-  const t = readTrial();
-  t.usedMs = Math.min(PRO.trialMs, t.usedMs + ms);
-  try { localStorage.setItem(TRIAL_KEY, JSON.stringify(t)); } catch { /* noop */ }
+// Plus 機能を使っている間に呼ぶ。初回だけお試し期間を開始する（引数は互換のため残す）
+export function addTrialUsage() {
+  if (trialStarted()) return;
+  try { localStorage.setItem(TRIAL_KEY, JSON.stringify({ startedAt: Date.now() })); } catch { /* noop */ }
 }

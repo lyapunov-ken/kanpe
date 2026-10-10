@@ -1,11 +1,11 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings, saveSettings } from '../core/settings.js?v=202610102127';
-import { createBus } from '../core/bus.js?v=202610102127';
-import { connectObs } from '../core/obs.js?v=202610102127';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610102127';
-import { Recognizer } from './recognizer.js?v=202610102127';
-import { simulateSpeech } from './demo.js?v=202610102127';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610102127';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings, saveSettings } from '../core/settings.js?v=202610102303';
+import { createBus } from '../core/bus.js?v=202610102303';
+import { connectObs } from '../core/obs.js?v=202610102303';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610102303';
+import { Recognizer } from './recognizer.js?v=202610102303';
+import { simulateSpeech } from './demo.js?v=202610102303';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610102303';
 
 const $ = (s) => document.querySelector(s);
 let S = { ...DEFAULTS, ...loadSettings() };
@@ -179,7 +179,7 @@ function segButtons(container, entries, key) {
 }
 function pick(container, entries, key, id, def) {
   if (key === 'theme' && def.pro && !canUse('theme:premium') && trialRemainingMs() <= 0) {
-    toast('今日の Plus 書体のお試し（5分）は終わりました。Plus（月¥100）で続けて使えます');
+    toast('お試し期間（1日）は終わりました。Plus 書体は Plus（月¥100）で続けて使えます');
     return;
   }
   S[key] = id;
@@ -187,7 +187,7 @@ function pick(container, entries, key, id, def) {
   pushSettings();
 }
 
-// ---- 書体テーマ（標準 / Plus）と、Free の5分お試し ----
+// ---- 書体テーマ（標準 / Plus）と、Free の1日お試し ----
 const FREE_THEMES = Object.fromEntries(Object.entries(THEMES).filter(([, d]) => !d.pro));
 const PRO_THEMES = Object.fromEntries(Object.entries(THEMES).filter(([, d]) => d.pro));
 function renderThemes() {
@@ -197,10 +197,10 @@ function renderThemes() {
   updateTrial();
 }
 
-// ---- アクセントカラー（Plus。Free は書体と同じ1日5分のお試し） ----
+// ---- アクセントカラー（Plus。Free は書体と同じ1日のお試し） ----
 const accentLocked = () => !canUse('accent:custom') && trialRemainingMs() <= 0;
 function pickAccent(c) {
-  if (c && accentLocked()) { toast('今日のお試し（5分）は終わりました。アクセントカラーは Plus（月¥100）で変えられます'); return; }
+  if (c && accentLocked()) { toast('お試し期間（1日）は終わりました。アクセントカラーは Plus（月¥100）で変えられます'); return; }
   S.accent = c;
   renderAccents();
   updateTrial();
@@ -236,7 +236,7 @@ function renderAccents() {
   const input = document.createElement('input');
   input.type = 'color';
   input.value = S.accent || '#ffd23f';
-  input.addEventListener('click', (e) => { if (accentLocked()) { e.preventDefault(); toast('今日のお試し（5分）は終わりました。アクセントカラーは Plus（月¥100）で変えられます'); } });
+  input.addEventListener('click', (e) => { if (accentLocked()) { e.preventDefault(); toast('お試し期間（1日）は終わりました。アクセントカラーは Plus（月¥100）で変えられます'); } });
   input.addEventListener('change', () => pickAccent(input.value));
   custom.appendChild(input);
   box.appendChild(custom);
@@ -247,12 +247,13 @@ function updateTrial() {
   if (canUse('theme:premium')) { box.hidden = true; return; }
   const rem = trialRemainingMs();
   const active = usingPlusTrial();
-  const mm = Math.floor(rem / 60000), ss = String(Math.floor(rem / 1000) % 60).padStart(2, '0');
+  const h = Math.floor(rem / 3600000), m = Math.floor(rem / 60000) % 60;
+  const left = h > 0 ? `${h}時間${m}分` : `${m}分`;
   $('#trialFill').style.transform = `scaleX(${(rem / PRO.trialMs).toFixed(4)})`;
-  box.classList.toggle('active', active);
-  $('#trialNote').textContent = rem <= 0 ? '今日のお試しは終わりました。Plus（月¥100）で続けて使えます'
-    : active ? `お試し中　残り ${mm}:${ss}（終わると標準の書体と色に戻ります）`
-    : `Plus 書体とアクセントカラーは、無料版でも1日5分お試しできます（残り ${mm}:${ss}）`;
+  box.classList.toggle('active', trialStarted() && rem > 0);
+  $('#trialNote').textContent = rem <= 0 ? `お試し期間（1日）は終わりました。Plus（月¥100）で続けて使えます`
+    : trialStarted() ? `お試し中　残り ${left}（終わると標準の書体と色に戻ります）`
+    : 'Plus 書体とアクセントカラーは、無料版でも1日（24時間）お試しできます。使い始めた時から数えます';
 }
 let trialLast = performance.now();
 setInterval(() => {
@@ -266,7 +267,7 @@ setInterval(() => {
       S.accent = '';
       pushSettings();
       renderThemes();
-      toast('Plus 機能のお試し（5分）が終わったので、標準の書体と色に戻しました');
+      toast('Plus 機能のお試し期間（1日）が終わったので、標準の書体と色に戻しました');
       return;
     }
   }

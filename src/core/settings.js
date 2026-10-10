@@ -33,7 +33,7 @@ export const THEMES = {
     strong: 900, light: 500,
     bg: 'transparent', ink: '#ffffff', sub: 'rgba(255,255,255,.78)', accent: '#ffe14d', accent2: '#7fe3ff', stroke: 'rgba(0,0,0,.82)',
   },
-  // ---- Plus 書体（Free は1日5分までお試し） ----
+  // ---- Plus 書体（Free は1日お試し） ----
   fude: {
     label: '筆', note: '墨書き・和紙', pro: true,
     family: '"Yuji Boku"', fallback: MINCHO, gf: 'Yuji+Boku',
@@ -50,7 +50,7 @@ export const THEMES = {
 
 export const DEFAULT_THEME = 'yoru';
 
-// アクセントカラーの候補（空＝書体テーマ標準の色）。Plus の機能で、Free は1日5分お試し
+// アクセントカラーの候補（空＝書体テーマ標準の色）。Plus の機能で、Free は1日お試し
 export const ACCENTS = [
   { c: '#ffd23f', label: '黄' },
   { c: '#ff8a3d', label: '橙' },
