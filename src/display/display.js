@@ -1,10 +1,10 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610110808';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610110808';
-import { createBus } from '../core/bus.js?v=202610110808';
-import { connectObs } from '../core/obs.js?v=202610110808';
-import { runs } from '../core/extract.js?v=202610110808';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610110857';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610110857';
+import { createBus } from '../core/bus.js?v=202610110857';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610110857';
+import { runs } from '../core/extract.js?v=202610110857';
 
 const P = new URLSearchParams(location.search);
 const LOCK = {};
@@ -41,6 +41,7 @@ const el = (cls, text) => { const e = document.createElement(text === undefined 
 
 // ---------------------------------------------------------------- テーマ
 const fontLinks = new Set();
+let shownBg = '';
 function applyTheme() {
   const th = THEMES[S.theme] || THEMES.yoru;
   const vars = {
@@ -48,8 +49,18 @@ function applyTheme() {
     '--font': `${th.family}, ${th.fallback}`, '--w-strong': th.strong, '--w-light': th.light, '--base': basePx() + 'px',
   };
   for (const k in vars) root.style.setProperty(k, vars[k]);
+  // 背景画像：窓に合わせて cover でトリミング。上に地色を重ねて文字を読みやすくする
+  const bgEl = document.getElementById('bg');
+  if (bgEl) {
+    if (shownBg !== (S.bgImage || '')) { // 数百KBの文字列なので、変わった時だけ差し替える
+      shownBg = S.bgImage || '';
+      bgEl.style.backgroundImage = S.bgImage ? `url("${S.bgImage}")` : '';
+    }
+    root.style.setProperty('--bg-dim', String(S.bgDim == null ? 0.4 : S.bgDim));
+    root.style.setProperty('--bg-dim-color', th.bg === 'transparent' ? '#000' : th.bg);
+  }
   document.body.className = `theme-${S.theme} layout-${S.layout}` + (S.reduceMotion ? ' calm' : '') +
-    (S.caption ? ' has-cap' : '') + (EMBED ? ' embed' : '') + (S.credit === false ? '' : ' has-credit');
+    (S.caption ? ' has-cap' : '') + (EMBED ? ' embed' : '') + (S.credit === false ? '' : ' has-credit') + (S.bgImage ? ' has-bgimg' : '');
   if (!LOCAL_FONTS && th.gf && !fontLinks.has(th.gf)) {
     fontLinks.add(th.gf);
     const l = document.createElement('link');
@@ -389,6 +400,7 @@ function onMessage(m) {
 let lastSettings = null; // コンソールから届いた最新の設定（別窓で「連動」に戻すときに使う）
 function applySettings(s) {
   const prev = S;
+  if (s && s.bgImage === BG_KEEP) s = { ...s, bgImage: prev.bgImage || '' };
   lastSettings = s;
   S = { ...DEFAULTS, ...s, ...LOCK };
   applyTheme();
@@ -574,7 +586,7 @@ bus.send({ t: 'hello' });
 
 // 単体デモ：display.html?demo=1
 if (P.get('demo') === '1') {
-  import('../console/demo.js?v=202610110808').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
+  import('../console/demo.js?v=202610110857').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
 }
 
 // 検証用フック

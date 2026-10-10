@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings, saveSettings } from '../core/settings.js?v=202610110808';
-import { createBus } from '../core/bus.js?v=202610110808';
-import { connectObs } from '../core/obs.js?v=202610110808';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610110808';
-import { Recognizer } from './recognizer.js?v=202610110808';
-import { simulateSpeech } from './demo.js?v=202610110808';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610110808';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings, saveSettings } from '../core/settings.js?v=202610110857';
+import { createBus } from '../core/bus.js?v=202610110857';
+import { connectObs } from '../core/obs.js?v=202610110857';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610110857';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610110857';
+import { simulateSpeech } from './demo.js?v=202610110857';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610110857';
 
 const $ = (s) => document.querySelector(s);
 let S = { ...DEFAULTS, ...loadSettings() };
 
 const ex = new Extractor({ lang: S.lang, registered: S.registered, ng: S.ng });
-const bus = createBus((m) => { if (m.t === 'hello') pushSettings(false); });
+const bus = createBus((m) => { if (m.t === 'hello') { try { obs && obs.resetBg(); } catch { /* noop */ } pushSettings(false); } });
 let obs = null, unlinkObs = null;
 
 let paused = false;
@@ -62,18 +62,23 @@ const rec = new Recognizer({
   onState: (st) => {
     if (st === 'listening') setStatus('on', '聞き取り中');
     else if (st === 'restarting') setStatus('on', '聞き取り中');
-    else if (st === 'stopped') { setStatus('', '待機中'); setMic(false); stopMeter(); }
+    else if (st === 'stopped') { setStatus('', '待機中'); setMic(false); stopMeter(); releaseWake(); }
   },
   onError: (err) => {
     const msg = {
-      unsupported: 'このブラウザは音声認識に対応していません。Chrome か Edge で開いてください',
-      'not-allowed': 'マイクの使用が許可されていません。アドレスバーのマイクアイコンから許可してください',
-      'service-not-allowed': '音声認識サービスを使えません（Chrome / Edge と https または localhost で開いてください）',
+      unsupported: IS_IOS ? 'このブラウザでは音声認識を使えません。iPhone は Safari で開いてください（アプリ内ブラウザは非対応です）'
+        : IS_ANDROID ? 'このブラウザでは音声認識を使えません。Android は Chrome で開いてください（アプリ内ブラウザは非対応です）'
+        : 'このブラウザは音声認識に対応していません。Chrome / Edge / Safari で開いてください',
+      'not-allowed': IS_IOS ? 'マイクか音声認識が許可されていません。「設定」→「Safari」→「マイク」を許可し、「設定」→「Siri」で Siri（または音声入力）をオンにしてください'
+        : IS_MOBILE ? 'マイクが許可されていません。ブラウザのサイト設定でマイクを許可してください'
+        : 'マイクの使用が許可されていません。アドレスバーのマイクアイコンから許可してください',
+      'service-not-allowed': IS_IOS ? '音声認識を使えません。「設定」→「Siri」で Siri（または「一般」→「キーボード」→「音声入力」）をオンにしてください'
+        : '音声認識サービスを使えません（Chrome / Edge / Safari と https で開いてください）',
       'audio-capture': 'マイクが見つかりません',
       network: '音声認識サービスに接続できません。ネットワークを確認してください',
     }[err] || `音声認識エラー：${err}`;
     toast(msg);
-    if (err !== 'network') { setStatus('err', 'エラー'); setMic(false); stopMeter(); }
+    if (err !== 'network') { setStatus('err', 'エラー'); setMic(false); stopMeter(); releaseWake(); }
   },
 });
 
@@ -85,12 +90,30 @@ function setMic(on) {
   $('#micHint').textContent = on ? 'もう一度押すと止まります' : '押すとマイクで聞き取りを始めます';
 }
 $('#btnMic').addEventListener('click', async () => {
-  if (rec.wanted) { rec.stop(); setMic(false); stopMeter(); return; }
+  if (rec.wanted) { rec.stop(); setMic(false); stopMeter(); releaseWake(); return; }
   if (!Recognizer.supported()) { rec.onError('unsupported'); return; }
   stopDemo();
   clock();
-  if (rec.start()) { setMic(true); setStatus('on', '準備中'); startMeter(); }
+  if (rec.start()) {
+    setMic(true); setStatus('on', '準備中');
+    // スマホはマイクを2つ同時に開くと音声認識が止まるので、レベル表示は PC のみ
+    if (!IS_MOBILE) startMeter();
+    keepAwake();
+  }
 });
+
+// 聞き取り中は画面を消さない（スマホ）。裏に回って戻ってきたら認識を開き直す
+let wakeLock = null;
+async function keepAwake() {
+  try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch { /* 任意 */ }
+}
+function releaseWake() { try { wakeLock && wakeLock.release(); } catch { /* noop */ } wakeLock = null; }
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !rec.wanted) return;
+  keepAwake();
+  if (IS_MOBILE) rec.resume();
+});
+if (IS_MOBILE) document.body.classList.add('is-mobile');
 
 // 入力レベル表示（音声認識とは別に、マイクが拾えているかの目安）
 let meterCtx = null, meterStream = null, meterRaf = 0;
@@ -241,7 +264,7 @@ function renderAccents() {
   custom.appendChild(input);
   box.appendChild(custom);
 }
-const usingPlusTrial = () => !canUse('theme:premium') && ((THEMES[S.theme] && THEMES[S.theme].pro) || !!S.accent);
+const usingPlusTrial = () => !canUse('theme:premium') && ((THEMES[S.theme] && THEMES[S.theme].pro) || !!S.accent || !!S.bgImage);
 function updateTrial() {
   const box = $('#trialBox');
   if (canUse('theme:premium')) { box.hidden = true; return; }
@@ -252,8 +275,8 @@ function updateTrial() {
   $('#trialFill').style.transform = `scaleX(${(rem / PRO.trialMs).toFixed(4)})`;
   box.classList.toggle('active', trialStarted() && rem > 0);
   $('#trialNote').textContent = rem <= 0 ? `お試し期間（1日）は終わりました。お手軽プラン（月¥100）で続けて使えます`
-    : trialStarted() ? `お試し中　残り ${left}（終わると標準の書体と色に戻ります）`
-    : 'プレミアム書体とアクセントカラーは、無料プランでも1日（24時間）お試しできます。使い始めた時から数えます';
+    : trialStarted() ? `お試し中　残り ${left}（終わると標準の書体と色に戻り、背景画像は外れます）`
+    : 'プレミアム書体・アクセントカラー・背景画像は、無料プランでも1日（24時間）お試しできます。使い始めた時から数えます';
 }
 let trialLast = performance.now();
 setInterval(() => {
@@ -265,14 +288,71 @@ setInterval(() => {
     if (trialRemainingMs() <= 0) {
       if (THEMES[S.theme] && THEMES[S.theme].pro) S.theme = DEFAULT_THEME;
       S.accent = '';
+      S.bgImage = '';
+      renderBg();
       pushSettings();
       renderThemes();
-      toast('プレミアム機能のお試し期間（1日）が終わったので、標準の書体と色に戻しました');
+      toast('プレミアム機能のお試し期間（1日）が終わったので、標準の書体・色・背景に戻しました');
       return;
     }
   }
   updateTrial();
 }, 1000);
+
+// ---- 背景画像（お手軽プラン以上。無料プランは1日お試し）----
+// 長い辺を1000px以下に縮小して JPEG にし、設定と一緒に表示ビューへ送る。表示側は窓に合わせて cover でトリミング。
+const BG_MAX = 1000;
+const bgLocked = () => !canUse('bg:image') && trialRemainingMs() <= 0;
+async function shrinkImage(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error('decode'));
+      i.src = url;
+    });
+    const k = Math.min(1, BG_MAX / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.max(1, Math.round(img.naturalWidth * k)), h = Math.max(1, Math.round(img.naturalHeight * k));
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    g.fillStyle = '#000';
+    g.fillRect(0, 0, w, h); // 透過 PNG は黒地に
+    g.drawImage(img, 0, 0, w, h);
+    return { data: c.toDataURL('image/jpeg', 0.82), w, h };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+function renderBg() {
+  const thumb = $('#bgThumb');
+  thumb.style.backgroundImage = S.bgImage ? `url("${S.bgImage}")` : '';
+  thumb.classList.toggle('has', !!S.bgImage);
+  $('#bgRemove').hidden = !S.bgImage;
+  $('#bgDimRow').hidden = !S.bgImage;
+  document.querySelector('.bg-pick').classList.toggle('locked', bgLocked());
+}
+$('#bgFile').addEventListener('click', (e) => {
+  if (bgLocked()) { e.preventDefault(); toast('お試し期間（1日）は終わりました。背景画像はお手軽プラン（月¥100）で使えます'); }
+});
+$('#bgFile').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (!/^image\//.test(file.type)) { toast('画像ファイルを選んでください'); return; }
+  try {
+    const { data, w, h } = await shrinkImage(file);
+    S.bgImage = data;
+    renderBg();
+    updateTrial();
+    pushSettings();
+    toast(`背景画像を設定しました（${w}×${h}px に縮小）`);
+  } catch {
+    toast('この画像は読み込めませんでした。JPEG か PNG で試してください');
+  }
+});
+$('#bgRemove').addEventListener('click', () => { S.bgImage = ''; renderBg(); updateTrial(); pushSettings(); });
 
 function bindRange(id, label, fmt) {
   const input = $('#' + id);
@@ -301,11 +381,14 @@ function bindText(id, after) {
 
 if (!THEMES[S.theme] || (THEMES[S.theme].pro && !canUse('theme:premium') && trialRemainingMs() <= 0)) S.theme = DEFAULT_THEME;
 if (S.accent && accentLocked()) S.accent = '';
+if (S.bgImage && accentLocked()) S.bgImage = '';
 renderThemes();
 segButtons('#layouts', LAYOUTS, 'layout');
 bindRange('baseSize', 'vSize', (v) => `${v}`);
 bindRange('ttl', 'vTtl', (v) => `${v}秒`);
 bindRange('maxWords', 'vMax', (v) => `${v}語`);
+bindRange('bgDim', 'vBgDim', (v) => `${Math.round(v * 100)}%`);
+renderBg();
 bindCheck('vertical');
 bindCheck('caption');
 bindCheck('reduceMotion');

@@ -79,6 +79,8 @@ export const DEFAULTS = {
   caption: true,     // 最新の発話を字幕ラインで出す
   reduceMotion: false,
   accent: '',        // アクセントカラー（空＝書体テーマ標準）
+  bgImage: '',       // 背景画像（data URL。長辺1000px以下に縮小済み）
+  bgDim: 0.4,        // 背景画像の上に重ねる地色の濃さ（文字を読みやすくする）
   lang: 'ja-JP',
   registered: '',
   ng: '',

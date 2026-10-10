@@ -3,12 +3,13 @@
 export const PLANS = {
   free: { label: '無料プラン',   short: '無料',   price: '¥0',      rank: 0 },
   plus: { label: 'お手軽プラン', short: 'お手軽', price: '¥100/月', rank: 1 },
-  pro:  { label: 'おトクプラン', short: 'おトク', price: '¥980/月', rank: 2 },
+  pro:  { label: 'おトクプラン', short: 'おトク', price: '¥1,980/月', rank: 2 },
 };
 
 export const PRO = {
-  includedHours: 5,          // おトクプランの高精度クラウド認識（月・話している区間のみ）
-  extraPrice: '¥200 / 1時間',
+  // 想定：2時間の配信を週3回（月約26時間）。話している区間は6〜7割なので月17時間前後。
+  includedHours: 20,         // おトクプランの高精度クラウド認識（月・話している区間のみ）。上の想定がまるごと収まる
+  extraPrice: '¥150 / 1時間',
   checkoutUrl: '',           // Stripe Payment Link 等を設定すると「アップグレード」から決済へ進む
   available: false,          // 有料プラン公開時に true
   trialMs: 24 * 60 * 60 * 1000, // 無料プランでプレミアム機能を試せる期間（最初に使ってから1日・1回だけ）
@@ -25,6 +26,7 @@ export const REQUIRES = {
   'theme:premium': 'plus',   // プレミアム書体（筆・ドット…）
   'credit:hide': 'plus',     // 配信画面の「KANPE」表示を消す
   'accent:custom': 'plus',   // アクセントカラーの変更
+  'bg:image': 'plus',        // 背景画像のアップロード
   'engine:cloud': 'pro',     // 高精度クラウド認識
   'ai:ideas': 'pro',         // AI の要点・アイデア抽出
 };

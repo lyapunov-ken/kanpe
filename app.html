@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KANPE コンソール</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97&display=swap">
-<link rel="stylesheet" href="styles/console.css?v=202610110808">
+<link rel="stylesheet" href="styles/console.css?v=202610110857">
 </head>
 <body>
 <header class="top">
@@ -43,7 +43,7 @@
       </div>
       <div id="proNote" class="pro-note" hidden>
         <b>高精度認識はおトクプランの機能です</b>
-        <p>固有名詞や専門用語に強いクラウド認識で、拾う言葉の精度が上がります。おトクプラン（月 ¥980・5時間つき）で使えます（近日公開）。</p>
+        <p>固有名詞や専門用語に強いクラウド認識で、拾う言葉の精度が上がります。おトクプラン（月 ¥1,980・月20時間つき。週3回×2時間の配信がまるごと収まります）で使えます（近日公開）。</p>
         <a href="index.html#pricing">料金を見る</a>
       </div>
       <div class="field try">
@@ -67,9 +67,21 @@
         <div id="accents" class="accents" role="radiogroup" aria-label="アクセントカラー"></div>
         <p class="hint">初めて出た言葉の色と下線に使います</p>
       </div>
+      <div class="field">
+        <span class="lbl">背景画像 <em class="pro-tag">¥100〜</em></span>
+        <div class="bg-row">
+          <div id="bgThumb" class="bg-thumb" aria-hidden="true"></div>
+          <div class="bg-actions">
+            <label class="btn bg-pick">画像を選ぶ<input id="bgFile" type="file" accept="image/*"></label>
+            <button id="bgRemove" class="btn" type="button" hidden>外す</button>
+          </div>
+        </div>
+        <label class="slider" id="bgDimRow" hidden><span class="lbl">画像の暗さ</span><output id="vBgDim"></output><input id="bgDim" type="range" min="0" max="0.85" step="0.05"></label>
+        <p class="hint">長い辺が1000px以下になるよう自動で縮小し、表示の窓に合わせて自動でトリミングします</p>
+      </div>
       <div id="trialBox" class="trial">
         <div class="trial-bar"><i id="trialFill"></i></div>
-        <p id="trialNote" class="hint">無料版でも1日（24時間）お試しできます</p>
+        <p id="trialNote" class="hint">プレミアム書体・アクセントカラー・背景画像は、無料プランでも1日（24時間）お試しできます</p>
       </div>
       <div class="field"><span class="lbl">レイアウト</span><div id="layouts" class="segmented" role="radiogroup" aria-label="レイアウト"></div><p id="layoutNote" class="hint"></p></div>
       <div class="sliders">
@@ -141,6 +153,6 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script type="module" src="src/console/console.js?v=202610110808"></script>
+<script type="module" src="src/console/console.js?v=202610110857"></script>
 </body>
 </html>

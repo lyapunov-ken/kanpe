@@ -7,6 +7,8 @@ async function sha256b64(str) {
   return btoa(bin);
 }
 
+export const BG_KEEP = '=keep';
+
 export function connectObs({ url, password = '', onMessage, onStatus }) {
   let ws = null, ready = false, closed = false, timer = null, req = 0;
 
@@ -24,7 +26,7 @@ export function connectObs({ url, password = '', onMessage, onStatus }) {
         }
         ws.send(JSON.stringify({ op: 1, d }));
       } else if (m.op === 2) { // Identified
-        ready = true; onStatus && onStatus('connected');
+        ready = true; lastBg = ''; onStatus && onStatus('connected');
       } else if (m.op === 5 && m.d && m.d.eventType === 'CustomEvent') {
         const data = m.d.eventData;
         if (data && data.__kanpe && onMessage) onMessage(data.msg);
@@ -40,12 +42,19 @@ export function connectObs({ url, password = '', onMessage, onStatus }) {
   const schedule = () => { clearTimeout(timer); timer = setTimeout(open, 2500); };
   open();
 
+  // 背景画像（数百KB）は変わった時だけ送る。同じなら目印だけ送り、受け手は手元の画像を使い続ける
+  let lastBg = '';
   return {
     send(msg) {
       if (!ready) return;
+      if (msg && msg.t === 'settings' && msg.s && msg.s.bgImage) {
+        if (msg.s.bgImage === lastBg) msg = { ...msg, s: { ...msg.s, bgImage: BG_KEEP } };
+        else lastBg = msg.s.bgImage;
+      }
       ws.send(JSON.stringify({ op: 6, d: { requestType: 'BroadcastCustomEvent', requestId: String(++req),
         requestData: { eventData: { __kanpe: 1, msg } } } }));
     },
+    resetBg() { lastBg = ''; },
     close() { closed = true; clearTimeout(timer); try { ws && ws.close(); } catch { /* noop */ } },
   };
 }
