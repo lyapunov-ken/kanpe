@@ -1,5 +1,5 @@
 // マイクなしで試すためのデモ。音声認識の途中結果が少しずつ伸びる様子を再現する。
-import { Extractor, cleanCaption } from '../core/extract.js?v=202610102005';
+import { Extractor, cleanCaption } from '../core/extract.js?v=202610102123';
 
 export const DEMO_LINES = {
   ja: [

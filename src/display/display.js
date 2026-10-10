@@ -1,9 +1,10 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, loadSettings } from '../core/settings.js?v=202610102005';
-import { createBus } from '../core/bus.js?v=202610102005';
-import { connectObs } from '../core/obs.js?v=202610102005';
-import { runs } from '../core/extract.js?v=202610102005';
+import { THEMES, DEFAULTS, DEFAULT_THEME, loadSettings } from '../core/settings.js?v=202610102123';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610102123';
+import { createBus } from '../core/bus.js?v=202610102123';
+import { connectObs } from '../core/obs.js?v=202610102123';
+import { runs } from '../core/extract.js?v=202610102123';
 
 const P = new URLSearchParams(location.search);
 const LOCK = {};
@@ -384,8 +385,10 @@ function onMessage(m) {
   else if (m.t === 'settings') applySettings(m.s);
 }
 
+let lastSettings = null; // コンソールから届いた最新の設定（別窓で「連動」に戻すときに使う）
 function applySettings(s) {
   const prev = S;
+  lastSettings = s;
   S = { ...DEFAULTS, ...s, ...LOCK };
   applyTheme();
   if (prev.layout !== S.layout) setupLayout();
@@ -402,11 +405,128 @@ if (P.get('obs')) {
   bus.link(link);
 }
 
+// ---------------------------------------------------------------- 別窓での書体切り替え
+// カンペ・組版を別窓で開いたときだけ、マウスを動かすと右上に書体の選択バーが出る。
+// 選んだ書体はこの窓だけに効く（URL に残るので再読み込みしても保たれる）。「連動」でコンソールの書体に戻る。
+const SHOW_UI = !EMBED && !P.get('obs') && P.get('ui') !== '0';
+const isLocked = (id) => THEMES[id] && THEMES[id].pro && !canUse('theme:premium') && trialRemainingMs() <= 0;
+let picker = null, pickerNote = null, uiTimer = 0;
+
+function setWindowTheme(id) {
+  if (id && isLocked(id)) { notify('今日の Plus 書体のお試し（5分）は終わりました'); return; }
+  const url = new URL(location.href);
+  if (id) { LOCK.theme = id; url.searchParams.set('theme', id); }
+  else { delete LOCK.theme; url.searchParams.delete('theme'); }
+  history.replaceState(null, '', url);
+  S = { ...DEFAULTS, ...(lastSettings || loadSettings()), ...LOCK };
+  applyTheme();
+  renderPicker();
+}
+
+function notify(text) {
+  if (!pickerNote) return;
+  pickerNote.textContent = text;
+  pickerNote.classList.add('on');
+  showUi();
+  clearTimeout(notify.t);
+  notify.t = setTimeout(() => pickerNote.classList.remove('on'), 3200);
+}
+
+function renderPicker() {
+  if (!picker) return;
+  const row = picker.querySelector('.pk-row');
+  row.replaceChildren();
+  const follow = document.createElement('button');
+  follow.type = 'button';
+  follow.className = 'pk-follow';
+  follow.textContent = '連動';
+  follow.title = 'コンソールで選んだ書体に合わせる';
+  follow.setAttribute('aria-pressed', String(!LOCK.theme));
+  follow.addEventListener('click', () => setWindowTheme(null));
+  row.appendChild(follow);
+  for (const [id, th] of Object.entries(THEMES)) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pk-theme' + (th.pro ? ' plus' : '') + (isLocked(id) ? ' locked' : '');
+    b.title = th.pro ? `${th.label}（Plus 書体）` : th.label;
+    b.setAttribute('aria-pressed', String(S.theme === id));
+    const tile = document.createElement('span');
+    tile.className = 'pk-tile';
+    tile.textContent = '字';
+    tile.style.background = th.bg === 'transparent' ? 'repeating-conic-gradient(#3a3d44 0 25%, #2a2d33 0 50%) 0 0 / 8px 8px' : th.bg;
+    tile.style.color = th.ink;
+    tile.style.fontFamily = `${th.family}, ${th.fallback}`;
+    tile.style.fontWeight = th.strong;
+    const name = document.createElement('span');
+    name.className = 'pk-name';
+    name.textContent = th.label;
+    b.append(tile, name);
+    b.addEventListener('click', () => setWindowTheme(id));
+    row.appendChild(b);
+  }
+  const fs = document.createElement('button');
+  fs.type = 'button';
+  fs.className = 'pk-fs';
+  fs.textContent = document.fullscreenElement ? '戻す' : '全画面';
+  fs.title = '全画面（F キー）';
+  fs.addEventListener('click', toggleFullscreen);
+  row.appendChild(fs);
+}
+
+function showUi() {
+  if (!picker) return;
+  document.body.classList.add('ui-on');
+  document.body.classList.remove('ui-idle');
+  clearTimeout(uiTimer);
+  uiTimer = setTimeout(() => {
+    if (picker.matches(':hover') || picker.querySelector(':focus-visible')) return showUi(); // キーボード操作中は出したまま
+    document.body.classList.remove('ui-on');
+    document.body.classList.add('ui-idle');
+  }, 2600);
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {});
+}
+
+if (SHOW_UI) {
+  picker = document.createElement('div');
+  picker.id = 'picker';
+  picker.setAttribute('role', 'toolbar');
+  picker.setAttribute('aria-label', 'この窓の書体');
+  picker.innerHTML = '<span class="pk-label">書体</span><div class="pk-row"></div><p class="pk-note" aria-live="polite"></p>';
+  pickerNote = picker.querySelector('.pk-note');
+  document.body.appendChild(picker);
+  renderPicker();
+  for (const ev of ['mousemove', 'pointerdown', 'touchstart']) window.addEventListener(ev, showUi, { passive: true });
+  picker.addEventListener('focusin', showUi);
+  document.addEventListener('fullscreenchange', renderPicker);
+  showUi();
+
+  // この窓で Plus 書体を使っている間は、Free の1日5分を消費する（コンソールと共通）
+  let last = performance.now();
+  setInterval(() => {
+    const t = performance.now();
+    const dt = t - last;
+    last = t;
+    if (LOCK.theme && THEMES[LOCK.theme] && THEMES[LOCK.theme].pro && !canUse('theme:premium')) {
+      addTrialUsage(dt);
+      if (trialRemainingMs() <= 0) {
+        setWindowTheme(null);
+        notify('Plus 書体のお試し（5分）が終わったので、コンソールの書体に戻しました');
+      }
+    }
+  }, 1000);
+}
+
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') clearAll();
-  if (e.key === 'f' && !EMBED) {
-    if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {});
+  if ((e.key === 't' || e.key === 'T') && SHOW_UI) { // T キーで書体を順に切り替え
+    const ids = Object.keys(THEMES).filter((id) => !isLocked(id));
+    setWindowTheme(ids[(ids.indexOf(S.theme) + 1) % ids.length]);
+    showUi();
   }
+  if (e.key === 'f' && !EMBED) toggleFullscreen();
 });
 window.addEventListener('resize', () => root.style.setProperty('--base', basePx() + 'px'));
 
@@ -416,7 +536,7 @@ bus.send({ t: 'hello' });
 
 // 単体デモ：display.html?demo=1
 if (P.get('demo') === '1') {
-  import('../console/demo.js?v=202610102005').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
+  import('../console/demo.js?v=202610102123').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
 }
 
 // 検証用フック

@@ -17,7 +17,7 @@
   const state = { theme: 'yoru', layout: 'compose' };
   const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const load = () => {
-    frame.src = `display.html?demo=1&theme=${state.theme}&layout=${state.layout}${calm ? '&calm=1' : ''}`;
+    frame.src = `display.html?demo=1&ui=0&theme=${state.theme}&layout=${state.layout}${calm ? '&calm=1' : ''}`;
     label.textContent = `${names[state.layout]} · ${names[state.theme]}`;
   };
   if (calm) load();

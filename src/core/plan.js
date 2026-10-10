@@ -46,13 +46,12 @@ function readTrial() {
   } catch { /* noop */ }
   return { date: today(), usedMs: 0 };
 }
-let trialMem = readTrial();
+// 複数の窓（コンソールと別窓）で同じ5分を共有するため、毎回ストレージから読む
 export function trialRemainingMs() {
-  if (trialMem.date !== today()) trialMem = { date: today(), usedMs: 0 };
-  return Math.max(0, PRO.trialMs - trialMem.usedMs);
+  return Math.max(0, PRO.trialMs - readTrial().usedMs);
 }
 export function addTrialUsage(ms) {
-  if (trialMem.date !== today()) trialMem = { date: today(), usedMs: 0 };
-  trialMem.usedMs = Math.min(PRO.trialMs, trialMem.usedMs + ms);
-  try { localStorage.setItem(TRIAL_KEY, JSON.stringify(trialMem)); } catch { /* noop */ }
+  const t = readTrial();
+  t.usedMs = Math.min(PRO.trialMs, t.usedMs + ms);
+  try { localStorage.setItem(TRIAL_KEY, JSON.stringify(t)); } catch { /* noop */ }
 }
