@@ -1,9 +1,9 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, loadSettings } from '../core/settings.js';
-import { createBus } from '../core/bus.js';
-import { connectObs } from '../core/obs.js';
-import { runs } from '../core/extract.js';
+import { THEMES, DEFAULTS, loadSettings } from '../core/settings.js?v=202610101851';
+import { createBus } from '../core/bus.js?v=202610101851';
+import { connectObs } from '../core/obs.js?v=202610101851';
+import { runs } from '../core/extract.js?v=202610101851';
 
 const P = new URLSearchParams(location.search);
 const LOCK = {};
@@ -416,7 +416,7 @@ bus.send({ t: 'hello' });
 
 // 単体デモ：display.html?demo=1
 if (P.get('demo') === '1') {
-  import('../console/demo.js').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
+  import('../console/demo.js?v=202610101851').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
 }
 
 // 検証用フック
