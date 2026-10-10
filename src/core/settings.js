@@ -50,6 +50,19 @@ export const THEMES = {
 
 export const DEFAULT_THEME = 'yoru';
 
+// アクセントカラーの候補（空＝書体テーマ標準の色）。Plus の機能で、Free は1日5分お試し
+export const ACCENTS = [
+  { c: '#ffd23f', label: '黄' },
+  { c: '#ff8a3d', label: '橙' },
+  { c: '#e0352b', label: '朱' },
+  { c: '#ff4f8b', label: '桃' },
+  { c: '#a78bfa', label: '紫' },
+  { c: '#4f7cff', label: '青' },
+  { c: '#4cc9f0', label: '水' },
+  { c: '#3ddc84', label: '緑' },
+  { c: '#ffffff', label: '白' },
+];
+
 export const LAYOUTS = {
   compose: { label: '組版', note: '画面いっぱいに文字を組む' },
   kanpe: { label: 'カンペ', note: '下から積み上がる大きな文字' },
@@ -65,6 +78,7 @@ export const DEFAULTS = {
   vertical: true,    // 縦組みを混ぜる（組版レイアウト）
   caption: true,     // 最新の発話を字幕ラインで出す
   reduceMotion: false,
+  accent: '',        // アクセントカラー（空＝書体テーマ標準）
   lang: 'ja-JP',
   registered: '',
   ng: '',

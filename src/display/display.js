@@ -1,14 +1,15 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, loadSettings } from '../core/settings.js?v=202610102123';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610102123';
-import { createBus } from '../core/bus.js?v=202610102123';
-import { connectObs } from '../core/obs.js?v=202610102123';
-import { runs } from '../core/extract.js?v=202610102123';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610102127';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610102127';
+import { createBus } from '../core/bus.js?v=202610102127';
+import { connectObs } from '../core/obs.js?v=202610102127';
+import { runs } from '../core/extract.js?v=202610102127';
 
 const P = new URLSearchParams(location.search);
 const LOCK = {};
 if (THEMES[P.get('theme')]) LOCK.theme = P.get('theme');
+if (/^[0-9a-f]{6}$/i.test(P.get('accent') || '')) LOCK.accent = '#' + P.get('accent');
 if (['compose', 'kanpe', 'ticker'].includes(P.get('layout'))) LOCK.layout = P.get('layout');
 if (+P.get('size') > 0) LOCK.baseSize = +P.get('size');
 if (P.get('calm') === '1') LOCK.reduceMotion = true;
@@ -43,7 +44,7 @@ const fontLinks = new Set();
 function applyTheme() {
   const th = THEMES[S.theme] || THEMES.yoru;
   const vars = {
-    '--bg': th.bg, '--ink': th.ink, '--sub': th.sub, '--accent': th.accent, '--accent2': th.accent2, '--stroke': th.stroke,
+    '--bg': th.bg, '--ink': th.ink, '--sub': th.sub, '--accent': S.accent || th.accent, '--accent2': th.accent2, '--stroke': th.stroke,
     '--font': `${th.family}, ${th.fallback}`, '--w-strong': th.strong, '--w-light': th.light, '--base': basePx() + 'px',
   };
   for (const k in vars) root.style.setProperty(k, vars[k]);
@@ -434,7 +435,7 @@ function notify(text) {
 
 function renderPicker() {
   if (!picker) return;
-  const row = picker.querySelector('.pk-row');
+  const row = picker.querySelector('.pk-themes');
   row.replaceChildren();
   const follow = document.createElement('button');
   follow.type = 'button';
@@ -471,6 +472,40 @@ function renderPicker() {
   fs.title = '全画面（F キー）';
   fs.addEventListener('click', toggleFullscreen);
   row.appendChild(fs);
+
+  // アクセントカラー（この窓だけ。「連動」でコンソールの色に戻る）
+  const arow = picker.querySelector('.pk-accents');
+  arow.replaceChildren();
+  const accLocked = !canUse('accent:custom') && trialRemainingMs() <= 0;
+  const af = document.createElement('button');
+  af.type = 'button';
+  af.className = 'pk-follow small';
+  af.textContent = '連動';
+  af.title = 'コンソールで選んだ色に合わせる';
+  af.setAttribute('aria-pressed', String(!LOCK.accent));
+  af.addEventListener('click', () => setWindowAccent(null));
+  arow.appendChild(af);
+  for (const a of ACCENTS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pk-acc' + (accLocked ? ' locked' : '');
+    b.style.background = a.c;
+    b.title = `${a.label}（Plus）`;
+    b.setAttribute('aria-pressed', String(LOCK.accent === a.c));
+    b.addEventListener('click', () => setWindowAccent(a.c));
+    arow.appendChild(b);
+  }
+}
+
+function setWindowAccent(c) {
+  if (c && !canUse('accent:custom') && trialRemainingMs() <= 0) { notify('今日のお試し（5分）は終わりました'); return; }
+  const url = new URL(location.href);
+  if (c) { LOCK.accent = c; url.searchParams.set('accent', c.slice(1)); }
+  else { delete LOCK.accent; url.searchParams.delete('accent'); }
+  history.replaceState(null, '', url);
+  S = { ...DEFAULTS, ...(lastSettings || loadSettings()), ...LOCK };
+  applyTheme();
+  renderPicker();
 }
 
 function showUi() {
@@ -494,7 +529,8 @@ if (SHOW_UI) {
   picker.id = 'picker';
   picker.setAttribute('role', 'toolbar');
   picker.setAttribute('aria-label', 'この窓の書体');
-  picker.innerHTML = '<span class="pk-label">書体</span><div class="pk-row"></div><p class="pk-note" aria-live="polite"></p>';
+  picker.innerHTML = '<span class="pk-label">書体</span><div class="pk-row pk-themes"></div>' +
+    '<span class="pk-label">アクセント</span><div class="pk-row pk-accents"></div><p class="pk-note" aria-live="polite"></p>';
   pickerNote = picker.querySelector('.pk-note');
   document.body.appendChild(picker);
   renderPicker();
@@ -509,11 +545,13 @@ if (SHOW_UI) {
     const t = performance.now();
     const dt = t - last;
     last = t;
-    if (LOCK.theme && THEMES[LOCK.theme] && THEMES[LOCK.theme].pro && !canUse('theme:premium')) {
+    const plusTheme = LOCK.theme && THEMES[LOCK.theme] && THEMES[LOCK.theme].pro;
+    if ((plusTheme || LOCK.accent) && !canUse('theme:premium')) {
       addTrialUsage(dt);
       if (trialRemainingMs() <= 0) {
-        setWindowTheme(null);
-        notify('Plus 書体のお試し（5分）が終わったので、コンソールの書体に戻しました');
+        if (plusTheme) setWindowTheme(null);
+        if (LOCK.accent) setWindowAccent(null);
+        notify('Plus 機能のお試し（5分）が終わったので、コンソールの設定に戻しました');
       }
     }
   }, 1000);
@@ -536,7 +574,7 @@ bus.send({ t: 'hello' });
 
 // 単体デモ：display.html?demo=1
 if (P.get('demo') === '1') {
-  import('../console/demo.js?v=202610102123').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
+  import('../console/demo.js?v=202610102127').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
 }
 
 // 検証用フック

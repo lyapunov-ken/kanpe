@@ -119,6 +119,20 @@ kbd { font-family: inherit; font-size: 10px; color: var(--faint); border: 1px so
 .trial-bar i { display: block; height: 100%; background: var(--accent); transform-origin: 0 50%; transition: transform .4s linear; }
 .trial.active .hint { color: var(--accent); }
 
+/* アクセントカラー */
+.accents { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.acc { width: 26px; height: 26px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); transition: transform .12s, box-shadow .15s; flex: none; }
+.acc:hover { transform: scale(1.08); }
+.acc[aria-checked="true"] { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--ink); }
+.acc-auto { height: 26px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line2); color: var(--sub); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+.acc-auto i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.acc-auto[aria-checked="true"] { border-color: var(--ink); color: var(--ink); }
+.acc-custom { position: relative; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; flex: none;
+  background: conic-gradient(#ff4f4f, #ffd23f, #3ddc84, #4cc9f0, #4f7cff, #a78bfa, #ff4f8b, #ff4f4f); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+.acc-custom input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+.acc-custom[aria-checked="true"] { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--ink); }
+.accents.locked .acc, .accents.locked .acc-custom { opacity: .35; }
+
 /* レイアウト：セグメント */
 .segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; padding: 3px; background: var(--bg); border: 1px solid var(--line2); border-radius: 10px; }
 .segmented button { height: 30px; border-radius: 7px; color: var(--sub); font-weight: 600; font-size: 13px; transition: background .15s, color .15s; }

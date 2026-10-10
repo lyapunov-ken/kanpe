@@ -25,6 +25,7 @@ const atLeast = (plan) => PLANS[currentPlan()].rank >= PLANS[plan].rank;
 export const REQUIRES = {
   'theme:premium': 'plus',   // Plus 書体（筆・ドット…）
   'credit:hide': 'plus',     // 配信画面の「KANPE」表示を消す
+  'accent:custom': 'plus',   // アクセントカラーの変更
   'engine:cloud': 'pro',     // 高精度クラウド認識
   'ai:ideas': 'pro',         // AI の要点・アイデア抽出
 };

@@ -1,11 +1,11 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, loadSettings, saveSettings } from '../core/settings.js?v=202610102123';
-import { createBus } from '../core/bus.js?v=202610102123';
-import { connectObs } from '../core/obs.js?v=202610102123';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610102123';
-import { Recognizer } from './recognizer.js?v=202610102123';
-import { simulateSpeech } from './demo.js?v=202610102123';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610102123';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings, saveSettings } from '../core/settings.js?v=202610102127';
+import { createBus } from '../core/bus.js?v=202610102127';
+import { connectObs } from '../core/obs.js?v=202610102127';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610102127';
+import { Recognizer } from './recognizer.js?v=202610102127';
+import { simulateSpeech } from './demo.js?v=202610102127';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610102127';
 
 const $ = (s) => document.querySelector(s);
 let S = { ...DEFAULTS, ...loadSettings() };
@@ -193,32 +193,80 @@ const PRO_THEMES = Object.fromEntries(Object.entries(THEMES).filter(([, d]) => d
 function renderThemes() {
   segButtons('#themes', FREE_THEMES, 'theme');
   segButtons('#proThemes', PRO_THEMES, 'theme');
+  renderAccents();
   updateTrial();
 }
+
+// ---- アクセントカラー（Plus。Free は書体と同じ1日5分のお試し） ----
+const accentLocked = () => !canUse('accent:custom') && trialRemainingMs() <= 0;
+function pickAccent(c) {
+  if (c && accentLocked()) { toast('今日のお試し（5分）は終わりました。アクセントカラーは Plus（月¥100）で変えられます'); return; }
+  S.accent = c;
+  renderAccents();
+  updateTrial();
+  pushSettings();
+}
+function renderAccents() {
+  const box = $('#accents');
+  box.replaceChildren();
+  box.classList.toggle('locked', accentLocked());
+  const radio = (el, on, label) => { el.setAttribute('role', 'radio'); el.setAttribute('aria-checked', String(on)); el.setAttribute('aria-label', label); el.title = label; };
+  const auto = document.createElement('button');
+  auto.type = 'button';
+  auto.className = 'acc-auto';
+  auto.style.setProperty('--c', (THEMES[S.theme] || THEMES[DEFAULT_THEME]).accent);
+  auto.innerHTML = '<i></i>標準';
+  radio(auto, !S.accent, '書体テーマ標準の色');
+  auto.addEventListener('click', () => pickAccent(''));
+  box.appendChild(auto);
+  const known = ACCENTS.some((a) => a.c === S.accent);
+  for (const a of ACCENTS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'acc';
+    b.style.setProperty('--c', a.c);
+    radio(b, S.accent === a.c, a.label);
+    b.addEventListener('click', () => pickAccent(a.c));
+    box.appendChild(b);
+  }
+  const custom = document.createElement('label');
+  custom.className = 'acc-custom';
+  radio(custom, !!S.accent && !known, '好きな色を選ぶ');
+  if (S.accent && !known) custom.style.background = S.accent;
+  const input = document.createElement('input');
+  input.type = 'color';
+  input.value = S.accent || '#ffd23f';
+  input.addEventListener('click', (e) => { if (accentLocked()) { e.preventDefault(); toast('今日のお試し（5分）は終わりました。アクセントカラーは Plus（月¥100）で変えられます'); } });
+  input.addEventListener('change', () => pickAccent(input.value));
+  custom.appendChild(input);
+  box.appendChild(custom);
+}
+const usingPlusTrial = () => !canUse('theme:premium') && ((THEMES[S.theme] && THEMES[S.theme].pro) || !!S.accent);
 function updateTrial() {
   const box = $('#trialBox');
   if (canUse('theme:premium')) { box.hidden = true; return; }
   const rem = trialRemainingMs();
-  const active = !!(THEMES[S.theme] && THEMES[S.theme].pro);
+  const active = usingPlusTrial();
   const mm = Math.floor(rem / 60000), ss = String(Math.floor(rem / 1000) % 60).padStart(2, '0');
   $('#trialFill').style.transform = `scaleX(${(rem / PRO.trialMs).toFixed(4)})`;
   box.classList.toggle('active', active);
   $('#trialNote').textContent = rem <= 0 ? '今日のお試しは終わりました。Plus（月¥100）で続けて使えます'
-    : active ? `お試し中　残り ${mm}:${ss}（終わると「夜」に戻ります）`
-    : `無料版は1日5分までお試しできます（残り ${mm}:${ss}）`;
+    : active ? `お試し中　残り ${mm}:${ss}（終わると標準の書体と色に戻ります）`
+    : `Plus 書体とアクセントカラーは、無料版でも1日5分お試しできます（残り ${mm}:${ss}）`;
 }
 let trialLast = performance.now();
 setInterval(() => {
   const t = performance.now();
   const dt = t - trialLast;
   trialLast = t;
-  if (THEMES[S.theme] && THEMES[S.theme].pro && !canUse('theme:premium')) {
+  if (usingPlusTrial()) {
     addTrialUsage(dt);
     if (trialRemainingMs() <= 0) {
-      S.theme = DEFAULT_THEME;
+      if (THEMES[S.theme] && THEMES[S.theme].pro) S.theme = DEFAULT_THEME;
+      S.accent = '';
       pushSettings();
       renderThemes();
-      toast('Plus 書体のお試し（5分）が終わったので「夜」に戻しました');
+      toast('Plus 機能のお試し（5分）が終わったので、標準の書体と色に戻しました');
       return;
     }
   }
@@ -251,6 +299,7 @@ function bindText(id, after) {
 }
 
 if (!THEMES[S.theme] || (THEMES[S.theme].pro && !canUse('theme:premium') && trialRemainingMs() <= 0)) S.theme = DEFAULT_THEME;
+if (S.accent && accentLocked()) S.accent = '';
 renderThemes();
 segButtons('#layouts', LAYOUTS, 'layout');
 bindRange('baseSize', 'vSize', (v) => `${v}`);
