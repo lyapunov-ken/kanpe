@@ -80,7 +80,9 @@ const rec = new Recognizer({
 function setMic(on) {
   $('#btnMic').classList.toggle('on', on);
   $('#btnMic').setAttribute('aria-pressed', String(on));
-  $('#micLabel').textContent = on ? '停止する' : '話しはじめる';
+  $('#btnMic').setAttribute('aria-label', on ? '聞き取りを止める' : '話しはじめる');
+  $('#micLabel').textContent = on ? '聞き取り中' : '話しはじめる';
+  $('#micHint').textContent = on ? 'もう一度押すと止まります' : '押すとマイクで聞き取りを始めます';
 }
 $('#btnMic').addEventListener('click', async () => {
   if (rec.wanted) { rec.stop(); setMic(false); stopMeter(); return; }
@@ -150,22 +152,37 @@ function segButtons(container, entries, key) {
   for (const [id, def] of Object.entries(entries)) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'seg-btn' + (S[key] === id ? ' on' : '');
-    b.innerHTML = `<b>${def.label}</b><small>${def.note}</small>`;
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', String(S[key] === id));
+    b.title = def.note;
     if (key === 'theme') {
-      b.style.setProperty('--sw-bg', def.bg === 'transparent' ? 'repeating-conic-gradient(#555 0 25%, #333 0 50%) 0 0/10px 10px' : def.bg);
-      b.style.setProperty('--sw-ink', def.ink);
-      b.style.setProperty('--sw-accent', def.accent);
-      b.classList.add('swatch');
+      b.className = 'theme';
+      const tile = document.createElement('span');
+      tile.className = 'tile';
+      tile.textContent = '字';
+      tile.style.setProperty('--sw-bg', def.bg === 'transparent' ? 'repeating-conic-gradient(#3a3d44 0 25%, #2a2d33 0 50%) 0 0 / 10px 10px' : def.bg);
+      tile.style.setProperty('--sw-ink', def.ink);
+      tile.style.setProperty('--sw-accent', def.accent);
+      tile.style.fontFamily = `${def.family}, ${def.fallback}`;
+      tile.style.fontWeight = def.strong;
+      const name = document.createElement('span');
+      name.textContent = def.label;
+      b.append(tile, name);
+    } else {
+      b.textContent = def.label;
     }
     b.addEventListener('click', () => { S[key] = id; segButtons(container, entries, key); pushSettings(); });
     box.appendChild(b);
   }
+  if (key === 'layout') $('#layoutNote').textContent = entries[S[key]] ? entries[S[key]].note : '';
 }
 function bindRange(id, label, fmt) {
   const input = $('#' + id);
   input.value = S[id];
-  const show = () => { $('#' + label).textContent = fmt(S[id]); };
+  const show = () => {
+    $('#' + label).textContent = fmt(S[id]);
+    input.style.setProperty('--p', `${((S[id] - input.min) / (input.max - input.min)) * 100}%`);
+  };
   show();
   input.addEventListener('input', () => { S[id] = +input.value; show(); pushSettings(); });
 }

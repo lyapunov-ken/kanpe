@@ -16,76 +16,87 @@
 </header>
 
 <main class="grid">
-  <section class="panel controls">
-    <div class="card">
-      <h2>音声</h2>
-      <div class="row mic">
-        <button id="btnMic" class="mic-btn" aria-pressed="false"><span class="ring"></span><span id="micLabel">話しはじめる</span></button>
-        <div class="mic-side">
-          <label class="field"><span>言語</span>
-            <select id="lang"><option value="ja-JP">日本語</option><option value="en-US">English</option></select>
-          </label>
-          <label class="field"><span>認識エンジン</span>
-            <select id="engine">
-              <option value="browser">ブラウザ標準（無料）</option>
-              <option value="cloud">高精度クラウド（Pro）</option>
-            </select>
-          </label>
+  <section class="panel controls" aria-label="設定">
+    <div class="sec mic-sec">
+      <div class="mic-row">
+        <button id="btnMic" class="mic-btn" type="button" aria-pressed="false" aria-label="話しはじめる">
+          <svg class="ic ic-mic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>
+          <svg class="ic ic-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.5"/></svg>
+        </button>
+        <div class="mic-info">
+          <b id="micLabel">話しはじめる</b>
+          <span id="micHint" class="hint">押すとマイクで聞き取りを始めます</span>
           <div class="meter" title="入力レベル"><i id="meter"></i></div>
         </div>
       </div>
+      <div class="grid2">
+        <label class="field"><span class="lbl">言語</span>
+          <select id="lang"><option value="ja-JP">日本語</option><option value="en-US">English</option></select>
+        </label>
+        <label class="field"><span class="lbl">認識エンジン</span>
+          <select id="engine">
+            <option value="browser">ブラウザ（無料）</option>
+            <option value="cloud">高精度（Pro）</option>
+          </select>
+        </label>
+      </div>
       <div id="proNote" class="pro-note" hidden>
-        <b>高精度クラウド認識は Pro の機能です</b>
-        <p>固有名詞や専門用語に強いクラウドの音声認識で、拾う言葉の精度が上がります。月 ¥100 で 60 分つき（近日公開）。</p>
+        <b>高精度認識は Pro の機能です</b>
+        <p>固有名詞や専門用語に強いクラウド認識で、拾う言葉の精度が上がります。月 ¥100 で 60 分つき（近日公開）。</p>
         <a href="index.html#pricing">料金を見る</a>
       </div>
-      <div class="row">
-        <button id="btnDemo" class="ghost">デモを流す</button>
-        <form id="typeForm" class="type"><input id="typeInput" placeholder="テキストで試す（Enter で流す）" autocomplete="off"></form>
+      <div class="field try">
+        <span class="lbl">マイクなしで試す</span>
+        <div class="try-row">
+          <button id="btnDemo" class="btn" type="button">デモを流す</button>
+          <form id="typeForm" class="type"><input id="typeInput" placeholder="文章を入れて Enter" autocomplete="off" aria-label="テキストで試す"></form>
+        </div>
       </div>
     </div>
 
-    <div class="card">
+    <div class="sec">
       <h2>表示</h2>
-      <div class="field"><span>書体テーマ</span><div id="themes" class="seg"></div></div>
-      <div class="field"><span>レイアウト</span><div id="layouts" class="seg"></div></div>
-      <label class="field range"><span>文字サイズ <b id="vSize"></b></span><input id="baseSize" type="range" min="20" max="90" step="1"></label>
-      <label class="field range"><span>表示時間 <b id="vTtl"></b></span><input id="ttl" type="range" min="3" max="30" step="1"></label>
-      <label class="field range"><span>同時に出す語 <b id="vMax"></b></span><input id="maxWords" type="range" min="6" max="40" step="1"></label>
-      <div class="toggles">
-        <label><input id="vertical" type="checkbox"> 縦組みを混ぜる</label>
-        <label><input id="caption" type="checkbox"> 字幕ライン</label>
-        <label><input id="reduceMotion" type="checkbox"> 動きを控えめに</label>
+      <div class="field"><span class="lbl">書体テーマ</span><div id="themes" class="themes" role="radiogroup" aria-label="書体テーマ"></div></div>
+      <div class="field"><span class="lbl">レイアウト</span><div id="layouts" class="segmented" role="radiogroup" aria-label="レイアウト"></div><p id="layoutNote" class="hint"></p></div>
+      <div class="sliders">
+        <label class="slider"><span class="lbl">文字サイズ</span><output id="vSize"></output><input id="baseSize" type="range" min="20" max="90" step="1"></label>
+        <label class="slider"><span class="lbl">表示時間</span><output id="vTtl"></output><input id="ttl" type="range" min="3" max="30" step="1"></label>
+        <label class="slider"><span class="lbl">同時に出す語</span><output id="vMax"></output><input id="maxWords" type="range" min="6" max="40" step="1"></label>
+      </div>
+      <div class="switches">
+        <label class="switch"><span>縦組みを混ぜる</span><input id="vertical" type="checkbox" role="switch"></label>
+        <label class="switch"><span>字幕ライン</span><input id="caption" type="checkbox" role="switch"></label>
+        <label class="switch"><span>動きを控えめに</span><input id="reduceMotion" type="checkbox" role="switch"></label>
       </div>
     </div>
 
-    <div class="card">
+    <div class="sec">
       <h2>辞書</h2>
-      <label class="field"><span>登録キーワード（強調・優先して拾う）</span><textarea id="registered" rows="2" placeholder="例：商品名、番組名、ゲストの名前（読点・改行区切り）"></textarea></label>
-      <label class="field"><span>NGワード（画面に出さない）</span><textarea id="ng" rows="2" placeholder="例：社外秘のコードネーム"></textarea></label>
+      <label class="field"><span class="lbl">登録キーワード</span><textarea id="registered" rows="2" placeholder="商品名、番組名、ゲストの名前など"></textarea><span class="hint">強調して表示し、優先して拾います。読点か改行で区切ります。</span></label>
+      <label class="field"><span class="lbl">NG ワード</span><textarea id="ng" rows="2" placeholder="社外秘のコードネームなど"></textarea><span class="hint">画面にも字幕にも出しません。</span></label>
     </div>
 
-    <div class="card">
+    <div class="sec">
       <h2>表示ビュー</h2>
-      <div class="row wrap">
-        <button id="openKanpe" class="ghost">カンペを別窓で開く</button>
-        <button id="openStage" class="ghost">組版ビューを開く</button>
+      <div class="grid2">
+        <button id="openKanpe" class="btn" type="button">カンペを別窓で</button>
+        <button id="openStage" class="btn" type="button">組版を別窓で</button>
       </div>
       <details class="obs">
-        <summary>OBS に透過で重ねる（obs-websocket・実験的）</summary>
-        <ol class="fine">
+        <summary><span>OBS に透過で重ねる</span><small>実験的</small></summary>
+        <ol class="steps-mini">
           <li>OBS の「ツール → WebSocketサーバー設定」でサーバーを有効にする</li>
-          <li>下に接続先とパスワードを入れて「接続」</li>
-          <li>「URLをコピー」して OBS のブラウザソースに貼る（幅1920・高さ1080）</li>
+          <li>接続先とパスワードを入れて「接続」</li>
+          <li>「URLをコピー」して OBS のブラウザソースに貼る（1920×1080）</li>
         </ol>
-        <div class="row wrap">
-          <input id="obsUrl" class="mono" placeholder="ws://127.0.0.1:4455">
-          <input id="obsPassword" type="password" placeholder="パスワード">
+        <div class="grid2">
+          <input id="obsUrl" class="mono" placeholder="ws://127.0.0.1:4455" aria-label="接続先">
+          <input id="obsPassword" type="password" placeholder="パスワード" aria-label="パスワード">
         </div>
-        <div class="row wrap">
-          <button id="obsConnect" class="ghost">接続</button>
-          <button id="obsCopy" class="ghost">URLをコピー</button>
-          <span id="obsStatus" class="fine">未接続</span>
+        <div class="obs-actions">
+          <button id="obsConnect" class="btn" type="button">接続</button>
+          <button id="obsCopy" class="btn" type="button">URLをコピー</button>
+          <span id="obsStatus" class="hint">未接続</span>
         </div>
       </details>
     </div>
