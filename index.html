@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KANPE リアルタイムカンペ</title>
+<meta name="description" content="ライブ配信で話した言葉を、その場で美しい日本語タイポグラフィに。ブラウザとマイクだけで無料ではじめられるリアルタイムカンペ。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles/lp.css">
+</head>
+<body>
+<header class="nav" id="top">
+  <a class="logo" href="#top" aria-label="KANPE トップ"><span class="tally" aria-hidden="true"></span>KANPE</a>
+  <nav class="links" aria-label="ページ内">
+    <a href="#features">特徴</a>
+    <a href="#how">使い方</a>
+    <a href="#pricing">料金</a>
+    <a href="#faq">よくある質問</a>
+  </nav>
+  <a class="btn btn-ink small" href="app.html">無料で使う</a>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow mono"><span class="rec" aria-hidden="true"></span>LIVE CUE · リアルタイムカンペ</p>
+      <h1 class="display">
+        <span class="line">話<span class="kana">すと、</span></span>
+        <span class="line">文字<span class="kana">が</span></span>
+        <span class="line">組<span class="kana">まれる。</span></span>
+      </h1>
+      <p class="lede">ライブ配信の声を、その場でタイポグラフィに。ひとりで話していても、画面が相づちを打ってくれる。話すのが、ちょっと楽しくなるカンペです。</p>
+      <div class="cta-row">
+        <a class="btn btn-tally" href="app.html">ブラウザで無料ではじめる</a>
+        <a class="btn btn-line" href="#pricing">料金を見る</a>
+      </div>
+      <p class="fine">登録・インストール不要　Chrome / Edge とマイクだけ</p>
+    </div>
+
+    <figure class="monitor" aria-label="表示エンジンのライブデモ">
+      <div class="bezel">
+        <div class="monitor-bar mono">
+          <span class="onair"><i aria-hidden="true"></i>ON AIR</span>
+          <span id="tc" class="tc">00:00:00;00</span>
+          <span id="monLabel" class="mon-label">組版 · 夜</span>
+        </div>
+        <div class="screen">
+          <iframe id="demo" title="KANPE 表示デモ" src="display.html?demo=1&amp;theme=yoru&amp;layout=compose" loading="eager"></iframe>
+        </div>
+      </div>
+      <div class="switch" role="group" aria-label="デモの見た目を切り替える">
+        <div class="chips" id="themeChips">
+          <button type="button" data-theme-id="sumi">墨</button>
+          <button type="button" data-theme-id="yoru" aria-pressed="true">夜</button>
+          <button type="button" data-theme-id="pop">ポップ</button>
+          <button type="button" data-theme-id="yawaraka">やわらか</button>
+        </div>
+        <div class="chips" id="layoutChips">
+          <button type="button" data-layout-id="compose" aria-pressed="true">組版</button>
+          <button type="button" data-layout-id="kanpe">カンペ</button>
+          <button type="button" data-layout-id="ticker">テロップ</button>
+        </div>
+      </div>
+      <figcaption class="fine">実際の表示エンジンが、デモ原稿を読んでいるところです（音声なし）。</figcaption>
+    </figure>
+  </section>
+
+  <section class="band" aria-label="数字で見る KANPE">
+    <div class="stat"><b class="mono">0<small>円</small></b><span>無料版のランニングコスト</span></div>
+    <div class="stat"><b class="mono">1<small>秒</small></b><span>話してから文字が出るまでの目標</span></div>
+    <div class="stat"><b class="mono">14<small>KB</small></b><span>表示エンジンの大きさ（gzip）</span></div>
+    <div class="stat"><b class="mono">5<small>書体</small></b><span>明朝・ゴシック・極太・丸・透過</span></div>
+  </section>
+
+  <section class="section" id="features">
+    <header class="section-head">
+      <p class="eyebrow mono">FEATURES</p>
+      <h2>言葉が、組版になる。</h2>
+      <p>文字起こしをそのまま流すのではなく、キーワードだけを拾い、日本語の文字組みの作法で画面に置きます。</p>
+    </header>
+
+    <div class="specimens">
+      <article class="spec">
+        <div class="spec-art" aria-hidden="true">
+          <span class="sp-word"><span class="k">話</span><span class="h">す</span></span>
+          <span class="sp-word"><span class="k">美</span><span class="h">しい</span></span>
+        </div>
+        <h3>漢字を立て、かなを引く</h3>
+        <p>漢字は太く大きく、送りがなは約8割に縮めて細く。カタカナは字面が小さく見えるぶん少しだけ大きく。文字種ごとに組み分けます。</p>
+      </article>
+
+      <article class="spec">
+        <div class="spec-art grow" aria-hidden="true">
+          <span style="font-size:.55em">カンペ</span><span style="font-size:.8em">カンペ</span><span>カンペ</span>
+        </div>
+        <h3>繰り返すと、育つ</h3>
+        <p>同じ言葉を話すたびに大きく、濃くなります。いま何が話題の中心なのかが、画面を見るだけで分かります。</p>
+      </article>
+
+      <article class="spec">
+        <div class="spec-art" aria-hidden="true">
+          <span class="sp-new">新アイデア</span>
+        </div>
+        <h3>初めての言葉に、小さなご褒美</h3>
+        <p>その配信で初めて出た目立つ言葉だけ、アクセント色と下線で登場します。多用しないよう、5秒に1語までに絞っています。</p>
+      </article>
+
+      <article class="spec">
+        <div class="spec-art filler" aria-hidden="true">
+          <s>えーっと、</s><span>今日の話題</span>
+        </div>
+        <h3>「えーっと」は出さない</h3>
+        <p>えー、あのー、まあ、などのつなぎ言葉は画面にも文字起こしにも残しません。言い淀んでも、画面はすっきりしたまま。</p>
+      </article>
+
+      <article class="spec">
+        <div class="spec-art fade" aria-hidden="true">
+          <span>余</span><span>韻</span><span>が</span><span>残</span><span>る</span>
+        </div>
+        <h3>間があくと、余韻が残る</h3>
+        <p>よく話すと画面は賑やかに、黙ると言葉はゆっくり薄れながら残ります。話のリズムに画面が呼吸を合わせます。</p>
+      </article>
+
+      <article class="spec">
+        <div class="spec-art vert" aria-hidden="true">
+          <span class="v">縦組</span><span class="v small">字幕</span>
+        </div>
+        <h3>縦組みも、字幕も</h3>
+        <p>明朝テーマでは短い漢字語を縦に組んで、和のポスターのような構成に。最新の発話は文節で折り返す字幕ラインで出せます。</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section alt" id="how">
+    <header class="section-head">
+      <p class="eyebrow mono">HOW IT WORKS</p>
+      <h2>はじめるのに、3分もかからない。</h2>
+    </header>
+    <ol class="steps">
+      <li>
+        <span class="num mono">1</span>
+        <h3>ブラウザで開く</h3>
+        <p>Chrome か Edge で開くだけ。アカウント登録もインストールもいりません。</p>
+      </li>
+      <li>
+        <span class="num mono">2</span>
+        <h3>マイクを許可して話す</h3>
+        <p>「話しはじめる」を押して話すと、キーワードが拾われてその場で組まれます。</p>
+      </li>
+      <li>
+        <span class="num mono">3</span>
+        <h3>カンペにも、配信画面にも</h3>
+        <p>手元のモニターに出せばカンペに。OBS に透過で重ねれば、視聴者にも見えるオーバーレイに。</p>
+      </li>
+    </ol>
+    <ul class="uses">
+      <li><b>ひとり雑談</b>話題が目に見えて、話が続く</li>
+      <li><b>ゲーム実況</b>テロップ帯で画面の邪魔をしない</li>
+      <li><b>ウェビナー・登壇</b>言い忘れを防ぐカンペとして</li>
+      <li><b>社内勉強会</b>終わったら文字起こしを SRT で保存</li>
+    </ul>
+  </section>
+
+  <section class="section" id="pricing">
+    <header class="section-head">
+      <p class="eyebrow mono">PRICING</p>
+      <h2>無料で、ずっと使える。</h2>
+      <p>無料版はブラウザの中だけで動くので、サーバー代がかかりません。認識の精度を上げたいときだけ Pro に。</p>
+    </header>
+
+    <div class="plans">
+      <article class="plan">
+        <header>
+          <h3>Free</h3>
+          <p class="price"><b>¥0</b><span>ずっと無料</span></p>
+        </header>
+        <ul>
+          <li>ブラウザ内蔵の音声認識（Chrome / Edge）</li>
+          <li>書体テーマ5種・レイアウト3種</li>
+          <li>カンペ表示・OBS オーバーレイ</li>
+          <li>登録キーワード・NG ワード</li>
+          <li>文字起こしの TXT / SRT 書き出し</li>
+          <li>日本語・英語</li>
+        </ul>
+        <a class="btn btn-ink block" href="app.html">無料ではじめる</a>
+      </article>
+
+      <article class="plan pro">
+        <header>
+          <h3>Pro <span class="badge mono">近日公開</span></h3>
+          <p class="price"><b>¥100</b><span>/ 月（税込）</span></p>
+        </header>
+        <ul>
+          <li><b>高精度クラウド認識　月60分つき</b></li>
+          <li>追加の高精度認識は 60分ごとに ¥100</li>
+          <li>登録キーワードを認識ヒントに反映して、固有名詞の誤認識を減らす</li>
+          <li>品詞を見たキーワード抽出で、拾う言葉の精度アップ</li>
+          <li>追加の書体テーマ</li>
+          <li>Free のすべての機能</li>
+        </ul>
+        <button class="btn btn-tally block" type="button" disabled>準備中</button>
+      </article>
+    </div>
+    <p class="fine center">高精度認識の時間は、話している区間だけを数えます。無料版の音声認識はブラウザの機能を使うため、Chrome では音声が Google のサーバーで処理されます。</p>
+  </section>
+
+  <section class="section alt" id="faq">
+    <header class="section-head">
+      <p class="eyebrow mono">FAQ</p>
+      <h2>よくある質問</h2>
+    </header>
+    <div class="faq">
+      <details>
+        <summary>本当に無料で使えますか？</summary>
+        <p>はい。無料版はブラウザに内蔵された音声認識とブラウザ内のキーワード抽出だけで動くため、利用料はかかりません。時間制限もありません。</p>
+      </details>
+      <details>
+        <summary>どのブラウザで使えますか？</summary>
+        <p>Chrome と Edge を推奨しています。マイクの使用を許可してください。表示ビューだけなら、OBS のブラウザソースを含めほとんどのブラウザで動きます。</p>
+      </details>
+      <details>
+        <summary>OBS で使うにはどうすればいいですか？</summary>
+        <p>認識は Chrome のコンソール画面で行い、結果を OBS に送ります。OBS の WebSocket サーバー機能（OBS 28 以降に標準搭載）を使えば透過で重ねられます。かんたんに試すなら、表示ビューの窓を OBS のウィンドウキャプチャで取り込む方法もあります。</p>
+      </details>
+      <details>
+        <summary>話した内容はどこかに保存されますか？</summary>
+        <p>文字起こしはお使いのブラウザの中にだけ保存されます。KANPE のサーバーには送りません。ただし無料版の音声認識はブラウザ提供元のサービスを使います。社外秘の内容を扱う場合は、NG ワードの設定や Pro の利用をご検討ください。</p>
+      </details>
+      <details>
+        <summary>Pro はなぜ月100円なのですか？</summary>
+        <p>高精度な認識にはクラウドの音声認識サービスを使うため、話した時間に応じて費用がかかります。誰でも気軽に試せるよう、月60分ぶんを含めた最小のプランを100円にしました。</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="closer">
+    <h2 class="display"><span class="kana">さあ、</span>話<span class="kana">しはじめよう。</span></h2>
+    <a class="btn btn-tally" href="app.html">ブラウザで無料ではじめる</a>
+  </section>
+</main>
+
+<footer class="foot">
+  <span class="logo small"><span class="tally" aria-hidden="true"></span>KANPE</span>
+  <span class="fine">© <span id="year">2026</span> KANPE · 試作版</span>
+</footer>
+<script src="src/lp/lp.js" defer></script>
+</body>
+</html>
