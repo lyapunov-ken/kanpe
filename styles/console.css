@@ -311,3 +311,8 @@ details.obs[open] { padding-bottom: 12px; }
 .plan-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 16px 0 0; font-size: 11.5px; }
 .plan-foot a { color: var(--sub); }
 .plan-close { margin-left: auto; height: 32px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line2); background: var(--raise); font-weight: 700; font-size: 12.5px; }
+
+/* 有料プランの人には、UI 内の価格表示（¥480〜 の札、おトクプランの価格案内）を出さない。
+   プランが分かるまでは隠しておき、無料プランと分かってから出す（支払い済みの人に一瞬でも見せないため） */
+:root:not([data-plan="free"]) .pro-tag,
+:root:not([data-plan="free"]) .price-txt { display: none !important; }

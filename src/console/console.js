@@ -1,13 +1,13 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111338';
-import { EN, L, tr } from '../core/i18n.js?v=202610111338';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111338';
-import { createBus } from '../core/bus.js?v=202610111338';
-import { connectObs } from '../core/obs.js?v=202610111338';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111338';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610111338';
-import { simulateSpeech } from './demo.js?v=202610111338';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610111338';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111509';
+import { EN, L, tr } from '../core/i18n.js?v=202610111509';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111509';
+import { createBus } from '../core/bus.js?v=202610111509';
+import { connectObs } from '../core/obs.js?v=202610111509';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111509';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610111509';
+import { simulateSpeech } from './demo.js?v=202610111509';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610111509';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -586,7 +586,9 @@ engineSel.addEventListener('change', () => {
   if (engineSel.value === 'cloud' && !canUse('engine:cloud')) {
     engineSel.value = 'browser';
     $('#proNote').hidden = false;
-    toast(L(`高精度クラウド認識は${PLANS.pro.label}（${PLANS.pro.price}・月${PRO.includedHours}時間つき）の機能です（近日公開）`, `High-accuracy cloud recognition comes with the ${PLANS.pro.labelEn} plan (${PLANS.pro.yen}/mo, ${PRO.includedHours} hours a month). Coming soon.`));
+    toast(currentPlan() === 'free'
+      ? L(`高精度クラウド認識は${PLANS.pro.label}（${PLANS.pro.price}・月${PRO.includedHours}時間つき）の機能です（近日公開）`, `High-accuracy cloud recognition comes with the ${PLANS.pro.labelEn} plan (${PLANS.pro.yen}/mo, ${PRO.includedHours} hours a month). Coming soon.`)
+      : L(`高精度クラウド認識は${PLANS.pro.label}の機能です（近日公開）`, `High-accuracy cloud recognition comes with the ${PLANS.pro.labelEn} plan. Coming soon.`));
     return;
   }
   $('#proNote').hidden = true;
@@ -606,6 +608,7 @@ function payError(e) {
 // プランが変わったら、鍵のかかった機能や「KANPE」表示を最新の状態にする
 function applyPlanUI() {
   const plan = currentPlan();
+  document.documentElement.dataset.plan = plan; // 有料プランなら UI 内の価格表示を隠す（console.css）
   const badge = $('#planBadge');
   badge.innerHTML = plan === 'free'
     ? `<b>${tr(PLANS.free)}</b><span>${L('アップグレード', 'Upgrade')}</span>`
