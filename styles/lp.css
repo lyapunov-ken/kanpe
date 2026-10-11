@@ -13,7 +13,7 @@
   --grid: rgba(18, 18, 17, .055);
   --tally: #d8392b;
   --tally-ink: #ffffff;
-  --marker: #ffd23f;
+  --marker: #3ddc84;    /* 新出語のアクセント（デモと同じ緑） */
   --monitor: #0d0e11;
   --shadow: 0 1px 2px rgba(18,18,17,.04), 0 30px 60px -36px rgba(18,18,17,.35);
 
@@ -102,6 +102,14 @@ i { font-style: normal; }
 .links { display: flex; gap: 28px; margin-left: auto; font-size: 13.5px; }
 .links a { text-decoration: none; color: var(--ink-2); transition: color .2s; }
 .links a:hover { color: var(--ink); }
+.mode-btn { display: grid; place-items: center; width: 38px; height: 38px; flex: none; border-radius: 50%; border: 1px solid var(--rule-2);
+  background: transparent; color: var(--ink-2); cursor: pointer; transition: color .2s, border-color .2s, background-color .2s; }
+.mode-btn:hover { color: var(--ink); border-color: var(--ink); }
+.mode-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.mode-btn .i-sun { display: none; }
+:root[data-mode="dark"] .mode-btn .i-sun { display: block; }
+:root[data-mode="dark"] .mode-btn .i-moon { display: none; }
+.mode-anim, .mode-anim body, .mode-anim .nav, .mode-anim .section, .mode-anim .plan, .mode-anim .spec { transition: background-color .35s ease, color .35s ease, border-color .35s ease !important; }
 
 /* ---------------------------------------------------------------- ヒーロー */
 .hero { position: relative; max-width: var(--max); margin: 0 auto;
@@ -315,7 +323,7 @@ i { font-style: normal; }
   html { scroll-padding-top: 64px; }
   .nav { height: 56px; gap: 16px; }
   .links { display: none; }
-  .nav .btn { margin-left: auto; }
+  .nav .mode-btn { margin-left: auto; width: 36px; height: 36px; }
 
   .hero { padding-top: 32px; padding-bottom: 48px; gap: 36px; }
   .hero-copy { gap: 22px; }

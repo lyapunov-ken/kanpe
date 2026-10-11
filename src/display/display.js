@@ -1,11 +1,11 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610111152';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610111152';
-import { createBus } from '../core/bus.js?v=202610111152';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610111152';
-import { runs } from '../core/extract.js?v=202610111152';
-import { createVJ } from './vj.js?v=202610111152';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610111202';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610111202';
+import { createBus } from '../core/bus.js?v=202610111202';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610111202';
+import { runs } from '../core/extract.js?v=202610111202';
+import { createVJ } from './vj.js?v=202610111202';
 
 const P = new URLSearchParams(location.search);
 const LOCK = {};
@@ -627,7 +627,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610111152').then(({ runDemo }) => runDemo({ lang: S.lang, deliver, registered: S.registered }));
+  import('../console/demo.js?v=202610111202').then(({ runDemo }) => runDemo({ lang: S.lang, deliver, registered: S.registered }));
 }
 
 // 検証用フック

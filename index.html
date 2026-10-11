@@ -12,7 +12,7 @@
 <meta property="og:url" content="https://kanpe.yoneken.xyz/">
 <meta property="og:title" content="KANPE｜話すと、文字が組まれる。">
 <meta property="og:description" content="ライブ配信の声を、その場で美しい日本語タイポグラフィに。ブラウザとマイクだけ、登録不要・無料ではじめられるリアルタイムカンペ。PC・スマホ対応。">
-<meta property="og:image" content="https://kanpe.yoneken.xyz/assets/og.png">
+<meta property="og:image" content="https://kanpe.yoneken.xyz/assets/og.png?v=2">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -20,7 +20,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="KANPE｜話すと、文字が組まれる。">
 <meta name="twitter:description" content="ライブ配信の声を、その場で美しい日本語タイポグラフィに。ブラウザとマイクだけ、登録不要・無料ではじめられるリアルタイムカンペ。PC・スマホ対応。">
-<meta name="twitter:image" content="https://kanpe.yoneken.xyz/assets/og.png">
+<meta name="twitter:image" content="https://kanpe.yoneken.xyz/assets/og.png?v=2">
 <meta name="twitter:image:alt" content="KANPE｜話すと、文字が組まれる。">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
@@ -30,8 +30,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="styles/lp.css?v=202610111152">
+<link rel="stylesheet" href="styles/lp.css?v=202610111202">
 <script>document.documentElement.classList.add('js');</script>
+<script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(e){}</script>
 </head>
 <body>
 <header class="nav" id="top">
@@ -42,6 +43,7 @@
     <a href="#pricing">料金</a>
     <a href="#faq">よくある質問</a>
   </nav>
+  <button class="mode-btn" type="button" data-mode-toggle aria-label="表示モードを切り替える"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg></button>
   <a class="btn btn-ink small" href="app.html">無料で使う</a>
 </header>
 
@@ -393,6 +395,7 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html" tabindex="-1">ブラウザで無料ではじめる<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="src/lp/lp.js?v=202610111152" defer></script>
+<script src="src/ui/mode.js?v=202610111202" defer></script>
+<script src="src/lp/lp.js?v=202610111202" defer></script>
 </body>
 </html>

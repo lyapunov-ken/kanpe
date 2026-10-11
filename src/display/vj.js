@@ -108,7 +108,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
   const grid = document.createElement('canvas'); // 背景の升目（リサイズ時だけ描き直す）
 
   let W = 0, H = 0, dpr = 1, cell = 10, cols = 0, rows = 0;
-  let cfg = { style: 'led', accent: '#ffd23f', accent2: '#62d0ff', transparent: false, calm: false, caption: true, ttl: 8 };
+  let cfg = { style: 'led', accent: '#3ddc84', accent2: '#62d0ff', transparent: false, calm: false, caption: true, ttl: 8 };
   let words = []; // { text, color, bmp, t0, state, ox, oy, pitch, tox, toy, tpitch, starts, delays, alpha, out0, vx, vy, tag }
   let ripples = [];
   let sparks = [];

@@ -1,12 +1,12 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111152';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111152';
-import { createBus } from '../core/bus.js?v=202610111152';
-import { connectObs } from '../core/obs.js?v=202610111152';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111152';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610111152';
-import { simulateSpeech } from './demo.js?v=202610111152';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610111152';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111202';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111202';
+import { createBus } from '../core/bus.js?v=202610111202';
+import { connectObs } from '../core/obs.js?v=202610111202';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111202';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610111202';
+import { simulateSpeech } from './demo.js?v=202610111202';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610111202';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = `${PLANS.plus.label}（月${PLANS.plus.yen}）`;
@@ -296,7 +296,7 @@ function renderAccents() {
   if (S.accent && !known) custom.style.background = S.accent;
   const input = document.createElement('input');
   input.type = 'color';
-  input.value = S.accent || '#ffd23f';
+  input.value = S.accent || '#3ddc84';
   input.addEventListener('click', (e) => { if (accentLocked()) { e.preventDefault(); toast(`お試し期間（1日）は終わりました。アクセントカラーは${PLUS_LABEL}で変えられます`); } });
   input.addEventListener('change', () => pickAccent(input.value));
   custom.appendChild(input);

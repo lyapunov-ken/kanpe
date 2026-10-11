@@ -13,7 +13,7 @@ export const THEMES = {
     label: '夜', note: 'ゴシック・黒地',
     family: '"Zen Kaku Gothic New"', fallback: GOTHIC, gf: 'Zen+Kaku+Gothic+New:wght@500;900',
     strong: 900, light: 500,
-    bg: '#0d0e12', ink: '#f3f1ea', sub: '#7c808b', accent: '#ffd23f', accent2: '#62d0ff', stroke: 'transparent',
+    bg: '#0d0e12', ink: '#f3f1ea', sub: '#7c808b', accent: '#3ddc84', accent2: '#62d0ff', stroke: 'transparent',
   },
   pop: {
     label: 'ポップ', note: '極太・雑談向け',

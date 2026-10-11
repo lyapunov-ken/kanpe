@@ -1,6 +1,6 @@
 /* 表示ビュー：文字が主役。装飾は最小、大小と余白で見せる。 */
 :root {
-  --bg: #0d0e12; --ink: #f3f1ea; --sub: #7c808b; --accent: #ffd23f; --accent2: #62d0ff; --stroke: transparent;
+  --bg: #0d0e12; --ink: #f3f1ea; --sub: #7c808b; --accent: #3ddc84; --accent2: #62d0ff; --stroke: transparent;
   --font: "Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif;
   --w-strong: 900; --w-light: 500; --base: 40px;
 }
@@ -129,19 +129,19 @@ body {
 .pk-tile { position: relative; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 9px; font-size: 19px; line-height: 1;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
 .pk-name { font-size: 10.5px; color: #9b9da4; white-space: nowrap; }
-.pk-theme[aria-pressed="true"] .pk-tile { box-shadow: 0 0 0 2px rgba(18, 19, 23, 1), 0 0 0 4px #ffd23f; }
+.pk-theme[aria-pressed="true"] .pk-tile { box-shadow: 0 0 0 2px rgba(18, 19, 23, 1), 0 0 0 4px #3ddc84; }
 .pk-theme[aria-pressed="true"] .pk-name { color: #ecebe6; font-weight: 700; }
 .pk-theme.plus .pk-tile::after { content: "+"; position: absolute; right: -4px; top: -4px; width: 14px; height: 14px; border-radius: 50%;
-  background: #ffd23f; color: #151309; font: 900 10px/14px system-ui, sans-serif; text-align: center; }
+  background: #3ddc84; color: #052113; font: 900 10px/14px system-ui, sans-serif; text-align: center; }
 .pk-theme.locked .pk-tile { filter: grayscale(.7) brightness(.6); }
 .pk-theme.locked { cursor: not-allowed; }
 .pk-follow, .pk-fs { height: 40px; padding: 0 10px !important; border-radius: 9px; border: 1px solid rgba(255, 255, 255, .16) !important;
   font-size: 12px; font-weight: 700; color: #c9c9c4 !important; flex: none; }
-.pk-follow[aria-pressed="true"] { border-color: #ffd23f !important; color: #ffd23f !important; }
+.pk-follow[aria-pressed="true"] { border-color: #3ddc84 !important; color: #3ddc84 !important; }
 .pk-fs { margin-left: 4px; }
 .pk-follow:hover, .pk-fs:hover { background: rgba(255, 255, 255, .06) !important; }
-#picker button:focus-visible { outline: 2px solid #ffd23f; outline-offset: 2px; border-radius: 9px; }
-.pk-note { margin: 0; font-size: 11.5px; color: #ffd23f; display: none; }
+#picker button:focus-visible { outline: 2px solid #3ddc84; outline-offset: 2px; border-radius: 9px; }
+.pk-note { margin: 0; font-size: 11.5px; color: #3ddc84; display: none; }
 .pk-note.on { display: block; }
 .pk-accents { align-items: center; }
 .pk-follow.small { height: 26px; font-size: 11.5px; }
