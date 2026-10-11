@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- OGP 画像の原稿。tools/og/render.py で 1200×630 の assets/og.png に書き出す -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=IBM+Plex+Mono:wght@500&display=block">
+<style>
+  :root { --paper: #f5f3ee; --ink: #121211; --ink-2: #55524b; --ink-3: #8a867d; --rule: #dcd8ce; --tally: #d8392b; --marker: #ffd23f; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body { background: var(--paper); color: var(--ink); font-family: "Zen Kaku Gothic New", sans-serif; font-feature-settings: "palt" 1; position: relative; -webkit-font-smoothing: antialiased; }
+  body::before { content: ""; position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(18,18,17,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(18,18,17,.06) 1px, transparent 1px);
+    background-size: 30px 30px; background-position: -1px -1px;
+    -webkit-mask-image: radial-gradient(90% 100% at 20% 30%, #000 25%, transparent 75%); }
+  .wrap { position: absolute; inset: 0; padding: 64px 72px; display: grid; grid-template-columns: 500px 1fr; gap: 44px; align-items: center; }
+
+  .copy { display: flex; flex-direction: column; gap: 30px; }
+  .logo { display: flex; align-items: center; gap: 14px; font-weight: 900; font-size: 30px; letter-spacing: .22em; }
+  .tally { width: 14px; height: 14px; border-radius: 50%; background: var(--tally); box-shadow: 0 0 0 6px rgba(216,57,43,.18); }
+  h1 { font-family: "Shippori Mincho B1", serif; font-weight: 800; font-size: 100px; line-height: 1.12; letter-spacing: .01em; }
+  h1 .row { display: block; white-space: nowrap; }
+  h1 .r2 { padding-left: .6em; }
+  h1 i { font-style: normal; font-size: .7em; font-weight: 700; }
+  .sub { font-size: 26px; font-weight: 700; color: var(--ink-2); letter-spacing: .04em; }
+
+  .monitor { background: #17181b; border-radius: 22px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,.06), 0 40px 70px -36px rgba(18,18,17,.55); }
+  .bar { display: flex; align-items: center; gap: 12px; padding: 2px 6px 12px; font: 500 14px/1 "IBM Plex Mono", monospace; letter-spacing: .12em; color: #8d8f95; }
+  .onair { display: inline-flex; align-items: center; gap: 8px; background: var(--tally); color: #fff; padding: 5px 10px; border-radius: 5px; }
+  .onair::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #fff; }
+  .screen { position: relative; height: 330px; background: #0d0e11; border-radius: 12px; overflow: hidden; color: #f3f1ea; font-family: "Zen Kaku Gothic New", sans-serif; font-weight: 900; }
+  .w { position: absolute; white-space: nowrap; line-height: 1; }
+  .v { line-height: 1.04; text-align: center; white-space: normal; } /* 縦組みは1字ずつ改行して組む（画像用） */
+  .k-small { font-size: .72em; font-weight: 500; }
+  .new { color: var(--marker); }
+  .new::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 4px; background: var(--marker); border-radius: 2px; }
+  .cap { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-size: 15px; font-weight: 500; color: rgba(243,241,234,.82); }
+
+  .url { position: absolute; right: 72px; bottom: 40px; font: 500 18px/1 "IBM Plex Mono", monospace; letter-spacing: .1em; color: var(--ink-3); }
+  .tag { position: absolute; left: 72px; bottom: 40px; display: flex; gap: 10px; }
+  .tag span { font-size: 17px; font-weight: 700; color: var(--ink-2); border: 1.5px solid var(--rule); background: rgba(255,255,255,.55); border-radius: 999px; padding: 6px 16px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="copy">
+      <div class="logo"><span class="tally"></span>KANPE</div>
+      <h1>
+        <span class="row">話<i>すと、</i></span>
+        <span class="row r2">文字<i>が</i></span>
+        <span class="row">組<i>まれる。</i></span>
+      </h1>
+    </div>
+    <div class="monitor">
+      <div class="bar"><span class="onair">ON AIR</span><span style="color:#e9e8e2">00:12:48;06</span><span style="margin-left:auto">組版 · 夜</span></div>
+      <div class="screen">
+        <span class="w v" style="left:24px; top:30px; font-size:46px;">配<br>信</span>
+        <span class="w" style="left:96px; top:36px; font-size:42px;">タイポグラフィ</span>
+        <span class="w v" style="left:432px; top:28px; font-size:26px; color:#a9acb6;">相<br>づ<br>ち</span>
+        <span class="w new" style="left:96px; top:108px; font-size:60px;">リアルタイム</span>
+        <span class="w" style="left:30px; top:214px; font-size:30px; color:#a9acb6;">雑談</span>
+        <span class="w" style="left:110px; top:204px; font-size:46px;">話題</span>
+        <span class="w" style="left:234px; top:214px; font-size:32px;">言葉<span class="k-small">が</span>弾<span class="k-small">む</span></span>
+        <span class="cap">ひとりで話していても、画面が相づちを打ってくれる</span>
+      </div>
+    </div>
+  </div>
+  <div class="tag"><span>無料</span><span>登録不要</span><span>PC・スマホ対応</span></div>
+  <div class="url">kanpe.yoneken.xyz</div>
+</body>
+</html>

@@ -1,11 +1,11 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings, saveSettings } from '../core/settings.js?v=202610110911';
-import { createBus } from '../core/bus.js?v=202610110911';
-import { connectObs } from '../core/obs.js?v=202610110911';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610110911';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610110911';
-import { simulateSpeech } from './demo.js?v=202610110911';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610110911';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings, saveSettings } from '../core/settings.js?v=202610110918';
+import { createBus } from '../core/bus.js?v=202610110918';
+import { connectObs } from '../core/obs.js?v=202610110918';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610110918';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610110918';
+import { simulateSpeech } from './demo.js?v=202610110918';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610110918';
 
 const $ = (s) => document.querySelector(s);
 let S = { ...DEFAULTS, ...loadSettings() };
