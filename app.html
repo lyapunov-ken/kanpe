@@ -6,6 +6,8 @@
 <title>KANPE コンソール</title>
 <meta name="description" content="KANPE の操作画面。マイクで話すと、キーワードがその場で日本語タイポグラフィになります。">
 <link rel="canonical" href="https://kanpe.yoneken.xyz/app">
+<link rel="alternate" hreflang="ja" href="https://kanpe.yoneken.xyz/app">
+<link rel="alternate" hreflang="en" href="https://kanpe.yoneken.xyz/en/app">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="KANPE">
 <meta property="og:locale" content="ja_JP">
@@ -26,15 +28,16 @@
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97&display=swap">
-<script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(e){}</script>
-<meta name="theme-color" content="#0f1012">
-<link rel="stylesheet" href="styles/console.css?v=202610111202">
+<script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
+<meta name="theme-color" content="#f3f3f0">
+<link rel="stylesheet" href="styles/console.css?v=202610111226">
 </head>
 <body>
 <header class="top">
   <a class="brand" href="index.html" title="KANPE のトップへ"><span class="mark">K</span>KANPE<small>リアルタイムカンペ</small></a>
   <div class="top-right">
     <div class="status"><span id="dot" class="dot"></span><span id="statusText">待機中</span></div>
+    <a class="lang-link" href="en/app.html" hreflang="en" lang="en" data-lang-switch title="English version">EN</a>
     <button class="mode-btn" type="button" data-mode-toggle aria-label="表示モードを切り替える"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg></button>
     <a id="planBadge" class="plan-badge" href="index.html#pricing"><b>無料プラン</b><span>アップグレード</span></a>
   </div>
@@ -198,7 +201,8 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="src/ui/mode.js?v=202610111202" defer></script>
-<script type="module" src="src/console/console.js?v=202610111202"></script>
+<script src="src/ui/lang.js?v=202610111226" defer></script>
+<script src="src/ui/mode.js?v=202610111226" defer></script>
+<script type="module" src="src/console/console.js?v=202610111226"></script>
 </body>
 </html>

@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KANPE — Real-time cue cards for live streams</title>
+<meta name="description" content="Turn what you say on stream into beautiful live typography. A free real-time cue card that runs in your browser with just a mic.">
+<link rel="canonical" href="https://kanpe.yoneken.xyz/en/">
+<link rel="alternate" hreflang="ja" href="https://kanpe.yoneken.xyz/">
+<link rel="alternate" hreflang="en" href="https://kanpe.yoneken.xyz/en/">
+<link rel="alternate" hreflang="x-default" href="https://kanpe.yoneken.xyz/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KANPE">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://kanpe.yoneken.xyz/en/">
+<meta property="og:title" content="KANPE | Speak, and your words take shape.">
+<meta property="og:description" content="Turn your live-stream voice into typography, in real time. Free, no sign-up, runs in the browser on desktop and phone.">
+<meta property="og:image" content="https://kanpe.yoneken.xyz/assets/og-en.png?v=1">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KANPE | Speak, and your words take shape. A real-time cue card that turns your stream’s voice into typography.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="KANPE | Speak, and your words take shape.">
+<meta name="twitter:description" content="Turn your live-stream voice into typography, in real time. Free, no sign-up, runs in the browser on desktop and phone.">
+<meta name="twitter:image" content="https://kanpe.yoneken.xyz/assets/og-en.png?v=1">
+<meta name="twitter:image:alt" content="KANPE | Speak, and your words take shape.">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<meta name="theme-color" content="#f5f3ee">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700&family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../styles/lp.css?v=202610111226">
+<script>document.documentElement.classList.add('js');</script>
+<script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
+</head>
+<body id="top">
+<header class="nav">
+  <a class="logo" href="#top" aria-label="KANPE home"><span class="tally" aria-hidden="true"></span>KANPE</a>
+  <nav class="links" aria-label="On this page">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+  </nav>
+  <a class="lang-link jp" href="../" hreflang="ja" lang="ja" data-lang-switch title="日本語版">日本語</a>
+  <button class="mode-btn" type="button" data-mode-toggle aria-label="Switch color mode"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg></button>
+  <a class="btn btn-ink small" href="app.html">Try free</a>
+</header>
+
+<main>
+  <!-- ============ Hero ============ -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <p class="label mono"><span class="rec" aria-hidden="true"></span>LIVE CUE SYSTEM</p>
+      <h1 class="hero-title" id="hero-title">
+        <span class="row">Speak,</span>
+        <span class="row r2">and words</span>
+        <span class="row">take shape.</span>
+      </h1>
+      <p class="lede">Your live-stream voice, set as typography in real time. Even when you’re talking on your own, the screen nods along — a cue card that makes talking a little more fun.</p>
+      <div class="cta-row" id="heroCta">
+        <a class="btn btn-ink btn-lg" href="app.html">Start free in your browser<span class="arrow" aria-hidden="true">→</span></a>
+        <a class="text-link" href="#pricing">See pricing</a>
+      </div>
+      <ul class="facts" aria-label="Before you start">
+        <li>No sign-up</li>
+        <li>No install</li>
+        <li>Desktop &amp; phone</li>
+      </ul>
+    </div>
+
+    <figure class="monitor" aria-label="Live demo of the display engine">
+      <div class="bezel">
+        <div class="monitor-bar mono">
+          <span class="onair"><i aria-hidden="true"></i>ON AIR</span>
+          <span id="tc" class="tc">00:00:00;00</span>
+          <span id="monLabel" class="mon-label">Compose · Night</span>
+        </div>
+        <div class="screen">
+          <iframe id="demo" title="KANPE display demo" src="../display.html?demo=1&amp;ui=0&amp;theme=yoru&amp;layout=compose&amp;hl=en" loading="eager"></iframe>
+        </div>
+      </div>
+      <div class="switch" role="group" aria-label="Change the demo’s look">
+        <div class="seg-wrap">
+          <span class="seg-lbl mono">TYPE</span>
+          <div class="seg" id="themeChips">
+            <button type="button" data-theme-id="sumi">Sumi</button>
+            <button type="button" data-theme-id="yoru" aria-pressed="true">Night</button>
+            <button type="button" data-theme-id="pop">Pop</button>
+            <button type="button" data-theme-id="yawaraka">Soft</button>
+          </div>
+        </div>
+        <div class="seg-wrap">
+          <span class="seg-lbl mono">LAYOUT</span>
+          <div class="seg" id="layoutChips">
+            <button type="button" data-layout-id="compose" aria-pressed="true">Compose</button>
+            <button type="button" data-layout-id="kanpe">Cue</button>
+            <button type="button" data-layout-id="ticker">Ticker</button>
+          </div>
+        </div>
+      </div>
+      <figcaption class="fig mono">FIG.1 — The real display engine running a demo script (no audio)</figcaption>
+    </figure>
+    <p class="hero-side" aria-hidden="true">声を、その場で組む。</p>
+  </section>
+
+  <!-- ============ Word stream ============ -->
+  <div class="stream" aria-hidden="true">
+    <div class="stream-track">
+      <span class="m">New idea</span><span>Gameplay</span><span class="s">um, so</span><span class="m">Afterglow</span><span class="b">Real-time</span><span>Chat</span><span class="m">縦組み</span><span class="s">uh</span><span class="b">Webinar</span><span class="m">Nods</span><span>Ticker</span><span class="m">Typesetting</span>
+      <span class="m">New idea</span><span>Gameplay</span><span class="s">um, so</span><span class="m">Afterglow</span><span class="b">Real-time</span><span>Chat</span><span class="m">縦組み</span><span class="s">uh</span><span class="b">Webinar</span><span class="m">Nods</span><span>Ticker</span><span class="m">Typesetting</span>
+    </div>
+  </div>
+
+  <!-- ============ Numbers ============ -->
+  <section class="stats" aria-label="KANPE in numbers">
+    <div class="stat reveal"><b>¥0</b><span>Running cost of the free version</span></div>
+    <div class="stat reveal"><b>1<small>sec</small></b><span>From your voice to words on screen</span></div>
+    <div class="stat reveal"><b>7<small>faces</small></b><span>5 standard + 2 premium typefaces</span></div>
+    <div class="stat reveal"><b>3<small>min</small></b><span>From opening the page to talking</span></div>
+  </section>
+
+  <!-- ============ Features ============ -->
+  <section class="section" id="features" aria-labelledby="features-title">
+    <header class="section-head reveal">
+      <p class="label mono"><span class="no">01</span>FEATURES</p>
+      <div>
+        <h2 id="features-title">Your words, typeset.</h2>
+        <p>Instead of streaming a raw transcript, KANPE picks out the keywords and sets them on screen with real typographic care. Designed around Japanese script — and it works in English, too.</p>
+      </div>
+    </header>
+
+    <div class="specimens" id="specimens">
+      <article class="spec reveal">
+        <span class="spec-no mono">01</span>
+        <div class="spec-art" aria-hidden="true">
+          <span class="sp-word"><span class="k">話</span><span class="h">す</span></span>
+          <span class="sp-word"><span class="k">美</span><span class="h">しい</span></span>
+        </div>
+        <h3>Kanji stand tall, kana step back</h3>
+        <p>Kanji are set bold and large; kana endings shrink to about 80% and get lighter. Katakana go a touch larger because they read small. Every script gets its own treatment.</p>
+      </article>
+
+      <article class="spec reveal">
+        <span class="spec-no mono">02</span>
+        <div class="spec-art grow" aria-hidden="true">
+          <span>idea</span><span>idea</span><span>idea</span>
+        </div>
+        <h3>Say it again, and it grows</h3>
+        <p>Each time you repeat a word it gets bigger and bolder, so the topic of the moment is obvious at a glance.</p>
+      </article>
+
+      <article class="spec reveal">
+        <span class="spec-no mono">03</span>
+        <div class="spec-art" aria-hidden="true">
+          <span class="sp-new">New idea</span>
+        </div>
+        <h3>A small reward for new words</h3>
+        <p>The first time a standout word comes up in a stream, it arrives in the accent color with an underline — at most one every five seconds, so it stays special.</p>
+      </article>
+
+      <article class="spec reveal">
+        <span class="spec-no mono">04</span>
+        <div class="spec-art filler" aria-hidden="true">
+          <s>um, so,</s><span>Today’s topic</span>
+        </div>
+        <h3>No “um”s on screen</h3>
+        <p>Fillers like “um”, “uh” and “you know” are kept off the screen and out of the transcript. Stumble all you like — the screen stays clean.</p>
+      </article>
+
+      <article class="spec reveal">
+        <span class="spec-no mono">05</span>
+        <div class="spec-art fade" aria-hidden="true">
+          <span>e</span><span>c</span><span>h</span><span>o</span><span>…</span>
+        </div>
+        <h3>Pauses leave an afterglow</h3>
+        <p>Talk a lot and the screen gets busy; go quiet and words linger, slowly fading. The screen breathes with the rhythm of your talk.</p>
+      </article>
+
+      <article class="spec reveal">
+        <span class="spec-no mono">06</span>
+        <div class="spec-art vert" aria-hidden="true">
+          <span class="v">縦組</span><span class="v small">字幕</span>
+        </div>
+        <h3>Vertical type and captions</h3>
+        <p>Mincho themes set short kanji words vertically for a Japanese-poster feel. Your latest sentence can run as a caption line that wraps at natural phrase breaks.</p>
+      </article>
+    </div>
+    <p class="swipe-hint mono" aria-hidden="true"><span id="specCount">01 / 06</span><span>Swipe for more →</span></p>
+  </section>
+
+  <!-- ============ Paid effects ============ -->
+  <section class="section dark" id="plus" aria-labelledby="plus-title">
+    <div class="inner">
+      <header class="section-head reveal">
+        <p class="label mono"><span class="no">02</span>PLUS</p>
+        <div>
+          <h2 id="plus-title">Put on a show.</h2>
+          <p>Two effects that come with Plus and up. Free users can try them for a day.</p>
+        </div>
+      </header>
+      <div class="showcase">
+        <article class="show reveal">
+          <div class="show-screen"><iframe data-src="../display.html?demo=1&amp;ui=0&amp;layout=vj&amp;vj=neon&amp;hl=en" title="VJ mode demo" tabindex="-1"></iframe></div>
+          <div class="show-copy">
+            <p class="label mono">VJ MODE</p>
+            <h3>Words that glow in dots.</h3>
+            <p>VJ mode draws what you say as dot art. Your latest word lights up big in the center while earlier ones shrink and drift around it. New words send ripples across the screen, and the equalizers move with your voice.</p>
+            <ul class="chips-row" aria-label="Styles"><li>LED</li><li>Neon</li><li>Pixel</li></ul>
+          </div>
+        </article>
+        <article class="show reveal">
+          <div class="show-screen"><iframe data-src="../display.html?demo=1&amp;ui=0&amp;layout=compose&amp;theme=yoru&amp;sp=1&amp;hl=en" title="Speaker colors demo" tabindex="-1"></iframe></div>
+          <div class="show-copy">
+            <p class="label mono">SPEAKERS</p>
+            <h3>See who said what.</h3>
+            <p>For collabs and interviews, give each speaker a name label and a color. Switch with the buttons or keys 1–4 — or, on desktop, let KANPE switch automatically by voice pitch. Names carry over into the transcript.</p>
+            <ul class="chips-row" aria-label="What you get"><li>Up to 4 people</li><li>Names &amp; colors</li><li>Names in TXT &amp; SRT</li></ul>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ How it works ============ -->
+  <section class="section tint" id="how" aria-labelledby="how-title">
+    <div class="inner">
+      <header class="section-head reveal">
+        <p class="label mono"><span class="no">03</span>HOW IT WORKS</p>
+        <div>
+          <h2 id="how-title">Up and running in under three minutes.</h2>
+          <p>No account, no install. Open it in your browser and start talking.</p>
+        </div>
+      </header>
+      <ol class="steps">
+        <li class="reveal">
+          <span class="num" aria-hidden="true">01</span>
+          <div>
+            <h3>Open it in your browser</h3>
+            <p>Chrome or Edge on desktop; Safari on iPhone or Chrome on Android. That’s it.</p>
+          </div>
+        </li>
+        <li class="reveal">
+          <span class="num" aria-hidden="true">02</span>
+          <div>
+            <h3>Allow the mic and talk</h3>
+            <p>Press “Start talking” and keywords are picked up and set on screen as you speak.</p>
+          </div>
+        </li>
+        <li class="reveal">
+          <span class="num" aria-hidden="true">03</span>
+          <div>
+            <h3>A cue card, or part of the show</h3>
+            <p>Put it on your own monitor as a cue card, or overlay it in OBS with a transparent background so viewers see it too.</p>
+          </div>
+        </li>
+      </ol>
+      <ul class="uses" aria-label="Great for">
+        <li class="reveal"><b>Solo chat streams</b><span>Topics you can see keep the talk going</span></li>
+        <li class="reveal"><b>Game streams</b><span>A ticker band that stays out of the way</span></li>
+        <li class="reveal"><b>Webinars &amp; talks</b><span>A cue card so nothing gets forgotten</span></li>
+        <li class="reveal"><b>Study sessions</b><span>Save the transcript as SRT afterwards</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ Pricing ============ -->
+  <section class="section" id="pricing" aria-labelledby="pricing-title">
+    <header class="section-head reveal">
+      <p class="label mono"><span class="no">04</span>PRICING</p>
+      <div>
+        <h2 id="pricing-title">Free, for as long as you like.</h2>
+        <p>Just three plans, designed around streaming two hours, three times a week. Start free; pick Plus for looks and effects, or Pro for accuracy and automation. Prices are in Japanese yen and include tax.</p>
+      </div>
+    </header>
+
+    <div class="plan-tabs" role="tablist" aria-label="Choose a plan" id="planTabs">
+      <button type="button" role="tab" aria-selected="true" data-plan="0"><span>Free</span><b>¥0</b></button>
+      <button type="button" role="tab" aria-selected="false" data-plan="1"><span>Plus</span><b>¥480</b></button>
+      <button type="button" role="tab" aria-selected="false" data-plan="2"><span>Pro</span><b>¥2,980</b></button>
+    </div>
+    <div class="plans" id="plans" data-show="0">
+      <article class="plan reveal">
+        <header>
+          <h3>Free</h3>
+          <p class="plan-for">For trying it out. No time limits.</p>
+          <p class="price"><b>¥0</b><span>free forever</span></p>
+        </header>
+        <ul>
+          <li><b>Unlimited browser speech recognition</b> (Chrome, Edge and Safari on desktop and phone)</li>
+          <li>5 standard typefaces, 3 layouts</li>
+          <li>Cue view and OBS overlay</li>
+          <li>Keywords and blocked words</li>
+          <li>Transcript export as TXT / SRT</li>
+          <li>A one-day (24-hour) trial of the paid looks and effects — premium typefaces, background images, VJ mode, speaker colors and more</li>
+        </ul>
+        <p class="plan-note">A small “KANPE” mark appears in the corner of the display</p>
+        <a class="btn btn-ink block" href="app.html">Start free</a>
+      </article>
+
+      <article class="plan reveal">
+        <header>
+          <h3>Plus <span class="badge mono">SOON</span></h3>
+          <p class="plan-for">Make the look and effects your own — affordable because they cost us nothing to run</p>
+          <p class="price"><b>¥480</b><span>/ month</span></p>
+        </header>
+        <ul>
+          <li><b>VJ mode</b>: words drawn in dot art (LED, Neon, Pixel)</li>
+          <li><b>Speaker labels and colors</b>: up to 4 people, switch with buttons or keys, or automatically by voice on desktop</li>
+          <li>All premium typefaces (“Brush”, “Dot” and new ones every month)</li>
+          <li>Any accent color and your own background image</li>
+          <li>Remove the “KANPE” mark from the display</li>
+          <li>Unlimited browser speech recognition</li>
+        </ul>
+        <p class="plan-note">Or ¥4,800 / year (two months free)</p>
+        <button class="btn btn-line block" type="button" disabled>Coming soon</button>
+      </article>
+
+      <article class="plan pro reveal">
+        <p class="ribbon mono">RECOMMENDED</p>
+        <header>
+          <h3>Pro <span class="badge mono">SOON</span></h3>
+          <p class="plan-for">Everything, for people who stream every week</p>
+          <p class="price"><b>¥2,980</b><span>/ month</span></p>
+        </header>
+        <ul>
+          <li><b>High-accuracy cloud recognition, 20 hours a month</b><br>Enough for three 2-hour streams a week</li>
+          <li>About ¥149 per hour; extra hours ¥200 each</li>
+          <li><b>Automatic speaker separation and coloring</b> (cloud diarization)</li>
+          <li>Your keywords feed into recognition, so names and jargon come out right</li>
+          <li>AI picks out key points and ideas as you talk</li>
+          <li>A summary after each stream (key points and topic flow)</li>
+          <li>Everything in Plus</li>
+        </ul>
+        <p class="plan-note">Or ¥29,800 / year (two months free)</p>
+        <button class="btn btn-invert block" type="button" disabled>Coming soon</button>
+      </article>
+    </div>
+    <p class="fine center">High-accuracy hours count only the time you’re actually talking (a 2-hour stream is roughly 1.2–1.4 hours). Free and Plus use your browser’s built-in speech recognition, so audio is processed by Google in Chrome and by Apple in Safari. Get in touch about team plans.</p>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="section tint" id="faq" aria-labelledby="faq-title">
+    <div class="inner faq-grid">
+      <header class="section-head reveal">
+        <p class="label mono"><span class="no">05</span>FAQ</p>
+        <div>
+          <h2 id="faq-title">Questions</h2>
+        </div>
+      </header>
+      <div class="faq">
+        <details>
+          <summary>Is it really free?</summary>
+          <p>Yes. The free version runs entirely on your browser’s built-in speech recognition and keyword extraction in the page, so there’s nothing to pay and no time limit.</p>
+        </details>
+        <details>
+          <summary>Which browsers work? Does it work on my phone?</summary>
+          <p>Voice input works in Chrome and Edge on desktop, Chrome on Android and Safari on iPhone. Allow microphone access when asked. On iPhone, Siri (or Dictation) needs to be turned on in Settings. In-app browsers such as those in LINE or X aren’t supported — reopen the page in Safari or Chrome. The display views alone work in almost any browser, including OBS Browser Sources.</p>
+        </details>
+        <details>
+          <summary>How do I use it with OBS?</summary>
+          <p>Recognition runs in the console in Chrome and the results are sent to OBS. With OBS’s built-in WebSocket server (OBS 28 and later) you can overlay it with a transparent background. For a quick start, you can also capture the display window with OBS’s Window Capture.</p>
+        </details>
+        <details>
+          <summary>Is what I say stored anywhere?</summary>
+          <p>Transcripts are saved only in your own browser and are never sent to KANPE’s servers. The free version does use your browser vendor’s speech service, though. For confidential topics, use the blocked-words setting.</p>
+        </details>
+        <details>
+          <summary>What’s the difference between Plus and Pro?</summary>
+          <p>Plus (¥480/mo) bundles the looks and effects — VJ mode, speaker colors, premium typefaces, background images — and keeps unlimited browser speech recognition. Pro (¥2,980/mo) adds 20 hours a month of high-accuracy cloud recognition, enough for three 2-hour streams a week, plus automatic speaker separation, AI key points and post-stream summaries.</p>
+        </details>
+        <details>
+          <summary>Can it recognize English speech?</summary>
+          <p>Yes. Choose English as the speech language in the console (it’s the default when you open the English version). Keyword extraction and filler removal work in English as well as Japanese.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Closer ============ -->
+  <section class="closer" id="closer" aria-labelledby="closer-title">
+    <p class="label mono"><span class="rec" aria-hidden="true"></span>STAND BY</p>
+    <h2 id="closer-title">Ready? Start talking.</h2>
+    <a class="btn btn-paper btn-lg" href="app.html">Start free in your browser<span class="arrow" aria-hidden="true">→</span></a>
+    <p class="fine">No sign-up, no install — on desktop or phone</p>
+  </section>
+</main>
+
+<footer class="foot">
+  <span class="logo small"><span class="tally" aria-hidden="true"></span>KANPE</span>
+  <nav class="foot-links" aria-label="Footer">
+    <a href="app.html">Console</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+    <a href="../" hreflang="ja" lang="ja" data-lang-switch>日本語</a>
+  </nav>
+  <span class="fine">© <span id="year">2026</span> KANPE · Beta</span>
+</footer>
+
+<div class="dock" id="dock" aria-hidden="true">
+  <a class="btn btn-ink block" href="app.html" tabindex="-1">Start free in your browser<span class="arrow" aria-hidden="true">→</span></a>
+</div>
+<script src="../src/ui/lang.js?v=202610111226" defer></script>
+<script src="../src/ui/mode.js?v=202610111226" defer></script>
+<script src="../src/lp/lp.js?v=202610111226" defer></script>
+</body>
+</html>

@@ -7,23 +7,12 @@
   --knob: #d9d9d4; --thumb: #ffffff; --shade: rgba(0,0,0,.4); --check1: #1b1c20; --check2: #16171a;
   --pro-bd: #1d5236; --pro-bg: #102218;
   --r: 12px;
+  color-scheme: dark;
   font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", "Noto Sans CJK JP", system-ui, sans-serif;
   font-feature-settings: "palt" 1;
-  color-scheme: dark;
 }
-/* ライトモード：OS の設定に合わせる。右上のボタンで切り替えると、その選択を優先する */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --bg: #f3f3f0; --panel: #ffffff; --raise: #f4f4f1; --raise2: #e9e9e5; --line: #e6e6e1; --line2: #d4d4ce;
-    --ink: #17181a; --sub: #5b5e66; --faint: #8a8d94;
-    --accent-text: #138a48; --rec: #e3392c; --on: #16a34a; --err: #d63a2c; --demo: #1d8ad1;
-    --hover-line: #b8b8b1; --hover-line2: #a9a9a2; --hover-bg: rgba(0,0,0,.025); --edge: rgba(0,0,0,.1); --edge2: rgba(0,0,0,.22);
-    --knob: #ffffff; --thumb: #ffffff; --shade: rgba(0,0,0,.18); --check1: #ecece8; --check2: #f6f6f3;
-    --pro-bd: #b9e6cb; --pro-bg: #effaf3;
-    color-scheme: light;
-  }
-}
-:root[data-theme="light"] {
+/* 最初はライトモード。右上のボタンでダークにすると、その選択をブラウザに保存する */
+:root:not([data-theme="dark"]) {
   --bg: #f3f3f0; --panel: #ffffff; --raise: #f4f4f1; --raise2: #e9e9e5; --line: #e6e6e1; --line2: #d4d4ce;
   --ink: #17181a; --sub: #5b5e66; --faint: #8a8d94;
   --accent-text: #138a48; --rec: #e3392c; --on: #16a34a; --err: #d63a2c; --demo: #1d8ad1;
@@ -32,6 +21,7 @@
   --pro-bd: #b9e6cb; --pro-bg: #effaf3;
   color-scheme: light;
 }
+
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; }
@@ -260,6 +250,24 @@ details.obs[open] { padding-bottom: 12px; }
 .tx-sp { display: inline-block; margin-right: 8px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 800; line-height: 18px;
   color: #111; background: var(--c); vertical-align: 1px; }
 
+/* ---- 言語の切り替え（確認の窓） ---- */
+.lang-link { display: inline-grid; place-items: center; height: 32px; min-width: 32px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line2);
+  font-size: 11.5px; font-weight: 700; letter-spacing: .06em; color: var(--sub); text-decoration: none; transition: color .15s, border-color .15s, background .15s; }
+.lang-link:hover { color: var(--ink); border-color: var(--hover-line); background: var(--raise); }
+.lang-dialog { border: 0; padding: 0; border-radius: 16px; width: min(420px, calc(100vw - 32px)); background: var(--panel); color: var(--ink);
+  box-shadow: 0 24px 64px -16px rgba(0,0,0,.5), 0 0 0 1px var(--line2); }
+.lang-dialog::backdrop { background: rgba(0, 0, 0, .45); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.lang-box { display: flex; flex-direction: column; gap: 6px; padding: 24px 22px 20px; margin: 0; }
+.lang-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; margin: 0 0 8px; background: var(--accent); color: var(--accent-ink); font-size: 18px; font-weight: 900; }
+.lang-box h2 { font-size: 17px; letter-spacing: .02em; color: var(--ink); line-height: 1.4; }
+.lang-sub { margin: 0; font-size: 12px; color: var(--faint); }
+.lang-body { margin: 6px 0 0; font-size: 13px; line-height: 1.75; color: var(--sub); }
+.lang-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.lang-actions button { height: 38px; padding: 0 16px; border-radius: 8px; font-weight: 700; font-size: 13px; }
+.lang-cancel { border: 1px solid var(--line2); background: var(--raise); color: var(--ink); }
+.lang-ok { background: var(--accent); color: var(--accent-ink); }
+.lang-actions button:disabled { opacity: .55; cursor: progress; }
+
 @media (max-width: 900px) {
   /* スマホ・タブレット縦：マイク → プレビュー → 設定 → 文字起こし の順に1列で並べる */
   .grid { display: flex; flex-direction: column; gap: 12px; height: auto; }
@@ -283,3 +291,4 @@ details.obs[open] { padding-bottom: 12px; }
   .mic-btn.on::after, .dot.on { animation: none; }
   * { transition-duration: 0s !important; }
 }
+:lang(en) .bg-thumb:not(.has)::before { content: "None"; }

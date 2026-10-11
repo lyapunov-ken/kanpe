@@ -1,9 +1,9 @@
 // フリーミアムの設定。決済・ライセンス確認はサーバー側（今後）で行い、ここはその結果を受け取る窓口。
 // プランは3つ：無料プラン → お手軽プラン（見た目）→ おトクプラン（見た目＋精度と賢さ）。
 export const PLANS = {
-  free: { label: '無料プラン',   short: '無料',   price: '¥0',      yen: '¥0', rank: 0 },
-  plus: { label: 'お手軽プラン', short: 'お手軽', price: '¥480/月', yen: '¥480', rank: 1 },
-  pro:  { label: 'おトクプラン', short: 'おトク', price: '¥2,980/月', yen: '¥2,980', rank: 2 },
+  free: { label: '無料プラン', labelEn: 'Free', short: '無料',   price: '¥0',      yen: '¥0', rank: 0 },
+  plus: { label: 'お手軽プラン', labelEn: 'Plus', short: 'お手軽', price: '¥480/月', yen: '¥480', rank: 1 },
+  pro:  { label: 'おトクプラン', labelEn: 'Pro', short: 'おトク', price: '¥2,980/月', yen: '¥2,980', rank: 2 },
 };
 
 export const PRO = {

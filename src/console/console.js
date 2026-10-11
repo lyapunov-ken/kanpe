@@ -1,16 +1,21 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111202';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111202';
-import { createBus } from '../core/bus.js?v=202610111202';
-import { connectObs } from '../core/obs.js?v=202610111202';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111202';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610111202';
-import { simulateSpeech } from './demo.js?v=202610111202';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610111202';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111226';
+import { EN, L, tr } from '../core/i18n.js?v=202610111226';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111226';
+import { createBus } from '../core/bus.js?v=202610111226';
+import { connectObs } from '../core/obs.js?v=202610111226';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111226';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610111226';
+import { simulateSpeech } from './demo.js?v=202610111226';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610111226';
 
 const $ = (s) => document.querySelector(s);
-const PLUS_LABEL = `${PLANS.plus.label}（月${PLANS.plus.yen}）`;
-let S = { ...DEFAULTS, ...loadSettings() };
+const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
+const saved0 = loadSettings();
+let S = { ...DEFAULTS, ...saved0 };
+if (EN && !saved0.lang) S.lang = 'en-US'; // 英語版を初めて開いた人は英語で聞き取る
+const ROOT = EN ? '../' : ''; // 英語版は /en/ にあるので、表示ビューは1つ上
+const HL = EN ? 'hl=en' : '';
 
 const ex = new Extractor({ lang: S.lang, registered: S.registered, ng: S.ng });
 const bus = createBus((m) => { if (m.t === 'hello') { try { obs && obs.resetBg(); } catch { /* noop */ } pushSettings(false); } });
@@ -64,34 +69,34 @@ function onFinal(id, text) {
 const rec = new Recognizer({
   lang: S.lang, onInterim, onFinal,
   onState: (st) => {
-    if (st === 'listening') setStatus('on', '聞き取り中');
-    else if (st === 'restarting') setStatus('on', '聞き取り中');
-    else if (st === 'stopped') { setStatus('', '待機中'); setMic(false); stopMeter(); releaseWake(); }
+    if (st === 'listening') setStatus('on', L('聞き取り中', 'Listening'));
+    else if (st === 'restarting') setStatus('on', L('聞き取り中', 'Listening'));
+    else if (st === 'stopped') { setStatus('', L('待機中', 'Idle')); setMic(false); stopMeter(); releaseWake(); }
   },
   onError: (err) => {
     const msg = {
-      unsupported: IS_IOS ? 'このブラウザでは音声認識を使えません。iPhone は Safari で開いてください（アプリ内ブラウザは非対応です）'
-        : IS_ANDROID ? 'このブラウザでは音声認識を使えません。Android は Chrome で開いてください（アプリ内ブラウザは非対応です）'
-        : 'このブラウザは音声認識に対応していません。Chrome / Edge / Safari で開いてください',
-      'not-allowed': IS_IOS ? 'マイクか音声認識が許可されていません。「設定」→「Safari」→「マイク」を許可し、「設定」→「Siri」で Siri（または音声入力）をオンにしてください'
-        : IS_MOBILE ? 'マイクが許可されていません。ブラウザのサイト設定でマイクを許可してください'
-        : 'マイクの使用が許可されていません。アドレスバーのマイクアイコンから許可してください',
-      'service-not-allowed': IS_IOS ? '音声認識を使えません。「設定」→「Siri」で Siri（または「一般」→「キーボード」→「音声入力」）をオンにしてください'
-        : '音声認識サービスを使えません（Chrome / Edge / Safari と https で開いてください）',
-      'audio-capture': 'マイクが見つかりません',
-      network: '音声認識サービスに接続できません。ネットワークを確認してください',
-    }[err] || `音声認識エラー：${err}`;
+      unsupported: IS_IOS ? L('このブラウザでは音声認識を使えません。iPhone は Safari で開いてください（アプリ内ブラウザは非対応です）', 'Speech recognition isn’t available in this browser. On iPhone, open this page in Safari (in-app browsers aren’t supported).')
+        : IS_ANDROID ? L('このブラウザでは音声認識を使えません。Android は Chrome で開いてください（アプリ内ブラウザは非対応です）', 'Speech recognition isn’t available in this browser. On Android, open this page in Chrome (in-app browsers aren’t supported).')
+        : L('このブラウザは音声認識に対応していません。Chrome / Edge / Safari で開いてください', 'This browser doesn’t support speech recognition. Please use Chrome, Edge or Safari.'),
+      'not-allowed': IS_IOS ? L('マイクか音声認識が許可されていません。「設定」→「Safari」→「マイク」を許可し、「設定」→「Siri」で Siri（または音声入力）をオンにしてください', 'Microphone or speech recognition is blocked. Allow the microphone in Settings → Safari → Microphone, and turn on Siri (or Dictation) in Settings → Siri.')
+        : IS_MOBILE ? L('マイクが許可されていません。ブラウザのサイト設定でマイクを許可してください', 'The microphone is blocked. Allow it in your browser’s site settings.')
+        : L('マイクの使用が許可されていません。アドレスバーのマイクアイコンから許可してください', 'The microphone is blocked. Allow it from the microphone icon in the address bar.'),
+      'service-not-allowed': IS_IOS ? L('音声認識を使えません。「設定」→「Siri」で Siri（または「一般」→「キーボード」→「音声入力」）をオンにしてください', 'Speech recognition is unavailable. Turn on Siri in Settings → Siri (or Dictation in General → Keyboard).')
+        : L('音声認識サービスを使えません（Chrome / Edge / Safari と https で開いてください）', 'The speech service is unavailable. Use Chrome, Edge or Safari over https.'),
+      'audio-capture': L('マイクが見つかりません', 'No microphone was found.'),
+      network: L('音声認識サービスに接続できません。ネットワークを確認してください', 'Can’t reach the speech service. Check your network connection.'),
+    }[err] || L(`音声認識エラー：${err}`, `Speech recognition error: ${err}`);
     toast(msg);
-    if (err !== 'network') { setStatus('err', 'エラー'); setMic(false); stopMeter(); releaseWake(); }
+    if (err !== 'network') { setStatus('err', L('エラー', 'Error')); setMic(false); stopMeter(); releaseWake(); }
   },
 });
 
 function setMic(on) {
   $('#btnMic').classList.toggle('on', on);
   $('#btnMic').setAttribute('aria-pressed', String(on));
-  $('#btnMic').setAttribute('aria-label', on ? '聞き取りを止める' : '話しはじめる');
-  $('#micLabel').textContent = on ? '聞き取り中' : '話しはじめる';
-  $('#micHint').textContent = on ? 'もう一度押すと止まります' : '押すとマイクで聞き取りを始めます';
+  $('#btnMic').setAttribute('aria-label', on ? L('聞き取りを止める', 'Stop listening') : L('話しはじめる', 'Start talking'));
+  $('#micLabel').textContent = on ? L('聞き取り中', 'Listening') : L('話しはじめる', 'Start talking');
+  $('#micHint').textContent = on ? L('もう一度押すと止まります', 'Press again to stop') : L('押すとマイクで聞き取りを始めます', 'Press to start listening with your mic');
 }
 $('#btnMic').addEventListener('click', async () => {
   if (rec.wanted) { rec.stop(); setMic(false); stopMeter(); releaseWake(); return; }
@@ -99,7 +104,7 @@ $('#btnMic').addEventListener('click', async () => {
   stopDemo();
   clock();
   if (rec.start()) {
-    setMic(true); setStatus('on', '準備中');
+    setMic(true); setStatus('on', L('準備中', 'Starting'));
     // スマホはマイクを2つ同時に開くと音声認識が止まるので、レベル表示は PC のみ
     if (!IS_MOBILE) startMeter();
     keepAwake();
@@ -163,18 +168,18 @@ function stopMeter() {
 
 // ------------------------------------------------------------ デモとテキスト入力
 let demoRunning = false;
-function stopDemo() { demoRunning = false; $('#btnDemo').textContent = 'デモを流す'; }
+function stopDemo() { demoRunning = false; $('#btnDemo').textContent = L('デモを流す', 'Play demo'); }
 $('#btnDemo').addEventListener('click', async () => {
   if (demoRunning) { stopDemo(); return; }
   if (rec.wanted) { rec.stop(); setMic(false); stopMeter(); }
   demoRunning = true;
-  $('#btnDemo').textContent = 'デモを止める';
-  setStatus('demo', 'デモ再生中');
+  $('#btnDemo').textContent = L('デモを止める', 'Stop demo');
+  setStatus('demo', L('デモ再生中', 'Demo playing'));
   // 話者の色分けがオンなら、デモでは話者を交互に切り替える
   const demoFinal = (id, t) => { onFinal(id, t); if (speakersOn()) setSpeaker((curSp + 1) % S.speakerCount); };
   await simulateSpeech({ lang: S.lang, onInterim, onFinal: demoFinal, shouldStop: () => !demoRunning, loop: true });
   stopDemo();
-  setStatus('', '待機中');
+  setStatus('', L('待機中', 'Idle'));
 });
 let typed = 0;
 $('#typeForm').addEventListener('submit', (e) => {
@@ -194,7 +199,7 @@ function segButtons(container, entries, key) {
     b.type = 'button';
     b.setAttribute('role', 'radio');
     b.setAttribute('aria-checked', String(String(S[key]) === id));
-    b.title = def.note;
+    b.title = tr(def, 'note');
     if (key === 'theme') {
       b.className = 'theme';
       const tile = document.createElement('span');
@@ -206,10 +211,10 @@ function segButtons(container, entries, key) {
       tile.style.fontFamily = `${def.family}, ${def.fallback}`;
       tile.style.fontWeight = def.strong;
       const name = document.createElement('span');
-      name.textContent = def.label;
+      name.textContent = tr(def);
       b.append(tile, name);
     } else {
-      b.textContent = def.label;
+      b.textContent = tr(def);
     }
     if (def.pro && plusLocked(key === 'layout' ? 'layout:vj' : 'theme:premium')) b.classList.add('locked');
     if (def.pro && key === 'layout') { const t = document.createElement('em'); t.className = 'seg-tag'; t.textContent = '+'; b.appendChild(t); }
@@ -217,32 +222,32 @@ function segButtons(container, entries, key) {
     box.appendChild(b);
   }
   if (key === 'layout') {
-    $('#layoutNote').textContent = entries[S[key]] ? entries[S[key]].note : '';
+    $('#layoutNote').textContent = entries[S[key]] ? tr(entries[S[key]], 'note') : '';
     $('#vjOpts').hidden = S.layout !== 'vj';
   }
 }
 function pick(container, entries, key, id, def) {
   if (key === 'theme' && def.pro && plusLocked('theme:premium')) {
-    toast(`お試し期間（1日）は終わりました。プレミアム書体は${PLUS_LABEL}で続けて使えます`);
+    toast(L(`お試し期間（1日）は終わりました。プレミアム書体は${PLUS_LABEL}で続けて使えます`, `Your 1-day trial has ended. Premium typefaces are part of ${PLUS_LABEL}.`));
     return;
   }
   if (key === 'layout' && def.pro && plusLocked('layout:vj')) {
-    toast(`お試し期間（1日）は終わりました。VJ モードは${PLUS_LABEL}で使えます`);
+    toast(L(`お試し期間（1日）は終わりました。VJ モードは${PLUS_LABEL}で使えます`, `Your 1-day trial has ended. VJ mode is part of ${PLUS_LABEL}.`));
     return;
   }
   if (key === 'speakerMode' && id !== 'off' && plusLocked('speaker:labels')) {
-    toast(`お試し期間（1日）は終わりました。話者の色分けは${PLUS_LABEL}で使えます`);
+    toast(L(`お試し期間（1日）は終わりました。話者の色分けは${PLUS_LABEL}で使えます`, `Your 1-day trial has ended. Speaker colors are part of ${PLUS_LABEL}.`));
     return;
   }
   if (key === 'speakerMode' && id === 'auto' && IS_MOBILE) {
-    toast('スマホでは「声で自動」は使えません。手動で切り替えてください');
+    toast(L('スマホでは「声で自動」は使えません。手動で切り替えてください', 'Voice-based switching isn’t available on phones. Please switch speakers manually.'));
     return;
   }
   if (key === 'speakerCount') { S[key] = +id; renderSpeakers(); pushSettings(); return; }
   if (key === 'speakerMode') { S[key] = id; renderSpeakers(); updateTrial(); pushSettings(); return; }
   S[key] = id;
   if (key === 'theme') renderThemes(); else segButtons(container, entries, key);
-  if (key === 'vjStyle') $('#vjStyleNote').textContent = VJ_STYLES[id].note;
+  if (key === 'vjStyle') $('#vjStyleNote').textContent = tr(VJ_STYLES[id], 'note');
   updateTrial();
   pushSettings();
 }
@@ -261,7 +266,7 @@ function renderThemes() {
 const plusLocked = (feature) => !canUse(feature) && trialRemainingMs() <= 0;
 const accentLocked = () => plusLocked('accent:custom');
 function pickAccent(c) {
-  if (c && accentLocked()) { toast(`お試し期間（1日）は終わりました。アクセントカラーは${PLUS_LABEL}で変えられます`); return; }
+  if (c && accentLocked()) { toast(L(`お試し期間（1日）は終わりました。アクセントカラーは${PLUS_LABEL}で変えられます`, `Your 1-day trial has ended. Accent colors are part of ${PLUS_LABEL}.`)); return; }
   S.accent = c;
   renderAccents();
   updateTrial();
@@ -276,8 +281,8 @@ function renderAccents() {
   auto.type = 'button';
   auto.className = 'acc-auto';
   auto.style.setProperty('--c', (THEMES[S.theme] || THEMES[DEFAULT_THEME]).accent);
-  auto.innerHTML = '<i></i>標準';
-  radio(auto, !S.accent, '書体テーマ標準の色');
+  auto.innerHTML = `<i></i>${L('標準', 'Default')}`;
+  radio(auto, !S.accent, L('書体テーマ標準の色', 'The typeface theme’s own color'));
   auto.addEventListener('click', () => pickAccent(''));
   box.appendChild(auto);
   const known = ACCENTS.some((a) => a.c === S.accent);
@@ -286,18 +291,18 @@ function renderAccents() {
     b.type = 'button';
     b.className = 'acc';
     b.style.setProperty('--c', a.c);
-    radio(b, S.accent === a.c, a.label);
+    radio(b, S.accent === a.c, tr(a));
     b.addEventListener('click', () => pickAccent(a.c));
     box.appendChild(b);
   }
   const custom = document.createElement('label');
   custom.className = 'acc-custom';
-  radio(custom, !!S.accent && !known, '好きな色を選ぶ');
+  radio(custom, !!S.accent && !known, L('好きな色を選ぶ', 'Pick any color'));
   if (S.accent && !known) custom.style.background = S.accent;
   const input = document.createElement('input');
   input.type = 'color';
   input.value = S.accent || '#3ddc84';
-  input.addEventListener('click', (e) => { if (accentLocked()) { e.preventDefault(); toast(`お試し期間（1日）は終わりました。アクセントカラーは${PLUS_LABEL}で変えられます`); } });
+  input.addEventListener('click', (e) => { if (accentLocked()) { e.preventDefault(); toast(L(`お試し期間（1日）は終わりました。アクセントカラーは${PLUS_LABEL}で変えられます`, `Your 1-day trial has ended. Accent colors are part of ${PLUS_LABEL}.`)); } });
   input.addEventListener('change', () => pickAccent(input.value));
   custom.appendChild(input);
   box.appendChild(custom);
@@ -310,12 +315,12 @@ function updateTrial() {
   const rem = trialRemainingMs();
   const active = usingPlusTrial();
   const h = Math.floor(rem / 3600000), m = Math.floor(rem / 60000) % 60;
-  const left = h > 0 ? `${h}時間${m}分` : `${m}分`;
+  const left = h > 0 ? L(`${h}時間${m}分`, `${h}h ${m}m`) : L(`${m}分`, `${m}m`);
   $('#trialFill').style.transform = `scaleX(${(rem / PRO.trialMs).toFixed(4)})`;
   box.classList.toggle('active', trialStarted() && rem > 0);
-  $('#trialNote').textContent = rem <= 0 ? `お試し期間（1日）は終わりました。${PLUS_LABEL}で続けて使えます`
-    : trialStarted() ? `お試し中　残り ${left}（終わると標準の見た目に戻ります）`
-    : 'プレミアム書体・アクセントカラー・背景画像・VJ モード・話者の色分けは、無料プランでも1日（24時間）お試しできます。使い始めた時から数えます';
+  $('#trialNote').textContent = rem <= 0 ? L(`お試し期間（1日）は終わりました。${PLUS_LABEL}で続けて使えます`, `Your 1-day trial has ended. Keep using these with ${PLUS_LABEL}.`)
+    : trialStarted() ? L(`お試し中　残り ${left}（終わると標準の見た目に戻ります）`, `Trial: ${left} left (then everything returns to the standard look)`)
+    : L('プレミアム書体・アクセントカラー・背景画像・VJ モード・話者の色分けは、無料プランでも1日（24時間）お試しできます。使い始めた時から数えます', 'Premium typefaces, accent colors, background images, VJ mode and speaker colors can be tried free for one day (24 hours), counted from first use.');
 }
 let trialLast = performance.now();
 setInterval(() => {
@@ -335,7 +340,7 @@ setInterval(() => {
       renderThemes();
       segButtons('#layouts', LAYOUTS, 'layout');
       renderSpeakers();
-      toast('プレミアム機能のお試し期間（1日）が終わったので、標準の見た目に戻しました');
+      toast(L('プレミアム機能のお試し期間（1日）が終わったので、標準の見た目に戻しました', 'Your 1-day trial of premium features has ended, so the standard look is back.'));
       return;
     }
   }
@@ -377,7 +382,7 @@ function renderBg() {
   document.querySelector('.bg-pick').classList.toggle('locked', bgLocked());
 }
 $('#bgFile').addEventListener('click', (e) => {
-  if (bgLocked()) { e.preventDefault(); toast(`お試し期間（1日）は終わりました。背景画像は${PLUS_LABEL}で使えます`); }
+  if (bgLocked()) { e.preventDefault(); toast(L(`お試し期間（1日）は終わりました。背景画像は${PLUS_LABEL}で使えます`, `Your 1-day trial has ended. Background images are part of ${PLUS_LABEL}.`)); }
 });
 $('#bgFile').addEventListener('change', async (e) => {
   const file = e.target.files && e.target.files[0];
@@ -390,9 +395,9 @@ $('#bgFile').addEventListener('change', async (e) => {
     renderBg();
     updateTrial();
     pushSettings();
-    toast(`背景画像を設定しました（${w}×${h}px に縮小）`);
+    toast(L(`背景画像を設定しました（${w}×${h}px に縮小）`, `Background set (resized to ${w}×${h}px)`));
   } catch {
-    toast('この画像は読み込めませんでした。JPEG か PNG で試してください');
+    toast(L('この画像は読み込めませんでした。JPEG か PNG で試してください', 'Couldn’t read this image. Please try a JPEG or PNG.'));
   }
 });
 $('#bgRemove').addEventListener('click', () => { S.bgImage = ''; renderBg(); updateTrial(); pushSettings(); });
@@ -432,10 +437,10 @@ if (!VJ_STYLES[S.vjStyle]) S.vjStyle = 'led';
 renderThemes();
 segButtons('#layouts', LAYOUTS, 'layout');
 segButtons('#vjStyles', VJ_STYLES, 'vjStyle');
-$('#vjStyleNote').textContent = VJ_STYLES[S.vjStyle].note;
+$('#vjStyleNote').textContent = tr(VJ_STYLES[S.vjStyle], 'note');
 bindRange('baseSize', 'vSize', (v) => `${v}`);
-bindRange('ttl', 'vTtl', (v) => `${v}秒`);
-bindRange('maxWords', 'vMax', (v) => `${v}語`);
+bindRange('ttl', 'vTtl', (v) => L(`${v}秒`, `${v}s`));
+bindRange('maxWords', 'vMax', (v) => L(`${v}語`, `${v} words`));
 bindRange('bgDim', 'vBgDim', (v) => `${Math.round(v * 100)}%`);
 renderBg();
 bindCheck('vertical');
@@ -449,12 +454,14 @@ bindText('ng', () => ex.setDict(S));
 // 手動：ボタンかキーボードの 1〜4 で「いま話している人」を切り替える
 // 声で自動：登録した声の高さから推定する（PC のみ・簡易）。おトクプランではクラウド認識の話者分離で自動化する（近日公開）
 const SPEAKER_MODES = {
-  off: { label: 'オフ', note: '話している人ごとに、名前のラベルと色を付けられます' },
-  manual: { label: '手動', note: 'いま話している人を、下のボタンかキーボードの 1〜4 で切り替えます。いちばん確実です' },
-  auto: { label: '声で自動', note: '登録した声の高さから自動で切り替えます（PC のみ・簡易）。声の高さが近い人どうしは、ボタンで直してください' },
+  off: { label: 'オフ', labelEn: 'Off', note: '話している人ごとに、名前のラベルと色を付けられます', noteEn: 'Give each speaker a name label and a color.' },
+  manual: { label: '手動', labelEn: 'Manual', note: 'いま話している人を、下のボタンかキーボードの 1〜4 で切り替えます。いちばん確実です', noteEn: 'Switch the current speaker with the buttons below or keys 1–4. The most reliable option.' },
+  auto: { label: '声で自動', labelEn: 'By voice', note: '登録した声の高さから自動で切り替えます（PC のみ・簡易）。声の高さが近い人どうしは、ボタンで直してください', noteEn: 'Switches automatically by voice pitch (desktop only, basic). Correct it with the buttons when voices are similar.' },
 };
-const SPEAKER_COUNTS = { 2: { label: '2人' }, 3: { label: '3人' }, 4: { label: '4人' } };
+const SPEAKER_COUNTS = { 2: { label: '2人', labelEn: '2' }, 3: { label: '3人', labelEn: '3' }, 4: { label: '4人', labelEn: '4' } };
 S.speakers = DEFAULT_SPEAKERS.map((d, i) => ({ ...d, ...((Array.isArray(S.speakers) && S.speakers[i]) || {}) }));
+// 名前が初期値のままなら、表示中の言語の初期値にそろえる
+S.speakers.forEach((sp, i) => { const d = DEFAULT_SPEAKERS[i]; if (sp.name === d.name || sp.name === d.nameEn) sp.name = EN ? d.nameEn : d.name; });
 S.speakerCount = Math.min(MAX_SPEAKERS, Math.max(2, +S.speakerCount || 2));
 if (!SPEAKER_MODES[S.speakerMode]) S.speakerMode = 'off';
 if (S.speakerMode === 'auto' && IS_MOBILE) S.speakerMode = 'manual';
@@ -464,7 +471,7 @@ const speakersOn = () => S.speakerMode !== 'off' && !plusLocked('speaker:labels'
 function speakerInfo() {
   if (!speakersOn()) return {};
   const sp = S.speakers[curSp] || S.speakers[0];
-  return { sp: curSp, spn: (sp.name || '').trim() || `話者${curSp + 1}`, spc: sp.color };
+  return { sp: curSp, spn: (sp.name || '').trim() || L(`話者${curSp + 1}`, `Speaker ${curSp + 1}`), spc: sp.color };
 }
 function syncProfiles() { tracker.setProfiles(S.speakers.slice(0, S.speakerCount).map((x) => x.f0 || 0)); }
 function setSpeaker(i, fromAuto = false) {
@@ -476,7 +483,7 @@ function setSpeaker(i, fromAuto = false) {
 function renderSpeakers() {
   segButtons('#spModes', SPEAKER_MODES, 'speakerMode');
   segButtons('#spCounts', SPEAKER_COUNTS, 'speakerCount');
-  $('#spModeNote').textContent = SPEAKER_MODES[S.speakerMode].note;
+  $('#spModeNote').textContent = tr(SPEAKER_MODES[S.speakerMode], 'note');
   $('#spBody').hidden = S.speakerMode === 'off';
   $('#speakerSec').classList.toggle('locked', plusLocked('speaker:labels'));
   if (curSp >= S.speakerCount) curSp = 0;
@@ -490,27 +497,27 @@ function renderSpeakers() {
     const sw = document.createElement('label');
     sw.className = 'sp-color';
     sw.style.setProperty('--c', sp.color);
-    sw.title = '色を変える';
+    sw.title = L('色を変える', 'Change color');
     const ci = document.createElement('input');
     ci.type = 'color';
     ci.value = sp.color;
-    ci.setAttribute('aria-label', `${i + 1}人目の色`);
+    ci.setAttribute('aria-label', L(`${i + 1}人目の色`, `Color for speaker ${i + 1}`));
     ci.addEventListener('input', () => { sp.color = ci.value; sw.style.setProperty('--c', ci.value); renderNow(); pushSettings(); });
     sw.appendChild(ci);
     const name = document.createElement('input');
     name.className = 'sp-name';
     name.maxLength = 12;
     name.value = sp.name;
-    name.placeholder = `話者${i + 1}`;
-    name.setAttribute('aria-label', `${i + 1}人目の名前`);
+    name.placeholder = L(`話者${i + 1}`, `Speaker ${i + 1}`);
+    name.setAttribute('aria-label', L(`${i + 1}人目の名前`, `Name for speaker ${i + 1}`));
     name.addEventListener('input', () => { sp.name = name.value; renderNow(); pushSettings(); });
     li.append(sw, name);
     if (S.speakerMode === 'auto') {
       const reg = document.createElement('button');
       reg.type = 'button';
       reg.className = 'btn small sp-reg';
-      reg.textContent = sp.f0 ? `${sp.f0}Hz` : '声を登録';
-      reg.title = sp.f0 ? '登録し直す' : '3秒ほど話して声の高さを登録します';
+      reg.textContent = sp.f0 ? `${sp.f0}Hz` : L('声を登録', 'Record voice');
+      reg.title = sp.f0 ? L('登録し直す', 'Record again') : L('3秒ほど話して声の高さを登録します', 'Talk for about 3 seconds to record your voice pitch');
       reg.classList.toggle('done', !!sp.f0);
       reg.addEventListener('click', () => registerVoice(i, reg));
       li.appendChild(reg);
@@ -531,7 +538,7 @@ function renderNow() {
     b.setAttribute('aria-pressed', String(i === curSp));
     b.innerHTML = '<kbd></kbd><span></span>';
     b.firstChild.textContent = String(i + 1);
-    b.lastChild.textContent = (sp.name || '').trim() || `話者${i + 1}`;
+    b.lastChild.textContent = (sp.name || '').trim() || L(`話者${i + 1}`, `Speaker ${i + 1}`);
     b.addEventListener('click', () => setSpeaker(i));
     now.appendChild(b);
   });
@@ -539,7 +546,7 @@ function renderNow() {
 let registering = false;
 async function registerVoice(i, btn) {
   if (registering) return;
-  if (IS_MOBILE) { toast('スマホでは「声で自動」は使えません。手動で切り替えてください'); return; }
+  if (IS_MOBILE) { toast(L('スマホでは「声で自動」は使えません。手動で切り替えてください', 'Voice-based switching isn’t available on phones. Please switch speakers manually.')); return; }
   registering = true;
   let an = meterAnalyser, temp = null;
   try {
@@ -552,16 +559,16 @@ async function registerVoice(i, btn) {
       temp = { stream, ctx };
     }
     const rate = (temp ? temp.ctx : meterCtx).sampleRate;
-    const f0 = await calibrate(an, rate, 3000, (k) => { btn.textContent = `話してください… ${Math.max(1, Math.ceil(3 - k * 3))}`; });
+    const f0 = await calibrate(an, rate, 3000, (k) => { btn.textContent = L(`話してください… ${Math.max(1, Math.ceil(3 - k * 3))}`, `Keep talking… ${Math.max(1, Math.ceil(3 - k * 3))}`); });
     if (f0 > 0) {
       S.speakers[i].f0 = Math.round(f0);
       pushSettings();
-      toast(`${S.speakers[i].name || `話者${i + 1}`}の声を登録しました（${Math.round(f0)}Hz）`);
+      toast(L(`${S.speakers[i].name || `話者${i + 1}`}の声を登録しました（${Math.round(f0)}Hz）`, `Voice recorded for ${S.speakers[i].name || `Speaker ${i + 1}`} (${Math.round(f0)}Hz)`));
     } else {
-      toast('声をうまく拾えませんでした。マイクに近づいて、ふだんの声で3秒ほど話してください');
+      toast(L('声をうまく拾えませんでした。マイクに近づいて、ふだんの声で3秒ほど話してください', 'Couldn’t pick up your voice. Move closer to the mic and talk normally for about 3 seconds.'));
     }
   } catch {
-    toast('マイクを使えませんでした。ブラウザのマイクの許可を確認してください');
+    toast(L('マイクを使えませんでした。ブラウザのマイクの許可を確認してください', 'Couldn’t use the microphone. Check your browser’s microphone permission.'));
   } finally {
     if (temp) { temp.stream.getTracks().forEach((t) => t.stop()); temp.ctx.close(); }
     registering = false;
@@ -577,13 +584,13 @@ engineSel.addEventListener('change', () => {
   if (engineSel.value === 'cloud' && !canUse('engine:cloud')) {
     engineSel.value = 'browser';
     $('#proNote').hidden = false;
-    toast(`高精度クラウド認識は${PLANS.pro.label}（${PLANS.pro.price}・月${PRO.includedHours}時間つき）の機能です（近日公開）`);
+    toast(L(`高精度クラウド認識は${PLANS.pro.label}（${PLANS.pro.price}・月${PRO.includedHours}時間つき）の機能です（近日公開）`, `High-accuracy cloud recognition comes with the ${PLANS.pro.labelEn} plan (${PLANS.pro.yen}/mo, ${PRO.includedHours} hours a month). Coming soon.`));
     return;
   }
   $('#proNote').hidden = true;
 });
 if (currentPlan() !== 'free') {
-  $('#planBadge').innerHTML = `<b>${PLANS[currentPlan()].label}</b>`;
+  $("#planBadge").innerHTML = `<b>${tr(PLANS[currentPlan()])}</b>`;
 }
 
 $('#lang').value = S.lang;
@@ -598,8 +605,8 @@ $('#lang').addEventListener('change', () => {
 function togglePause() {
   paused = !paused;
   $('#btnPause').classList.toggle('on', paused);
-  $('#btnPause').firstChild.textContent = paused ? '再開 ' : '一時停止 ';
-  toast(paused ? '表示を一時停止しました（文字起こしは続きます）' : '表示を再開しました');
+  $('#btnPause').firstChild.textContent = paused ? L('再開 ', 'Resume ') : L('一時停止 ', 'Pause ');
+  toast(paused ? L('表示を一時停止しました（文字起こしは続きます）', 'Display paused (the transcript keeps going)') : L('表示を再開しました', 'Display resumed'));
 }
 function clearAll() { send({ t: 'clear' }); }
 $('#btnPause').addEventListener('click', togglePause);
@@ -613,17 +620,17 @@ window.addEventListener('keydown', (e) => {
 });
 
 // ------------------------------------------------------------ 表示ビュー
-const base = location.href.replace(/[^/]*$/, '');
-$('#openKanpe').addEventListener('click', () => window.open('display.html?layout=kanpe', 'kanpe-kanpe', 'width=1280,height=720'));
-$('#openStage').addEventListener('click', () => window.open('display.html', 'kanpe-stage', 'width=1280,height=720'));
+const base = new URL(ROOT, location.href).href;
+$('#openKanpe').addEventListener('click', () => window.open(`${ROOT}display.html?layout=kanpe${HL ? '&' + HL : ''}`, 'kanpe-kanpe', 'width=1280,height=720'));
+$('#openStage').addEventListener('click', () => window.open(`${ROOT}display.html${HL ? '?' + HL : ''}`, 'kanpe-stage', 'width=1280,height=720'));
 
 $('#obsUrl').value = S.obsUrl;
 $('#obsPassword').value = S.obsPassword;
 function obsLabel(st) {
-  return { connecting: '接続中…', connected: '接続済み', disconnected: '未接続（再試行中）', 'auth-failed': 'パスワードが違います' }[st] || st;
+  return { connecting: L('接続中…', 'Connecting…'), connected: L('接続済み', 'Connected'), disconnected: L('未接続（再試行中）', 'Disconnected (retrying)'), 'auth-failed': L('パスワードが違います', 'Wrong password') }[st] || st;
 }
 $('#obsConnect').addEventListener('click', () => {
-  if (obs) { obs.close(); unlinkObs && unlinkObs(); obs = null; $('#obsConnect').textContent = '接続'; $('#obsStatus').textContent = '未接続'; return; }
+  if (obs) { obs.close(); unlinkObs && unlinkObs(); obs = null; $('#obsConnect').textContent = L('接続', 'Connect'); $('#obsStatus').textContent = L('未接続', 'Not connected'); return; }
   S.obsUrl = $('#obsUrl').value.trim() || DEFAULTS.obsUrl;
   S.obsPassword = $('#obsPassword').value;
   saveSettings(S);
@@ -633,12 +640,12 @@ $('#obsConnect').addEventListener('click', () => {
     onStatus: (st) => { $('#obsStatus').textContent = obsLabel(st); if (st === 'connected') pushSettings(false); },
   });
   unlinkObs = bus.link(obs);
-  $('#obsConnect').textContent = '切断';
+  $('#obsConnect').textContent = L('切断', 'Disconnect');
 });
 $('#obsCopy').addEventListener('click', async () => {
-  const url = `${base}display.html?theme=clear&obs=${encodeURIComponent($('#obsUrl').value.trim() || DEFAULTS.obsUrl)}` +
+  const url = `${base}display.html?theme=clear${HL ? '&' + HL : ''}&obs=${encodeURIComponent($('#obsUrl').value.trim() || DEFAULTS.obsUrl)}` +
     ($('#obsPassword').value ? `&pw=${encodeURIComponent($('#obsPassword').value)}` : '');
-  try { await navigator.clipboard.writeText(url); toast('OBS 用の URL をコピーしました'); } catch { prompt('この URL を OBS のブラウザソースに貼ってください', url); }
+  try { await navigator.clipboard.writeText(url); toast(L('OBS 用の URL をコピーしました', 'OBS URL copied')); } catch { prompt(L('この URL を OBS のブラウザソースに貼ってください', 'Paste this URL into an OBS Browser Source'), url); }
 });
 
 // ------------------------------------------------------------ 文字起こし
@@ -664,6 +671,16 @@ function appendTx(item) {
   $('#tx').prepend(li);
 }
 const who = (t) => (t.spn ? `${t.spn}：` : '');
+// 言語を切り替えて開き直したときだけ、直前の文字起こしを引き継ぐ（時刻も続きから数える）
+function restoreCarry() {
+  try {
+    if (sessionStorage.getItem('kanpe.carry') !== '1') return;
+    sessionStorage.removeItem('kanpe.carry');
+    const arr = JSON.parse(localStorage.getItem(TXKEY) || '[]');
+    for (const it of arr) { transcript.push(it); appendTx(it); }
+    if (arr.length) t0 = performance.now() - arr[arr.length - 1].end * 1000;
+  } catch { /* noop */ }
+}
 function saveTranscript() { try { localStorage.setItem(TXKEY, JSON.stringify(transcript.slice(-2000))); } catch { /* noop */ } }
 function download(name, text) {
   const a = document.createElement('a');
@@ -690,7 +707,15 @@ function toast(msg) {
 }
 
 // プレビューは読み込み完了後に設定を受け取る
+restoreCarry();
 $('#preview').addEventListener('load', () => pushSettings(false));
-if (!Recognizer.supported()) setStatus('err', '音声認識非対応のブラウザ（デモとテキスト入力は使えます）');
+if (!Recognizer.supported()) setStatus('err', L('音声認識非対応のブラウザ（デモとテキスト入力は使えます）', 'No speech recognition here (demo and typing still work)'));
 pushSettings(false);
+// 言語を切り替える直前（src/ui/lang.js から呼ばれる）：聞き取りとデモを止め、設定と文字起こしを保存する
+window.__kanpeBeforeLeave = () => {
+  try { if (rec.wanted) { rec.stop(); setMic(false); stopMeter(); releaseWake(); } } catch { /* noop */ }
+  stopDemo();
+  saveSettings(S);
+  saveTranscript();
+};
 window.__kanpeConsole = { onInterim, onFinal, get settings() { return S; } };

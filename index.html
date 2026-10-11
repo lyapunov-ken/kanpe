@@ -6,6 +6,9 @@
 <title>KANPE リアルタイムカンペ</title>
 <meta name="description" content="ライブ配信で話した言葉を、その場で美しい日本語タイポグラフィに。ブラウザとマイクだけで無料ではじめられるリアルタイムカンペ。">
 <link rel="canonical" href="https://kanpe.yoneken.xyz/">
+<link rel="alternate" hreflang="ja" href="https://kanpe.yoneken.xyz/">
+<link rel="alternate" hreflang="en" href="https://kanpe.yoneken.xyz/en/">
+<link rel="alternate" hreflang="x-default" href="https://kanpe.yoneken.xyz/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="KANPE">
 <meta property="og:locale" content="ja_JP">
@@ -25,17 +28,16 @@
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<meta name="theme-color" content="#f5f3ee" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f3ee">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="styles/lp.css?v=202610111202">
+<link rel="stylesheet" href="styles/lp.css?v=202610111226">
 <script>document.documentElement.classList.add('js');</script>
-<script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(e){}</script>
+<script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 </head>
-<body>
-<header class="nav" id="top">
+<body id="top">
+<header class="nav">
   <a class="logo" href="#top" aria-label="KANPE トップ"><span class="tally" aria-hidden="true"></span>KANPE</a>
   <nav class="links" aria-label="ページ内">
     <a href="#features">特徴</a>
@@ -43,6 +45,7 @@
     <a href="#pricing">料金</a>
     <a href="#faq">よくある質問</a>
   </nav>
+  <a class="lang-link" href="en/" hreflang="en" lang="en" data-lang-switch title="English version">EN</a>
   <button class="mode-btn" type="button" data-mode-toggle aria-label="表示モードを切り替える"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg></button>
   <a class="btn btn-ink small" href="app.html">無料で使う</a>
 </header>
@@ -388,6 +391,7 @@
     <a href="app.html">コンソール</a>
     <a href="#pricing">料金</a>
     <a href="#faq">よくある質問</a>
+    <a href="en/" hreflang="en" lang="en" data-lang-switch>English</a>
   </nav>
   <span class="fine">© <span id="year">2026</span> KANPE · 試作版</span>
 </footer>
@@ -395,7 +399,8 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html" tabindex="-1">ブラウザで無料ではじめる<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="src/ui/mode.js?v=202610111202" defer></script>
-<script src="src/lp/lp.js?v=202610111202" defer></script>
+<script src="src/ui/lang.js?v=202610111226" defer></script>
+<script src="src/ui/mode.js?v=202610111226" defer></script>
+<script src="src/lp/lp.js?v=202610111226" defer></script>
 </body>
 </html>

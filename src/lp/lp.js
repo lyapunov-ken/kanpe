@@ -18,10 +18,14 @@
   // ---- デモの見た目切り替え
   const frame = $('demo');
   const label = $('monLabel');
-  const names = { sumi: '墨', yoru: '夜', pop: 'ポップ', yawaraka: 'やわらか', compose: '組版', kanpe: 'カンペ', ticker: 'テロップ' };
+  const EN = (document.documentElement.lang || '').startsWith('en');
+  const names = EN
+    ? { sumi: 'Sumi', yoru: 'Night', pop: 'Pop', yawaraka: 'Soft', compose: 'Compose', kanpe: 'Cue', ticker: 'Ticker' }
+    : { sumi: '墨', yoru: '夜', pop: 'ポップ', yawaraka: 'やわらか', compose: '組版', kanpe: 'カンペ', ticker: 'テロップ' };
+  const demoBase = frame ? frame.getAttribute('src').split('?')[0] : 'display.html'; // 英語版は ../display.html
   const state = { theme: 'yoru', layout: 'compose' };
   const load = () => {
-    frame.src = `display.html?demo=1&ui=0&theme=${state.theme}&layout=${state.layout}${calm ? '&calm=1' : ''}`;
+    frame.src = `${demoBase}?demo=1&ui=0&theme=${state.theme}&layout=${state.layout}${calm ? '&calm=1' : ''}${EN ? '&hl=en' : ''}`;
     label.textContent = `${names[state.layout]} · ${names[state.theme]}`;
   };
   if (calm && frame) load();
@@ -56,6 +60,15 @@
       }
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
     items.forEach((el) => io.observe(el));
+  }
+
+  // ---- ロゴ：ページの先頭へ戻る（固定ヘッダー自身へのリンクだと動かないため、明示的に先頭へ）
+  for (const a of document.querySelectorAll('a[href="#top"]')) {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: calm ? 'auto' : 'smooth' });
+      if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    });
   }
 
   // ---- ナビの下線（スクロールしたら）

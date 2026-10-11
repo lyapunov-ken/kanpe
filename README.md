@@ -26,6 +26,14 @@
 
 URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / ticker / vj）、`vj`（led / neon / pixel）、`size`、`fonts=local`（Web フォントを読まず OS の書体を使う）、`demo=1&sp=1`（話者の色分けの見本）。
 
+## 英語版
+
+- `en/index.html`（英語の LP）と `en/app.html`（英語のコンソール）。表示ビューは共通の `display.html` を `hl=en` 付きで使う
+- `en/app.html` は `app.html` から生成する：`python3 tools/make-en-app.py`（app.html を直したら再実行）
+- JS 内の文言は `src/core/i18n.js` の `L('日本語', 'English')` で切り替える
+- 日本語版⇄英語版の切り替えは確認の窓（`src/ui/lang.js`）を出してから移動する。コンソールでは聞き取りとデモを止め、設定と文字起こしを引き継ぐ
+- 表示モードは最初ライト。右上のボタンでダークに切り替えると、ブラウザに保存される（`src/ui/mode.js`）
+
 ## 料金プラン（3つ）
 
 2時間の配信を週3回（月約26時間、話している区間は月17時間前後）する人を基準にしています。

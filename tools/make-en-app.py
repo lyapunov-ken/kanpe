@@ -1,0 +1,113 @@
+# 英語版のコンソール（en/app.html）を app.html から作る。app.html を直したら再実行する。
+#   python3 tools/make-en-app.py
+import pathlib, re
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+s = (ROOT / 'app.html').read_text()
+
+T = [
+  ('<html lang="ja">', '<html lang="en">'),
+  ('<title>KANPE コンソール</title>', '<title>KANPE Console</title>'),
+  ('content="KANPE の操作画面。マイクで話すと、キーワードがその場で日本語タイポグラフィになります。"', 'content="The KANPE console. Talk into your mic and keywords turn into live typography on screen."'),
+  ('<link rel="canonical" href="https://kanpe.yoneken.xyz/app">', '<link rel="canonical" href="https://kanpe.yoneken.xyz/en/app">'),
+  ('<meta property="og:url" content="https://kanpe.yoneken.xyz/app">', '<meta property="og:url" content="https://kanpe.yoneken.xyz/en/app">'),
+  ('<meta property="og:locale" content="ja_JP">', '<meta property="og:locale" content="en_US">'),
+  ('KANPE コンソール｜話すと、文字が組まれる。', 'KANPE Console | Speak, and your words take shape.'),
+  ('マイクで話すと、キーワードがその場で日本語タイポグラフィに。登録不要・無料で使えるリアルタイムカンペ。', 'Talk into your mic and keywords become live typography. A free real-time cue card for streamers, no sign-up needed.'),
+  ('KANPE｜話すと、文字が組まれる。ライブ配信の声をその場で日本語タイポグラフィにするリアルタイムカンペ', 'KANPE | Speak, and your words take shape. A real-time cue card that turns your stream’s voice into typography.'),
+  ('KANPE｜話すと、文字が組まれる。', 'KANPE | Speak, and your words take shape.'),
+  ('assets/og.png?v=2', 'assets/og-en.png?v=1'),
+  ('title="KANPE のトップへ"', 'title="Back to the KANPE home page"'),
+  ('<small>リアルタイムカンペ</small>', '<small>Real-time cue cards</small>'),
+  ('<span id="statusText">待機中</span>', '<span id="statusText">Idle</span>'),
+  ('<a class="lang-link" href="en/app.html" hreflang="en" lang="en" data-lang-switch title="English version">EN</a>', '<a class="lang-link jp" href="../app.html" hreflang="ja" lang="ja" data-lang-switch title="日本語版">日本語</a>'),
+  ('aria-label="表示モードを切り替える"', 'aria-label="Switch color mode"'),
+  ('<b>無料プラン</b><span>アップグレード</span>', '<b>Free</b><span>Upgrade</span>'),
+  ('aria-label="設定"', 'aria-label="Settings"'),
+  ('aria-label="話しはじめる"', 'aria-label="Start talking"'),
+  ('<b id="micLabel">話しはじめる</b>', '<b id="micLabel">Start talking</b>'),
+  ('<span id="micHint" class="hint">押すとマイクで聞き取りを始めます</span>', '<span id="micHint" class="hint">Press to start listening with your mic</span>'),
+  ('title="入力レベル"', 'title="Input level"'),
+  ('<span class="lbl">言語</span>', '<span class="lbl">Speech language</span>'),
+  ('<span class="lbl">認識エンジン</span>', '<span class="lbl">Recognition</span>'),
+  ('<option value="browser">ブラウザ（無料）</option>', '<option value="browser">Browser (free)</option>'),
+  ('<option value="cloud">高精度（おトク）</option>', '<option value="cloud">High accuracy (Pro)</option>'),
+  ('<b>高精度認識はおトクプランの機能です</b>', '<b>High-accuracy recognition is a Pro feature</b>'),
+  ('<p>固有名詞や専門用語に強いクラウド認識で、拾う言葉の精度が上がります。おトクプラン（月 ¥2,980・月20時間つき。週3回×2時間の配信がまるごと収まります）で使えます。話している人の自動聞き分けも入ります（近日公開）。</p>', '<p>Cloud recognition that handles names and jargon picks up words more accurately. Included in the Pro plan (¥2,980/mo with 20 hours a month — enough for three 2-hour streams a week), along with automatic speaker separation. Coming soon.</p>'),
+  ('<a href="index.html#pricing">料金を見る</a>', '<a href="index.html#pricing">See pricing</a>'),
+  ('<span class="lbl">マイクなしで試す</span>', '<span class="lbl">Try without a mic</span>'),
+  ('>デモを流す</button>', '>Play demo</button>'),
+  ('placeholder="文章を入れて Enter"', 'placeholder="Type a sentence, press Enter"'),
+  ('aria-label="テキストで試す"', 'aria-label="Try with text"'),
+  ('<h2>表示</h2>', '<h2>DISPLAY</h2>'),
+  ('<span class="lbl">書体テーマ</span>', '<span class="lbl">Typeface theme</span>'),
+  ('aria-label="書体テーマ"', 'aria-label="Typeface theme"'),
+  ('<span class="lbl">プレミアム書体 <em class="pro-tag">¥480〜</em></span>', '<span class="lbl">Premium typefaces <em class="pro-tag">¥480+</em></span>'),
+  ('aria-label="プレミアム書体"', 'aria-label="Premium typefaces"'),
+  ('<span class="lbl">アクセントカラー <em class="pro-tag">¥480〜</em></span>', '<span class="lbl">Accent color <em class="pro-tag">¥480+</em></span>'),
+  ('aria-label="アクセントカラー"', 'aria-label="Accent color"'),
+  ('<p class="hint">初めて出た言葉の色と下線に使います</p>', '<p class="hint">Used for the color and underline of words heard for the first time</p>'),
+  ('<span class="lbl">背景画像 <em class="pro-tag">¥480〜</em></span>', '<span class="lbl">Background image <em class="pro-tag">¥480+</em></span>'),
+  ('>画像を選ぶ<input', '>Choose image<input'),
+  ('type="button" hidden>外す</button>', 'type="button" hidden>Remove</button>'),
+  ('<span class="lbl">画像の暗さ</span>', '<span class="lbl">Image dimming</span>'),
+  ('<p class="hint">長い辺が1000px以下になるよう自動で縮小し、表示の窓に合わせて自動でトリミングします</p>', '<p class="hint">Automatically resized to 1000px on the long side and cropped to fit the display window</p>'),
+  ('<p id="trialNote" class="hint">プレミアム書体・アクセントカラー・背景画像・VJ モード・話者の色分けは、無料プランでも1日（24時間）お試しできます</p>', '<p id="trialNote" class="hint">Premium typefaces, accent colors, background images, VJ mode and speaker colors can be tried free for one day (24 hours)</p>'),
+  ('<span class="lbl">レイアウト</span>', '<span class="lbl">Layout</span>'),
+  ('aria-label="レイアウト"', 'aria-label="Layout"'),
+  ('<span class="lbl">VJ スタイル <em class="pro-tag">¥480〜</em></span>', '<span class="lbl">VJ style <em class="pro-tag">¥480+</em></span>'),
+  ('aria-label="VJ スタイル"', 'aria-label="VJ style"'),
+  ('<p class="hint">PC では、マイクの音量で画面の上下のイコライザーが揺れます</p>', '<p class="hint">On desktop, the equalizers at the top and bottom move with your mic volume</p>'),
+  ('<span class="lbl">文字サイズ</span>', '<span class="lbl">Text size</span>'),
+  ('<span class="lbl">表示時間</span>', '<span class="lbl">Display time</span>'),
+  ('<span class="lbl">同時に出す語</span>', '<span class="lbl">Words on screen</span>'),
+  ('<span>縦組みを混ぜる</span>', '<span>Mix in vertical text</span>'),
+  ('<span>字幕ライン</span>', '<span>Caption line</span>'),
+  ('<span>動きを控えめに</span>', '<span>Reduce motion</span>'),
+  ('<h2>話者 <em class="pro-tag">¥480〜</em></h2>', '<h2>SPEAKERS <em class="pro-tag">¥480+</em></h2>'),
+  ('<span class="lbl">ラベルと色分け</span>', '<span class="lbl">Labels and colors</span>'),
+  ('aria-label="話者の色分け"', 'aria-label="Speaker colors"'),
+  ('<span class="lbl">人数</span>', '<span class="lbl">People</span>'),
+  ('aria-label="話者の人数"', 'aria-label="Number of speakers"'),
+  ('<span class="lbl">名前と色</span>', '<span class="lbl">Names and colors</span>'),
+  ('<span class="lbl">いま話している人 <kbd>1</kbd>〜<kbd>4</kbd></span>', '<span class="lbl">Speaking now <kbd>1</kbd>–<kbd>4</kbd></span>'),
+  ('aria-label="いま話している人"', 'aria-label="Speaking now"'),
+  ('<p class="hint">おトクプランでは、クラウド認識が声を聞き分けて自動で色分けします（近日公開）</p>', '<p class="hint">With Pro, cloud recognition tells voices apart and colors them automatically (coming soon)</p>'),
+  ('<h2>辞書</h2>', '<h2>DICTIONARY</h2>'),
+  ('<span class="lbl">登録キーワード</span>', '<span class="lbl">Keywords</span>'),
+  ('placeholder="商品名、番組名、ゲストの名前など"', 'placeholder="Product names, show titles, guest names…"'),
+  ('<span class="hint">強調して表示し、優先して拾います。読点か改行で区切ります。</span>', '<span class="hint">Highlighted and picked up first. Separate with commas or new lines.</span>'),
+  ('<span class="lbl">NG ワード</span>', '<span class="lbl">Blocked words</span>'),
+  ('placeholder="社外秘のコードネームなど"', 'placeholder="Confidential code names, etc."'),
+  ('<span class="hint">画面にも字幕にも出しません。</span>', '<span class="hint">Never shown on screen or in captions.</span>'),
+  ('<h2>表示ビュー</h2>', '<h2>DISPLAY VIEWS</h2>'),
+  ('>カンペを別窓で</button>', '>Open cue view</button>'),
+  ('>組版を別窓で</button>', '>Open compose view</button>'),
+  ('<summary><span>OBS に透過で重ねる</span><small>実験的</small></summary>', '<summary><span>Overlay on OBS (transparent)</span><small>Beta</small></summary>'),
+  ('<li>OBS の「ツール → WebSocketサーバー設定」でサーバーを有効にする</li>', '<li>In OBS, enable the server under Tools → WebSocket Server Settings</li>'),
+  ('<li>接続先とパスワードを入れて「接続」</li>', '<li>Enter the address and password, then press Connect</li>'),
+  ('<li>「URLをコピー」して OBS のブラウザソースに貼る（1920×1080）</li>', '<li>Press Copy URL and paste it into an OBS Browser Source (1920×1080)</li>'),
+  ('aria-label="接続先"', 'aria-label="Address"'),
+  ('placeholder="パスワード" aria-label="パスワード"', 'placeholder="Password" aria-label="Password"'),
+  ('type="button">接続</button>', 'type="button">Connect</button>'),
+  ('type="button">URLをコピー</button>', 'type="button">Copy URL</button>'),
+  ('<span id="obsStatus" class="hint">未接続</span>', '<span id="obsStatus" class="hint">Not connected</span>'),
+  ('<h2>プレビュー</h2>', '<h2>PREVIEW</h2>'),
+  ('title="P">一時停止 <kbd>P</kbd>', 'title="P">Pause <kbd>P</kbd>'),
+  ('title="Esc">全消去 <kbd>Esc</kbd>', 'title="Esc">Clear <kbd>Esc</kbd>'),
+  ('src="display.html?embed=1" title="表示プレビュー"', 'src="../display.html?embed=1&amp;hl=en" title="Display preview"'),
+  ('<h2>文字起こし</h2>', '<h2>TRANSCRIPT</h2>'),
+  ('class="ghost small">消去</button>', 'class="ghost small">Clear</button>'),
+]
+for a, b in T:
+    if a not in s:
+        raise SystemExit(f'not found: {a[:60]}')
+    s = s.replace(a, b)
+# 英語版は /en/ にあるので、共有のファイルは1つ上を指す
+s = re.sub(r'(href|src)="(assets|styles|src)/', r'\1="../\2/', s)
+s = s.replace('<link rel="alternate" hreflang="ja" href="https://kanpe.yoneken.xyz/app">', '<link rel="alternate" hreflang="ja" href="https://kanpe.yoneken.xyz/app">')
+left = re.findall(r'[぀-ヿ一-鿿]+', re.sub(r'<a class="lang-link jp"[^>]*>日本語</a>', '', s).replace('title="日本語版"', ''))
+left = [w for w in left if w not in ('字',)]
+if left:
+    print('untranslated:', sorted(set(left))[:40])
+(ROOT / 'en' / 'app.html').write_text(s)
+print('wrote en/app.html')

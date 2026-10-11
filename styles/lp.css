@@ -26,14 +26,6 @@
   --ease: cubic-bezier(.2, .7, .2, 1);
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #111110; --paper-2: #181816; --card: #1c1c1a; --ink: #efede6; --ink-2: #a8a59c; --ink-3: #77746c;
-    --rule: #2b2a27; --rule-2: #3b3a36; --grid: rgba(239, 237, 230, .05); --tally: #ff5444; --tally-ink: #1a0503;
-    --monitor: #08090b; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 30px 60px -36px rgba(0,0,0,.9);
-    color-scheme: dark;
-  }
-}
 :root[data-theme="dark"] {
   --paper: #111110; --paper-2: #181816; --card: #1c1c1a; --ink: #efede6; --ink-2: #a8a59c; --ink-3: #77746c;
   --rule: #2b2a27; --rule-2: #3b3a36; --grid: rgba(239, 237, 230, .05); --tally: #ff5444; --tally-ink: #1a0503;
@@ -290,6 +282,33 @@ i { font-style: normal; }
 .foot-links a { text-decoration: none; color: var(--ink-2); }
 .foot-links a:hover { color: var(--ink); }
 
+/* ---------------------------------------------------------------- 言語の切り替え（確認の窓） */
+.lang-link { display: inline-grid; place-items: center; height: 38px; min-width: 38px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--rule-2);
+  font: 500 12px/1 var(--f-mono); letter-spacing: .08em; color: var(--ink-2); text-decoration: none; transition: color .2s, border-color .2s; }
+.lang-link:hover { color: var(--ink); border-color: var(--ink); }
+.lang-link.jp { font-family: var(--f-body); letter-spacing: .04em; }
+.lang-dialog { border: 0; padding: 0; border-radius: 22px; width: min(440px, calc(100vw - 32px)); background: var(--card); color: var(--ink);
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,.45), 0 0 0 1px var(--rule); }
+.lang-dialog::backdrop { background: rgba(10, 10, 9, .45); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.lang-dialog[open] { animation: dlg-in .28s var(--ease); }
+@keyframes dlg-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+.lang-box { display: flex; flex-direction: column; gap: 8px; padding: 30px 28px 24px; margin: 0; }
+.lang-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; margin-bottom: 8px; background: var(--paper-2);
+  font: 800 22px/1 var(--f-min); color: var(--ink); }
+.lang-box h2 { font-family: var(--f-min); font-weight: 800; font-size: 22px; line-height: 1.4; }
+.lang-sub { font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-3); }
+.lang-body { font-size: 14px; line-height: 1.9; color: var(--ink-2); margin-top: 6px; }
+.lang-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.lang-actions button { min-height: 44px; padding: 0 20px; border-radius: 999px; font: 700 14px/1 var(--f-body); cursor: pointer; letter-spacing: .03em; }
+.lang-cancel { background: transparent; color: var(--ink); border: 1px solid var(--rule-2); }
+.lang-ok { background: var(--ink); color: var(--paper); border: 1px solid var(--ink); }
+.lang-actions button:disabled { opacity: .55; cursor: progress; }
+@media (max-width: 640px) {
+  .lang-link { height: 36px; min-width: 36px; padding: 0 10px; }
+  .lang-actions button { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .lang-dialog[open] { animation: none; } }
+
 /* ---------------------------------------------------------------- スマホの固定ボタン */
 .dock { display: none; }
 
@@ -323,7 +342,8 @@ i { font-style: normal; }
   html { scroll-padding-top: 64px; }
   .nav { height: 56px; gap: 16px; }
   .links { display: none; }
-  .nav .mode-btn { margin-left: auto; width: 36px; height: 36px; }
+  .nav .mode-btn { width: 36px; height: 36px; }
+  .nav .lang-link { margin-left: auto; }
 
   .hero { padding-top: 32px; padding-bottom: 48px; gap: 36px; }
   .hero-copy { gap: 22px; }
@@ -423,3 +443,25 @@ i { font-style: normal; }
   .js .reveal { opacity: 1; transform: none; transition: none; }
   .btn, .btn .arrow, .dock { transition: none; }
 }
+
+/* ================================================================ 英語版（/en/）
+   見出しは欧文セリフ（Fraunces）、本文は Inter。和文が混じる見本は従来の和文書体に自動で切り替わる。 */
+:root:lang(en) {
+  --f-min: "Fraunces", "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", "Noto Serif JP", serif;
+  --f-body: "Inter", "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", "Noto Sans JP", system-ui, sans-serif;
+}
+:lang(en) body { letter-spacing: 0; line-height: 1.7; font-feature-settings: normal; }
+:lang(en) .hero-title { font-weight: 700; letter-spacing: -.03em; line-height: 1.02; font-variation-settings: "opsz" 144; }
+:lang(en) .section-head h2, :lang(en) .closer h2, :lang(en) .show-copy h3, :lang(en) .lang-box h2 { font-weight: 700; letter-spacing: -.02em; font-variation-settings: "opsz" 96; }
+:lang(en) .section-head p, :lang(en) .lede, :lang(en) .faq details p, :lang(en) .show-copy > p:not(.label) { line-height: 1.75; }
+:lang(en) .stat b, :lang(en) .price b, :lang(en) .num, :lang(en) .plan-tabs button b { font-weight: 700; letter-spacing: -.02em; }
+:lang(en) .spec h3, :lang(en) .steps h3, :lang(en) .plan h3, :lang(en) .uses b, :lang(en) .faq summary { letter-spacing: -.01em; font-weight: 600; }
+:lang(en) .btn { letter-spacing: 0; font-weight: 600; }
+:lang(en) .grow span:nth-child(3) { font-weight: 700; }
+:lang(en) .hero-title { font-size: clamp(48px, 6vw, 88px); }
+:lang(en) .hero-title .row { white-space: nowrap; }
+:lang(en) .hero-side { display: none !important; }
+@media (max-width: 640px) { :lang(en) .hero-title { font-size: min(14vw, 60px); } }
+:lang(en) .sp-word, :lang(en) .vert .v.small { font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", "Noto Sans JP", sans-serif; }
+:lang(en) .vert .v { font-family: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", "Noto Serif JP", serif; }
+:lang(en) .stream .m { font-family: var(--f-min); }

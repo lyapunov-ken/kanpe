@@ -1,11 +1,12 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610111202';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610111202';
-import { createBus } from '../core/bus.js?v=202610111202';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610111202';
-import { runs } from '../core/extract.js?v=202610111202';
-import { createVJ } from './vj.js?v=202610111202';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610111226';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610111226';
+import { createBus } from '../core/bus.js?v=202610111226';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610111226';
+import { runs } from '../core/extract.js?v=202610111226';
+import { EN, L, tr } from '../core/i18n.js?v=202610111226';
+import { createVJ } from './vj.js?v=202610111226';
 
 const P = new URLSearchParams(location.search);
 const LOCK = {};
@@ -25,6 +26,7 @@ const root = document.documentElement;
 const stage = document.getElementById('stage');
 const cap = document.getElementById('caption');
 const hint = document.getElementById('hint');
+if (EN && hint) { hint.textContent = 'Start talking and your words appear here'; document.documentElement.lang = 'en'; }
 const items = new Map();
 let host = stage;
 let trackX = 0;
@@ -461,7 +463,7 @@ const isLocked = (id) => THEMES[id] && THEMES[id].pro && !canUse('theme:premium'
 let picker = null, pickerNote = null, uiTimer = 0;
 
 function setWindowTheme(id) {
-  if (id && isLocked(id)) { notify('プレミアム書体のお試し期間（1日）は終わりました'); return; }
+  if (id && isLocked(id)) { notify(L('プレミアム書体のお試し期間（1日）は終わりました', 'The 1-day trial of premium typefaces has ended')); return; }
   const url = new URL(location.href);
   if (id) { LOCK.theme = id; url.searchParams.set('theme', id); }
   else { delete LOCK.theme; url.searchParams.delete('theme'); }
@@ -487,8 +489,8 @@ function renderPicker() {
   const follow = document.createElement('button');
   follow.type = 'button';
   follow.className = 'pk-follow';
-  follow.textContent = '連動';
-  follow.title = 'コンソールで選んだ書体に合わせる';
+  follow.textContent = L('連動', 'Sync');
+  follow.title = L('コンソールで選んだ書体に合わせる', 'Follow the typeface chosen in the console');
   follow.setAttribute('aria-pressed', String(!LOCK.theme));
   follow.addEventListener('click', () => setWindowTheme(null));
   row.appendChild(follow);
@@ -496,7 +498,7 @@ function renderPicker() {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'pk-theme' + (th.pro ? ' plus' : '') + (isLocked(id) ? ' locked' : '');
-    b.title = th.pro ? `${th.label}（プレミアム書体）` : th.label;
+    b.title = th.pro ? L(`${th.label}（プレミアム書体）`, `${tr(th)} (premium)`) : tr(th);
     b.setAttribute('aria-pressed', String(S.theme === id));
     const tile = document.createElement('span');
     tile.className = 'pk-tile';
@@ -507,7 +509,7 @@ function renderPicker() {
     tile.style.fontWeight = th.strong;
     const name = document.createElement('span');
     name.className = 'pk-name';
-    name.textContent = th.label;
+    name.textContent = tr(th);
     b.append(tile, name);
     b.addEventListener('click', () => setWindowTheme(id));
     row.appendChild(b);
@@ -515,8 +517,8 @@ function renderPicker() {
   const fs = document.createElement('button');
   fs.type = 'button';
   fs.className = 'pk-fs';
-  fs.textContent = document.fullscreenElement ? '戻す' : '全画面';
-  fs.title = '全画面（F キー）';
+  fs.textContent = document.fullscreenElement ? L('戻す', 'Exit') : L('全画面', 'Full');
+  fs.title = L('全画面（F キー）', 'Fullscreen (F key)');
   fs.addEventListener('click', toggleFullscreen);
   row.appendChild(fs);
 
@@ -527,8 +529,8 @@ function renderPicker() {
   const af = document.createElement('button');
   af.type = 'button';
   af.className = 'pk-follow small';
-  af.textContent = '連動';
-  af.title = 'コンソールで選んだ色に合わせる';
+  af.textContent = L('連動', 'Sync');
+  af.title = L('コンソールで選んだ色に合わせる', 'Follow the color chosen in the console');
   af.setAttribute('aria-pressed', String(!LOCK.accent));
   af.addEventListener('click', () => setWindowAccent(null));
   arow.appendChild(af);
@@ -537,7 +539,7 @@ function renderPicker() {
     b.type = 'button';
     b.className = 'pk-acc' + (accLocked ? ' locked' : '');
     b.style.background = a.c;
-    b.title = `${a.label}（お手軽プラン以上）`;
+    b.title = L(`${a.label}（お手軽プラン以上）`, `${tr(a)} (Plus and up)`);
     b.setAttribute('aria-pressed', String(LOCK.accent === a.c));
     b.addEventListener('click', () => setWindowAccent(a.c));
     arow.appendChild(b);
@@ -545,7 +547,7 @@ function renderPicker() {
 }
 
 function setWindowAccent(c) {
-  if (c && !canUse('accent:custom') && trialRemainingMs() <= 0) { notify('プレミアム機能のお試し期間（1日）は終わりました'); return; }
+  if (c && !canUse('accent:custom') && trialRemainingMs() <= 0) { notify(L('プレミアム機能のお試し期間（1日）は終わりました', 'The 1-day trial of premium features has ended')); return; }
   const url = new URL(location.href);
   if (c) { LOCK.accent = c; url.searchParams.set('accent', c.slice(1)); }
   else { delete LOCK.accent; url.searchParams.delete('accent'); }
@@ -575,9 +577,9 @@ if (SHOW_UI) {
   picker = document.createElement('div');
   picker.id = 'picker';
   picker.setAttribute('role', 'toolbar');
-  picker.setAttribute('aria-label', 'この窓の書体');
-  picker.innerHTML = '<span class="pk-label">書体</span><div class="pk-row pk-themes"></div>' +
-    '<span class="pk-label">アクセント</span><div class="pk-row pk-accents"></div><p class="pk-note" aria-live="polite"></p>';
+  picker.setAttribute('aria-label', L('この窓の書体', 'Typeface for this window'));
+  picker.innerHTML = `<span class="pk-label">${L('書体', 'TYPEFACE')}</span><div class="pk-row pk-themes"></div>` +
+    `<span class="pk-label">${L('アクセント', 'ACCENT')}</span><div class="pk-row pk-accents"></div><p class="pk-note" aria-live="polite"></p>`;
   pickerNote = picker.querySelector('.pk-note');
   document.body.appendChild(picker);
   renderPicker();
@@ -598,7 +600,7 @@ if (SHOW_UI) {
       if (trialRemainingMs() <= 0) {
         if (plusTheme) setWindowTheme(null);
         if (LOCK.accent) setWindowAccent(null);
-        notify('プレミアム機能のお試し期間（1日）が終わったので、コンソールの設定に戻しました');
+        notify(L('プレミアム機能のお試し期間（1日）が終わったので、コンソールの設定に戻しました', 'The 1-day trial has ended, so this window follows the console again'));
       }
     }
   }, 1000);
@@ -622,12 +624,12 @@ bus.send({ t: 'hello' });
 // 単体デモ：display.html?demo=1
 if (P.get('demo') === '1') {
   // sp=1：話者の色分けの見本（2人が交互に話す）
-  const SPK = [{ n: 'わたし', c: '#ffb020' }, { n: 'ゲスト', c: '#3fb6ff' }];
+  const SPK = [{ n: L('わたし', 'Me'), c: '#ffb020' }, { n: L('ゲスト', 'Guest'), c: '#3fb6ff' }];
   let cur = 0;
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610111202').then(({ runDemo }) => runDemo({ lang: S.lang, deliver, registered: S.registered }));
+  import('../console/demo.js?v=202610111226').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered }));
 }
 
 // 検証用フック

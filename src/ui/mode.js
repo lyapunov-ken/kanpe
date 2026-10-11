@@ -1,12 +1,11 @@
 // ライト／ダークの切り替え（トップページとコンソールで共通）。
-// 選ばなければ OS の設定に従う。ボタンで選ぶと、その選択をこのブラウザに保存して優先する。
+// 最初はライトモード。ボタンで選ぶと、その選択をこのブラウザに保存して優先する。
 // <html data-theme> = 明示的な選択、<html data-mode> = いま実際に表示しているモード。
 (() => {
   const KEY = 'kanpe.ui';
   const root = document.documentElement;
-  const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : { matches: false, addEventListener() {} };
   const saved = () => { try { const v = localStorage.getItem(KEY); return v === 'light' || v === 'dark' ? v : null; } catch { return null; } };
-  const effective = () => saved() || (mq.matches ? 'dark' : 'light');
+  const effective = () => saved() || 'light';
 
   function apply() {
     const s = saved();
@@ -33,7 +32,6 @@
     apply();
     setTimeout(() => root.classList.remove('mode-anim'), 400);
   });
-  mq.addEventListener && mq.addEventListener('change', apply);
   window.addEventListener('storage', (e) => { if (e.key === KEY) apply(); }); // 別のタブで切り替えたとき
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply); else apply();
 })();

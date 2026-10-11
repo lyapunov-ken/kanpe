@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KANPE Console</title>
+<meta name="description" content="The KANPE console. Talk into your mic and keywords turn into live typography on screen.">
+<link rel="canonical" href="https://kanpe.yoneken.xyz/en/app">
+<link rel="alternate" hreflang="ja" href="https://kanpe.yoneken.xyz/app">
+<link rel="alternate" hreflang="en" href="https://kanpe.yoneken.xyz/en/app">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KANPE">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://kanpe.yoneken.xyz/en/app">
+<meta property="og:title" content="KANPE Console | Speak, and your words take shape.">
+<meta property="og:description" content="Talk into your mic and keywords become live typography. A free real-time cue card for streamers, no sign-up needed.">
+<meta property="og:image" content="https://kanpe.yoneken.xyz/assets/og-en.png?v=1">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KANPE | Speak, and your words take shape. A real-time cue card that turns your stream’s voice into typography.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="KANPE Console | Speak, and your words take shape.">
+<meta name="twitter:description" content="Talk into your mic and keywords become live typography. A free real-time cue card for streamers, no sign-up needed.">
+<meta name="twitter:image" content="https://kanpe.yoneken.xyz/assets/og-en.png?v=1">
+<meta name="twitter:image:alt" content="KANPE | Speak, and your words take shape.">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97&display=swap">
+<script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
+<meta name="theme-color" content="#f3f3f0">
+<link rel="stylesheet" href="../styles/console.css?v=202610111226">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="index.html" title="Back to the KANPE home page"><span class="mark">K</span>KANPE<small>Real-time cue cards</small></a>
+  <div class="top-right">
+    <div class="status"><span id="dot" class="dot"></span><span id="statusText">Idle</span></div>
+    <a class="lang-link jp" href="../app.html" hreflang="ja" lang="ja" data-lang-switch title="日本語版">日本語</a>
+    <button class="mode-btn" type="button" data-mode-toggle aria-label="Switch color mode"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg></button>
+    <a id="planBadge" class="plan-badge" href="index.html#pricing"><b>Free</b><span>Upgrade</span></a>
+  </div>
+</header>
+
+<main class="grid">
+  <section class="panel controls" aria-label="Settings">
+    <div class="sec mic-sec">
+      <div class="mic-row">
+        <button id="btnMic" class="mic-btn" type="button" aria-pressed="false" aria-label="Start talking">
+          <svg class="ic ic-mic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>
+          <svg class="ic ic-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.5"/></svg>
+        </button>
+        <div class="mic-info">
+          <b id="micLabel">Start talking</b>
+          <span id="micHint" class="hint">Press to start listening with your mic</span>
+          <div class="meter" title="Input level"><i id="meter"></i></div>
+        </div>
+      </div>
+      <div class="grid2">
+        <label class="field"><span class="lbl">Speech language</span>
+          <select id="lang"><option value="ja-JP">日本語</option><option value="en-US">English</option></select>
+        </label>
+        <label class="field"><span class="lbl">Recognition</span>
+          <select id="engine">
+            <option value="browser">Browser (free)</option>
+            <option value="cloud">High accuracy (Pro)</option>
+          </select>
+        </label>
+      </div>
+      <div id="proNote" class="pro-note" hidden>
+        <b>High-accuracy recognition is a Pro feature</b>
+        <p>Cloud recognition that handles names and jargon picks up words more accurately. Included in the Pro plan (¥2,980/mo with 20 hours a month — enough for three 2-hour streams a week), along with automatic speaker separation. Coming soon.</p>
+        <a href="index.html#pricing">See pricing</a>
+      </div>
+      <div class="field try">
+        <span class="lbl">Try without a mic</span>
+        <div class="try-row">
+          <button id="btnDemo" class="btn" type="button">Play demo</button>
+          <form id="typeForm" class="type"><input id="typeInput" placeholder="Type a sentence, press Enter" autocomplete="off" aria-label="Try with text"></form>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>DISPLAY</h2>
+      <div class="field"><span class="lbl">Typeface theme</span><div id="themes" class="themes" role="radiogroup" aria-label="Typeface theme"></div></div>
+      <div class="field pro-themes">
+        <span class="lbl">Premium typefaces <em class="pro-tag">¥480+</em></span>
+        <div id="proThemes" class="themes" role="radiogroup" aria-label="Premium typefaces"></div>
+      </div>
+      <div class="field">
+        <span class="lbl">Accent color <em class="pro-tag">¥480+</em></span>
+        <div id="accents" class="accents" role="radiogroup" aria-label="Accent color"></div>
+        <p class="hint">Used for the color and underline of words heard for the first time</p>
+      </div>
+      <div class="field">
+        <span class="lbl">Background image <em class="pro-tag">¥480+</em></span>
+        <div class="bg-row">
+          <div id="bgThumb" class="bg-thumb" aria-hidden="true"></div>
+          <div class="bg-actions">
+            <label class="btn bg-pick">Choose image<input id="bgFile" type="file" accept="image/*"></label>
+            <button id="bgRemove" class="btn" type="button" hidden>Remove</button>
+          </div>
+        </div>
+        <label class="slider" id="bgDimRow" hidden><span class="lbl">Image dimming</span><output id="vBgDim"></output><input id="bgDim" type="range" min="0" max="0.85" step="0.05"></label>
+        <p class="hint">Automatically resized to 1000px on the long side and cropped to fit the display window</p>
+      </div>
+      <div id="trialBox" class="trial">
+        <div class="trial-bar"><i id="trialFill"></i></div>
+        <p id="trialNote" class="hint">Premium typefaces, accent colors, background images, VJ mode and speaker colors can be tried free for one day (24 hours)</p>
+      </div>
+      <div class="field"><span class="lbl">Layout</span><div id="layouts" class="segmented four" role="radiogroup" aria-label="Layout"></div><p id="layoutNote" class="hint"></p></div>
+      <div id="vjOpts" class="field vj-opts" hidden>
+        <span class="lbl">VJ style <em class="pro-tag">¥480+</em></span>
+        <div id="vjStyles" class="segmented" role="radiogroup" aria-label="VJ style"></div>
+        <p id="vjStyleNote" class="hint"></p>
+        <p class="hint">On desktop, the equalizers at the top and bottom move with your mic volume</p>
+      </div>
+      <div class="sliders">
+        <label class="slider"><span class="lbl">Text size</span><output id="vSize"></output><input id="baseSize" type="range" min="20" max="90" step="1"></label>
+        <label class="slider"><span class="lbl">Display time</span><output id="vTtl"></output><input id="ttl" type="range" min="3" max="30" step="1"></label>
+        <label class="slider"><span class="lbl">Words on screen</span><output id="vMax"></output><input id="maxWords" type="range" min="6" max="40" step="1"></label>
+      </div>
+      <div class="switches">
+        <label class="switch"><span>Mix in vertical text</span><input id="vertical" type="checkbox" role="switch"></label>
+        <label class="switch"><span>Caption line</span><input id="caption" type="checkbox" role="switch"></label>
+        <label class="switch"><span>Reduce motion</span><input id="reduceMotion" type="checkbox" role="switch"></label>
+      </div>
+    </div>
+
+    <div class="sec" id="speakerSec">
+      <h2>SPEAKERS <em class="pro-tag">¥480+</em></h2>
+      <div class="field">
+        <span class="lbl">Labels and colors</span>
+        <div id="spModes" class="segmented" role="radiogroup" aria-label="Speaker colors"></div>
+        <p id="spModeNote" class="hint"></p>
+      </div>
+      <div id="spBody" class="sp-body" hidden>
+        <div class="field"><span class="lbl">People</span><div id="spCounts" class="segmented" role="radiogroup" aria-label="Number of speakers"></div></div>
+        <div class="field"><span class="lbl">Names and colors</span><ul id="spList" class="sp-list"></ul></div>
+        <div class="field"><span class="lbl">Speaking now <kbd>1</kbd>–<kbd>4</kbd></span><div id="spNow" class="sp-now" role="group" aria-label="Speaking now"></div></div>
+      </div>
+      <p class="hint">With Pro, cloud recognition tells voices apart and colors them automatically (coming soon)</p>
+    </div>
+
+    <div class="sec">
+      <h2>DICTIONARY</h2>
+      <label class="field"><span class="lbl">Keywords</span><textarea id="registered" rows="2" placeholder="Product names, show titles, guest names…"></textarea><span class="hint">Highlighted and picked up first. Separate with commas or new lines.</span></label>
+      <label class="field"><span class="lbl">Blocked words</span><textarea id="ng" rows="2" placeholder="Confidential code names, etc."></textarea><span class="hint">Never shown on screen or in captions.</span></label>
+    </div>
+
+    <div class="sec">
+      <h2>DISPLAY VIEWS</h2>
+      <div class="grid2">
+        <button id="openKanpe" class="btn" type="button">Open cue view</button>
+        <button id="openStage" class="btn" type="button">Open compose view</button>
+      </div>
+      <details class="obs">
+        <summary><span>Overlay on OBS (transparent)</span><small>Beta</small></summary>
+        <ol class="steps-mini">
+          <li>In OBS, enable the server under Tools → WebSocket Server Settings</li>
+          <li>Enter the address and password, then press Connect</li>
+          <li>Press Copy URL and paste it into an OBS Browser Source (1920×1080)</li>
+        </ol>
+        <div class="grid2">
+          <input id="obsUrl" class="mono" placeholder="ws://127.0.0.1:4455" aria-label="Address">
+          <input id="obsPassword" type="password" placeholder="Password" aria-label="Password">
+        </div>
+        <div class="obs-actions">
+          <button id="obsConnect" class="btn" type="button">Connect</button>
+          <button id="obsCopy" class="btn" type="button">Copy URL</button>
+          <span id="obsStatus" class="hint">Not connected</span>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="panel right">
+    <div class="preview-head">
+      <h2>PREVIEW</h2>
+      <div class="ops">
+        <button id="btnPause" class="ghost small" title="P">Pause <kbd>P</kbd></button>
+        <button id="btnClear" class="ghost small" title="Esc">Clear <kbd>Esc</kbd></button>
+      </div>
+    </div>
+    <div class="preview"><iframe id="preview" src="../display.html?embed=1&amp;hl=en" title="Display preview"></iframe></div>
+
+    <div class="card transcript">
+      <div class="preview-head">
+        <h2>TRANSCRIPT</h2>
+        <div class="ops">
+          <button id="dlTxt" class="ghost small">TXT</button>
+          <button id="dlSrt" class="ghost small">SRT</button>
+          <button id="clrTx" class="ghost small">Clear</button>
+        </div>
+      </div>
+      <p id="live" class="live"></p>
+      <ol id="tx" class="tx"></ol>
+    </div>
+  </section>
+</main>
+<div id="toast" class="toast"></div>
+<script src="../src/ui/lang.js?v=202610111226" defer></script>
+<script src="../src/ui/mode.js?v=202610111226" defer></script>
+<script type="module" src="../src/console/console.js?v=202610111226"></script>
+</body>
+</html>
