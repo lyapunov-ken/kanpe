@@ -1,13 +1,13 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111610';
-import { EN, L, tr } from '../core/i18n.js?v=202610111610';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111610';
-import { createBus } from '../core/bus.js?v=202610111610';
-import { connectObs } from '../core/obs.js?v=202610111610';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111610';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610111610';
-import { simulateSpeech } from './demo.js?v=202610111610';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610111610';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610112307';
+import { EN, L, tr } from '../core/i18n.js?v=202610112307';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610112307';
+import { createBus } from '../core/bus.js?v=202610112307';
+import { connectObs } from '../core/obs.js?v=202610112307';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610112307';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610112307';
+import { simulateSpeech } from './demo.js?v=202610112307';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610112307';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -387,7 +387,7 @@ function renderAccents() {
   custom.appendChild(input);
   box.appendChild(custom);
 }
-const usingPlusTrial = () => !canUse('theme:premium') && ((THEMES[S.theme] && THEMES[S.theme].pro) || !!S.accent || !!S.bgImage ||
+const usingPlusTrial = () => !canUse('theme:premium') && ((THEMES[S.theme] && THEMES[S.theme].pro) || !!S.accent || !!S.bgImage || !!S.bgCamera ||
   S.layout === 'vj' || S.speakerMode !== 'off');
 function updateTrial() {
   const box = $('#trialBox');
@@ -413,9 +413,11 @@ setInterval(() => {
       if (THEMES[S.theme] && THEMES[S.theme].pro) S.theme = DEFAULT_THEME;
       S.accent = '';
       S.bgImage = '';
+      S.bgCamera = false;
       if (S.layout === 'vj') S.layout = 'compose';
       S.speakerMode = 'off';
       renderBg();
+      renderCam();
       pushSettings();
       renderThemes();
       segButtons('#layouts', LAYOUTS, 'layout');
@@ -455,10 +457,11 @@ async function shrinkImage(file) {
 }
 function renderBg() {
   const thumb = $('#bgThumb');
-  thumb.style.backgroundImage = S.bgImage ? `url("${S.bgImage}")` : '';
-  thumb.classList.toggle('has', !!S.bgImage);
+  thumb.style.backgroundImage = S.bgImage && !S.bgCamera ? `url("${S.bgImage}")` : '';
+  thumb.classList.toggle('has', !!S.bgImage && !S.bgCamera);
+  thumb.classList.toggle('cam', !!S.bgCamera); // カメラを映している間は、画像より手前にカメラが出る
   $('#bgRemove').hidden = !S.bgImage;
-  $('#bgDimRow').hidden = !S.bgImage;
+  $('#bgDimRow').hidden = !S.bgImage && !S.bgCamera;
   document.querySelector('.bg-pick').classList.toggle('locked', bgLocked());
 }
 $('#bgFile').addEventListener('click', (e) => {
@@ -481,6 +484,58 @@ $('#bgFile').addEventListener('change', async (e) => {
   }
 });
 $('#bgRemove').addEventListener('click', () => { S.bgImage = ''; renderBg(); updateTrial(); pushSettings(); });
+
+// ---- 背景にカメラの映像（お手軽プラン以上。無料プランは1日お試し）----
+// 許可はここ（コンソール）で一度だけ取る。映像を映すのは表示ビュー側で、同じサイトなので許可を引き継ぐ。
+// 映像はこの端末の中だけで使い、どこにも送らない。OBS のブラウザソースではカメラを開けないので映らない。
+const CAN_CAM = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+const camLocked = () => !canUse('bg:camera') && trialRemainingMs() <= 0;
+async function listCameras() {
+  const sel = $('#bgCamSel');
+  try {
+    const cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput' && d.deviceId);
+    sel.replaceChildren(...cams.map((d, i) => {
+      const o = document.createElement('option');
+      o.value = d.deviceId;
+      o.textContent = d.label || L(`カメラ ${i + 1}`, `Camera ${i + 1}`);
+      return o;
+    }));
+    if (S.bgCameraId && cams.some((d) => d.deviceId === S.bgCameraId)) sel.value = S.bgCameraId;
+    sel.hidden = !S.bgCamera || cams.length < 2; // カメラが1台なら選ぶ必要はない
+  } catch { sel.hidden = true; }
+}
+function renderCam() {
+  const b = $('#bgCam');
+  b.hidden = !CAN_CAM;
+  b.setAttribute('aria-pressed', String(!!S.bgCamera));
+  b.textContent = S.bgCamera ? L('カメラを止める', 'Stop camera') : L('カメラを映す', 'Show camera');
+  b.classList.toggle('on', !!S.bgCamera);
+  b.classList.toggle('locked', !S.bgCamera && camLocked());
+  $('#bgMirrorRow').hidden = !S.bgCamera;
+  $('#bgMirror').checked = !!S.bgMirror;
+  if (!S.bgCamera) $('#bgCamSel').hidden = true;
+}
+$('#bgCam').addEventListener('click', async () => {
+  if (S.bgCamera) { S.bgCamera = false; renderCam(); renderBg(); updateTrial(); pushSettings(); return; }
+  if (camLocked()) { toast(L(`お試し期間（1日）は終わりました。背景のカメラは${PLUS_LABEL}で使えます`, `Your 1-day trial has ended. The camera background is part of ${PLUS_LABEL}.`)); return; }
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    st.getTracks().forEach((t) => t.stop());
+  } catch (e) {
+    toast(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')
+      ? L('カメラの使用が許可されていません。アドレスバーのカメラアイコンから許可してください', 'Camera access is blocked. Allow it from the camera icon in the address bar.')
+      : L('カメラが見つかりませんでした。接続を確認してください', 'No camera was found. Check that one is connected.'));
+    return;
+  }
+  S.bgCamera = true;
+  renderCam(); renderBg(); updateTrial(); pushSettings();
+  listCameras();
+  toast(IS_MOBILE
+    ? L('カメラを背景に映しました。スマホではカメラを使うと音声認識が止まることがあります。止まる場合はカメラを止めてください', 'The camera is now the background. On phones the camera can stop speech recognition; if it does, turn the camera off.')
+    : L('カメラを背景に映しました（映像はこの端末の中だけで使います）', 'The camera is now the background (the video stays on this device).'));
+});
+$('#bgCamSel').addEventListener('change', () => { S.bgCameraId = $('#bgCamSel').value; pushSettings(); });
+$('#bgMirror').addEventListener('change', () => { S.bgMirror = $('#bgMirror').checked; pushSettings(); });
 
 function bindRange(id, label, fmt) {
   const input = $('#' + id);
@@ -510,6 +565,7 @@ function bindText(id, after) {
 if (!THEMES[S.theme] || (THEMES[S.theme].pro && !canUse('theme:premium') && trialRemainingMs() <= 0)) S.theme = DEFAULT_THEME;
 if (S.accent && accentLocked()) S.accent = '';
 if (S.bgImage && accentLocked()) S.bgImage = '';
+if (S.bgCamera && (camLocked() || !CAN_CAM)) S.bgCamera = false;
 if (S.layout === 'vj' && plusLocked('layout:vj')) S.layout = 'compose';
 if (!LAYOUTS[S.layout]) S.layout = 'compose';
 if (S.speakerMode !== 'off' && plusLocked('speaker:labels')) S.speakerMode = 'off';
@@ -523,6 +579,8 @@ bindRange('ttl', 'vTtl', (v) => L(`${v}秒`, `${v}s`));
 bindRange('maxWords', 'vMax', (v) => L(`${v}語`, `${v} words`));
 bindRange('bgDim', 'vBgDim', (v) => `${Math.round(v * 100)}%`);
 renderBg();
+renderCam();
+if (S.bgCamera) listCameras();
 bindCheck('vertical');
 bindCheck('caption');
 bindCheck('reduceMotion');
@@ -696,6 +754,7 @@ function applyPlanUI() {
   segButtons('#layouts', LAYOUTS, 'layout');
   renderSpeakers();
   renderBg();
+  renderCam();
   updateTrial();
   pushSettings(false);
 }

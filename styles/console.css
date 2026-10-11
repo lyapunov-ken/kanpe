@@ -159,7 +159,13 @@ kbd { font-family: inherit; font-size: 10px; color: var(--faint); border: 1px so
 .bg-row { display: flex; align-items: center; gap: 12px; }
 .bg-thumb { width: 96px; aspect-ratio: 16 / 9; border-radius: 8px; flex: none; background: var(--raise) center / cover no-repeat;
   box-shadow: inset 0 0 0 1px var(--line2); display: grid; place-items: center; color: var(--faint); font-size: 11px; }
-.bg-thumb:not(.has)::before { content: "なし"; }
+.bg-thumb:not(.has):not(.cam)::before { content: "なし"; }
+.bg-thumb.cam::before { content: "カメラ"; color: var(--accent-ink); }
+.bg-thumb.cam { background: var(--accent); }
+.cam-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.cam-row select { flex: 1 1 160px; min-width: 0; }
+.bg-cam.on { border-color: var(--accent); }
+.bg-cam.locked { opacity: .45; }
 .bg-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .bg-pick { position: relative; overflow: hidden; cursor: pointer; }
 .bg-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
@@ -292,7 +298,8 @@ details.obs[open] { padding-bottom: 12px; }
   .mic-btn.on::after, .dot.on { animation: none; }
   * { transition-duration: 0s !important; }
 }
-:lang(en) .bg-thumb:not(.has)::before { content: "None"; }
+:lang(en) .bg-thumb:not(.has):not(.cam)::before { content: "None"; }
+:lang(en) .bg-thumb.cam::before { content: "Camera"; }
 
 /* ---- プランとお支払い ---- */
 .plan-badge { cursor: pointer; }

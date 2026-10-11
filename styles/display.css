@@ -153,6 +153,8 @@ body {
 #bg { position: fixed; inset: 0; display: none; background: center / cover no-repeat; }
 #bg::after { content: ""; position: absolute; inset: 0; background: var(--bg-dim-color, #000); opacity: var(--bg-dim, .4); }
 .has-bgimg #bg { display: block; }
+#bg .bgcam { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#bg .bgcam.mirror { transform: scaleX(-1); }
 .has-bgimg #stage { background: transparent; }
 
 /* 話者のラベルと色分け（有料版） */

@@ -22,7 +22,7 @@ csp = '; '.join([
   Content-Security-Policy: {csp}
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: microphone=(self), camera=(), geolocation=(), payment=(), usb=()
+  Permissions-Policy: microphone=(self), camera=(self), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin-allow-popups
   Strict-Transport-Security: max-age=31536000
 """)

@@ -1,12 +1,12 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610111610';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610111610';
-import { createBus } from '../core/bus.js?v=202610111610';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610111610';
-import { runs } from '../core/extract.js?v=202610111610';
-import { EN, L, tr } from '../core/i18n.js?v=202610111610';
-import { createVJ } from './vj.js?v=202610111610';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610112307';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610112307';
+import { createBus } from '../core/bus.js?v=202610112307';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610112307';
+import { runs } from '../core/extract.js?v=202610112307';
+import { EN, L, tr } from '../core/i18n.js?v=202610112307';
+import { createVJ } from './vj.js?v=202610112307';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -49,6 +49,47 @@ const now = () => performance.now();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const el = (cls, text) => { const e = document.createElement(text === undefined ? 'div' : 'span'); e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 
+// ---------------------------------------------------------------- 背景のカメラ映像
+// この端末の中だけで映す（どこにも送らない）。デモや OBS のブラウザソース（カメラを開けない）では使わない。
+const CAM_OK = P.get('demo') !== '1' && !window.obsstudio && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+let camStream = null, camVideo = null, camWant = '';
+const camAllowed = () => canUse('bg:camera') || trialRemainingMs() > 0;
+function stopCamera() {
+  try { camStream && camStream.getTracks().forEach((t) => t.stop()); } catch { /* noop */ }
+  if (camVideo) camVideo.remove();
+  camStream = camVideo = null;
+}
+function camChanged() {
+  document.body.classList.toggle('has-bgimg', !!S.bgImage || !!camStream);
+  configureVJ();
+}
+async function syncCamera() {
+  const want = CAM_OK && S.bgCamera && camAllowed() ? (S.bgCameraId || 'default') : '';
+  if (camVideo) camVideo.classList.toggle('mirror', S.bgMirror !== false);
+  if (want === camWant) return;
+  camWant = want;
+  stopCamera();
+  camChanged();
+  if (!want) return;
+  try {
+    const video = { width: { ideal: 1280 }, height: { ideal: 720 } };
+    if (S.bgCameraId) video.deviceId = { ideal: S.bgCameraId };
+    const st = await navigator.mediaDevices.getUserMedia({ video, audio: false });
+    if (camWant !== want) { st.getTracks().forEach((t) => t.stop()); return; } // 待っている間に設定が変わった
+    camStream = st;
+    camVideo = document.createElement('video');
+    camVideo.className = 'bgcam' + (S.bgMirror !== false ? ' mirror' : '');
+    camVideo.muted = true; camVideo.playsInline = true; camVideo.autoplay = true;
+    camVideo.setAttribute('playsinline', '');
+    camVideo.srcObject = st;
+    const bgEl = document.getElementById('bg');
+    if (bgEl) bgEl.prepend(camVideo);
+    camVideo.play().catch(() => {});
+    camChanged();
+  } catch { /* 許可がない・カメラがない：テーマの背景（または背景画像）のまま */ }
+}
+window.addEventListener('pagehide', stopCamera);
+
 // ---------------------------------------------------------------- テーマ
 const fontLinks = new Set();
 let shownBg = '';
@@ -70,7 +111,7 @@ function applyTheme() {
     root.style.setProperty('--bg-dim-color', th.bg === 'transparent' ? '#000' : th.bg);
   }
   document.body.className = `theme-${S.theme} layout-${S.layout}` + (S.reduceMotion ? ' calm' : '') +
-    (S.caption ? ' has-cap' : '') + (EMBED ? ' embed' : '') + (S.credit === false ? '' : ' has-credit') + (S.bgImage ? ' has-bgimg' : '');
+    (S.caption ? ' has-cap' : '') + (EMBED ? ' embed' : '') + (S.credit === false ? '' : ' has-credit') + (S.bgImage || camStream ? ' has-bgimg' : '');
   if (!LOCAL_FONTS && th.gf && !fontLinks.has(th.gf)) {
     fontLinks.add(th.gf);
     const l = document.createElement('link');
@@ -79,6 +120,7 @@ function applyTheme() {
     document.head.appendChild(l);
   }
   configureVJ();
+  syncCamera();
 }
 
 // 表示する語の字形だけを先読み（Google Fonts は文字範囲ごとに分割配信）。最大120msで見切る。
@@ -126,7 +168,7 @@ function configureVJ() {
   if (!vj) return;
   const th = THEMES[S.theme] || THEMES.yoru;
   vj.configure({ style: S.vjStyle || 'led', accent: S.accent || th.accent, accent2: th.accent2,
-    transparent: th.bg === 'transparent' || !!S.bgImage, calm: !!S.reduceMotion, caption: !!S.caption, ttl: S.ttl });
+    transparent: th.bg === 'transparent' || !!S.bgImage || !!camStream, calm: !!S.reduceMotion, caption: !!S.caption, ttl: S.ttl });
 }
 
 function level(kind, text, count) {
@@ -633,7 +675,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610111610').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered }));
+  import('../console/demo.js?v=202610112307').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered }));
 }
 
 // 検証用フック

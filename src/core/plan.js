@@ -81,6 +81,7 @@ export const REQUIRES = {
   'credit:hide': 'plus',     // 配信画面の「KANPE」表示を消す
   'accent:custom': 'plus',   // アクセントカラーの変更
   'bg:image': 'plus',        // 背景画像のアップロード
+  'bg:camera': 'plus',       // 背景にカメラの映像を映す
   'layout:vj': 'plus',       // ドットアートの VJ モード
   'speaker:labels': 'plus',  // 話者のラベルと色分け（手動切り替え・声の高さで自動）
   'speaker:diarize': 'pro',  // クラウド認識による話者の自動聞き分け

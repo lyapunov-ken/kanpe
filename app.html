@@ -30,7 +30,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="styles/console.css?v=202610111610">
+<link rel="stylesheet" href="styles/console.css?v=202610112307">
 </head>
 <body>
 <header class="top">
@@ -95,7 +95,7 @@
         <p class="hint">初めて出た言葉の色と下線に使います</p>
       </div>
       <div class="field">
-        <span class="lbl">背景画像 <em class="pro-tag">¥480〜</em></span>
+        <span class="lbl">背景（画像・カメラ） <em class="pro-tag">¥480〜</em></span>
         <div class="bg-row">
           <div id="bgThumb" class="bg-thumb" aria-hidden="true"></div>
           <div class="bg-actions">
@@ -103,8 +103,13 @@
             <button id="bgRemove" class="btn" type="button" hidden>外す</button>
           </div>
         </div>
-        <label class="slider" id="bgDimRow" hidden><span class="lbl">画像の暗さ</span><output id="vBgDim"></output><input id="bgDim" type="range" min="0" max="0.85" step="0.05"></label>
-        <p class="hint">長い辺が1000px以下になるよう自動で縮小し、表示の窓に合わせて自動でトリミングします</p>
+        <div class="cam-row">
+          <button id="bgCam" class="btn bg-cam" type="button" aria-pressed="false">カメラを映す</button>
+          <select id="bgCamSel" aria-label="使うカメラ" hidden></select>
+        </div>
+        <label class="switch" id="bgMirrorRow" hidden><span>カメラを左右反転</span><input id="bgMirror" type="checkbox" role="switch"></label>
+        <label class="slider" id="bgDimRow" hidden><span class="lbl">背景の暗さ</span><output id="vBgDim"></output><input id="bgDim" type="range" min="0" max="0.85" step="0.05"></label>
+        <p class="hint">画像は長い辺が1000px以下になるよう自動で縮小し、表示の窓に合わせてトリミングします。カメラの映像はこの端末の中だけで使い、どこにも送りません（OBS のブラウザソースでは映りません）</p>
       </div>
       <div id="trialBox" class="trial">
         <div class="trial-bar"><i id="trialFill"></i></div>
@@ -184,7 +189,7 @@
         <button id="btnClear" class="ghost small" title="Esc">全消去 <kbd>Esc</kbd></button>
       </div>
     </div>
-    <div class="preview"><iframe id="preview" src="display.html?embed=1" title="表示プレビュー"></iframe></div>
+    <div class="preview"><iframe id="preview" src="display.html?embed=1" title="表示プレビュー" allow="camera"></iframe></div>
 
     <div class="card transcript">
       <div class="preview-head">
@@ -202,8 +207,8 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="src/ui/lang.js?v=202610111610" defer></script>
-<script src="src/ui/mode.js?v=202610111610" defer></script>
-<script type="module" src="src/console/console.js?v=202610111610"></script>
+<script src="src/ui/lang.js?v=202610112307" defer></script>
+<script src="src/ui/mode.js?v=202610112307" defer></script>
+<script type="module" src="src/console/console.js?v=202610112307"></script>
 </body>
 </html>

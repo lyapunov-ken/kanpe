@@ -102,7 +102,10 @@ export const DEFAULTS = {
   speakerCount: 2,
   speakers: DEFAULT_SPEAKERS,
   bgImage: '',       // 背景画像（data URL。長辺1000px以下に縮小済み）
-  bgDim: 0.4,        // 背景画像の上に重ねる地色の濃さ（文字を読みやすくする）
+  bgDim: 0.4,        // 背景（画像・カメラ）の上に重ねる地色の濃さ（文字を読みやすくする）
+  bgCamera: false,   // 背景にカメラの映像を映す（お手軽プラン。映像はこの端末の中だけで扱う）
+  bgCameraId: '',    // 使うカメラ（空なら既定のカメラ）
+  bgMirror: true,    // カメラの映像を左右反転（鏡のように）
   lang: 'ja-JP',
   registered: '',
   ng: '',
