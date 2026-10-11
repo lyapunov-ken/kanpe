@@ -9,9 +9,13 @@ const UA = typeof navigator !== 'undefined' ? navigator.userAgent : '';
 export const IS_IOS = /iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && typeof navigator !== 'undefined' && navigator.maxTouchPoints > 1);
 export const IS_ANDROID = /Android/.test(UA);
 export const IS_MOBILE = IS_IOS || IS_ANDROID;
+// Mac の Safari：連続モードが不安定で、マイクを別に開くと認識に音が届かなくなることがある → スマホと同じ扱い
+export const IS_SAFARI = !IS_IOS && /Safari\//.test(UA) && !/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|Electron/.test(UA);
+export const ONE_SHOT = IS_MOBILE || IS_SAFARI; // 一言ずつ聞いて自動で再開する端末
 
 const SETTLE_MS = IS_IOS ? 1300 : 1600;   // 途中結果がこの時間変わらなければ確定扱い
 const WATCHDOG_MS = IS_IOS ? 9000 : 15000; // 何も起きないまま止まっていたら開き直す
+const NET_FAIL_MAX = 3; // 結果が一度も来ないまま network エラーがこの回数続いたら、このブラウザでは使えないと判断する
 
 export class Recognizer {
   constructor({ lang = 'ja-JP', onInterim, onFinal, onState, onError } = {}) {
@@ -19,7 +23,10 @@ export class Recognizer {
     this.wanted = false;
     this.session = 0;
     this.r = null;
-    this.mobile = IS_MOBILE;
+    this.mobile = ONE_SHOT;
+    this.netFails = 0;
+    this.lastResultAt = 0;
+    this.renew = false; // 次に開き直すとき、認識オブジェクトを作り直す
     this.settleTimer = 0;
     this.watchdog = 0;
     this.pending = null; // { id, text } 確定していない最新の途中結果
@@ -31,18 +38,26 @@ export class Recognizer {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { this.onError && this.onError('unsupported'); return false; }
     this.wanted = true;
+    this.netFails = 0;
     if (!this.r) this._create(SR); // 1つを使い回す（iPhone で開き直すたびの効果音を減らす）
     this._begin();
     return true;
   }
 
   _create(SR) {
+    if (this.r) { // 古いものは切り離す（作り直したあとに古いイベントが届いても無視する）
+      const o = this.r;
+      o.onstart = o.onresult = o.onerror = o.onend = null;
+      try { o.abort(); } catch { /* noop */ }
+    }
     const r = new SR();
     r.interimResults = true;
     r.maxAlternatives = 1;
     r.onstart = () => { this.onState && this.onState('listening'); this._kick(); };
     r.onresult = (e) => {
       this._kick();
+      this.netFails = 0;
+      this.lastResultAt = Date.now();
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const res = e.results[i];
         const text = res[0] ? res[0].transcript : '';
@@ -54,7 +69,15 @@ export class Recognizer {
     };
     r.onerror = (e) => {
       if (e.error === 'no-speech' || e.error === 'aborted') return;
+      if (typeof console !== 'undefined') console.warn('[KANPE] speech error:', e.error, e.message || '');
+      if (e.error === 'network') {
+        // 一時的な切断なら開き直せば戻る。続くようなら（音声認識サービスに届かないブラウザ）止めて知らせる
+        this.renew = true;
+        if (++this.netFails < NET_FAIL_MAX) return;
+        this.wanted = false;
+      }
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') this.wanted = false;
+      this.renew = true;
       this.onError && this.onError(e.error);
     };
     r.onend = () => {
@@ -71,6 +94,11 @@ export class Recognizer {
   }
 
   _begin() {
+    if (this.renew && !this.mobile) { // エラーのあとは作り直す（Chrome で同じものを使い回すと結果が返らなくなることがある）
+      this.renew = false;
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SR) this._create(SR);
+    }
     const r = this.r;
     r.lang = this.lang;
     r.continuous = !this.mobile;
@@ -123,6 +151,17 @@ export class Recognizer {
     clearTimeout(this.watchdog);
     this._flush();
     try { this.r && this.r.stop(); } catch { /* noop */ }
+  }
+
+  // 声は届いているのに結果が返らないとき：認識オブジェクトを作り直して聞き取りを再開する
+  reset() {
+    if (!this.wanted) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    this._flush();
+    this.renew = false;
+    this._create(SR); // 古いものは abort（onend は切り離し済みなので、ここで開き直す）
+    setTimeout(() => { if (this.wanted) this._begin(); }, 150);
   }
 
   // 画面が裏に回るとスマホでは認識が止まるので、戻ってきたら開き直す

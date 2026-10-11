@@ -1,19 +1,21 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111509';
-import { EN, L, tr } from '../core/i18n.js?v=202610111509';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111509';
-import { createBus } from '../core/bus.js?v=202610111509';
-import { connectObs } from '../core/obs.js?v=202610111509';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111509';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610111509';
-import { simulateSpeech } from './demo.js?v=202610111509';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610111509';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111529';
+import { EN, L, tr } from '../core/i18n.js?v=202610111529';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111529';
+import { createBus } from '../core/bus.js?v=202610111529';
+import { connectObs } from '../core/obs.js?v=202610111529';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111529';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610111529';
+import { simulateSpeech } from './demo.js?v=202610111529';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610111529';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
 const saved0 = loadSettings();
 let S = { ...DEFAULTS, ...saved0 };
-if (EN && !saved0.lang) S.lang = 'en-US'; // 英語版を初めて開いた人は英語で聞き取る
+// 聞き取る言語：自分で選んでいなければページの言語に合わせる
+// （英語版を一度開くと日本語版でも英語で聞き取ってしまい、日本語が文字にならなかったため）
+if (!S.langChosen) S.lang = EN ? 'en-US' : 'ja-JP';
 const ROOT = EN ? '../' : ''; // 英語版は /en/ にあるので、表示ビューは1つ上
 const HL = EN ? 'hl=en' : '';
 
@@ -71,9 +73,9 @@ function onFinal(id, text) {
 const rec = new Recognizer({
   lang: S.lang, onInterim, onFinal,
   onState: (st) => {
-    if (st === 'listening') setStatus('on', L('聞き取り中', 'Listening'));
+    if (st === 'listening') { setStatus('on', L('聞き取り中', 'Listening')); if (!diag.since) diag.since = Date.now(); }
     else if (st === 'restarting') setStatus('on', L('聞き取り中', 'Listening'));
-    else if (st === 'stopped') { setStatus('', L('待機中', 'Idle')); setMic(false); stopMeter(); releaseWake(); }
+    else if (st === 'stopped') { setStatus('', L('待機中', 'Idle')); setMic(false); stopMeter(); releaseWake(); stopDiag(); }
   },
   onError: (err) => {
     const msg = {
@@ -86,10 +88,10 @@ const rec = new Recognizer({
       'service-not-allowed': IS_IOS ? L('音声認識を使えません。「設定」→「Siri」で Siri（または「一般」→「キーボード」→「音声入力」）をオンにしてください', 'Speech recognition is unavailable. Turn on Siri in Settings → Siri (or Dictation in General → Keyboard).')
         : L('音声認識サービスを使えません（Chrome / Edge / Safari と https で開いてください）', 'The speech service is unavailable. Use Chrome, Edge or Safari over https.'),
       'audio-capture': L('マイクが見つかりません', 'No microphone was found.'),
-      network: L('音声認識サービスに接続できません。ネットワークを確認してください', 'Can’t reach the speech service. Check your network connection.'),
+      network: L('音声認識サービスに接続できません。ネットワークを確認し、Google Chrome か Microsoft Edge で開いてください（Brave などの一部のブラウザやアプリ内のブラウザでは使えません）', 'Can’t reach the speech service. Check your connection and use Google Chrome or Microsoft Edge (some browsers such as Brave, and in-app browsers, aren’t supported).'),
     }[err] || L(`音声認識エラー：${err}`, `Speech recognition error: ${err}`);
     toast(msg);
-    if (err !== 'network') { setStatus('err', L('エラー', 'Error')); setMic(false); stopMeter(); releaseWake(); }
+    if (!rec.wanted) { setStatus('err', L('エラー', 'Error')); setMic(false); stopMeter(); releaseWake(); stopDiag(); }
   },
 });
 
@@ -101,17 +103,58 @@ function setMic(on) {
   $('#micHint').textContent = on ? L('もう一度押すと止まります', 'Press again to stop') : L('押すとマイクで聞き取りを始めます', 'Press to start listening with your mic');
 }
 $('#btnMic').addEventListener('click', async () => {
-  if (rec.wanted) { rec.stop(); setMic(false); stopMeter(); releaseWake(); return; }
+  if (rec.wanted) { rec.stop(); setMic(false); stopMeter(); releaseWake(); stopDiag(); return; }
   if (!Recognizer.supported()) { rec.onError('unsupported'); return; }
   stopDemo();
   clock();
   if (rec.start()) {
     setMic(true); setStatus('on', L('準備中', 'Starting'));
-    // スマホはマイクを2つ同時に開くと音声認識が止まるので、レベル表示は PC のみ
-    if (!IS_MOBILE) startMeter();
+    // スマホと Mac の Safari はマイクを2つ同時に開くと音声認識に音が届かなくなるので、レベル表示はそれ以外のみ
+    if (!ONE_SHOT) startMeter();
     keepAwake();
+    startDiag();
   }
 });
+
+// 聞き取りの自己診断：「聞き取り中」なのに文字が出ないとき、原因を推定して知らせる（レベル表示がある PC のみ）
+//  - 声は届いているのに結果が返らない → 認識を作り直して再開。それでもだめなら言語設定・ブラウザを案内
+//  - マイクの音がほとんど届いていない → 入力デバイスを案内
+const diag = { since: 0, voiceMs: 0, peak: 0, step: 0, silentWarned: false, timer: 0, last: 0 };
+function startDiag() {
+  stopDiag();
+  Object.assign(diag, { since: 0, voiceMs: 0, peak: 0, step: 0, silentWarned: false, last: performance.now() });
+  diag.timer = setInterval(checkDiag, 1000);
+}
+function stopDiag() { clearInterval(diag.timer); diag.timer = 0; diag.since = 0; }
+function diagLevel(v) { // メーターから毎フレーム呼ばれる
+  const t = performance.now();
+  if (v > 0.12) diag.voiceMs += Math.min(100, t - diag.last);
+  diag.peak = Math.max(diag.peak, v);
+  diag.last = t;
+}
+function checkDiag() {
+  if (!rec.wanted || !diag.since || !meterAnalyser || paused) return;
+  const now = Date.now();
+  const heardSince = rec.lastResultAt >= diag.since;
+  if (heardSince) { diag.since = now; diag.voiceMs = 0; diag.peak = 0; diag.step = 0; return; } // 正常
+  const elapsed = now - diag.since;
+  if (!diag.silentWarned && elapsed > 7000 && diag.peak < 0.04) {
+    diag.silentWarned = true;
+    toast(L('マイクの音がほとんど届いていません。パソコンの入力デバイス（サウンド設定）と、アドレスバーのマイクアイコンで選ばれているマイクを確認してください', 'Almost no sound is reaching the microphone. Check your computer’s input device (sound settings) and the mic selected via the microphone icon in the address bar.'));
+    return;
+  }
+  // 声（または BGM）が十分に届いているのに、一定時間まったく結果がないときだけ動く（誤報を避けるため控えめに）
+  if (elapsed < 8000 || diag.voiceMs < 4000) return;
+  if (diag.step === 0) {
+    diag.step = 1; diag.since = now; diag.voiceMs = 0;
+    rec.reset();
+    toast(L('声は届いていますが文字になりません。聞き取りを開き直しました。もう一度話してみてください', 'Your voice is reaching the mic but no text is coming back. Listening was restarted — please try speaking again.'));
+  } else if (diag.step === 1) {
+    diag.step = 2;
+    const langName = S.lang === 'en-US' ? L('英語', 'English') : L('日本語', 'Japanese');
+    toast(L(`音声認識サービスから文字が返ってきません。「言語」が話している言葉（いまは${langName}）になっているか確認し、Google Chrome か Microsoft Edge の最新版で開いてください`, `The speech service isn’t returning any text. Make sure “Language” matches what you’re speaking (now: ${langName}), and use the latest Google Chrome or Microsoft Edge.`), 9000);
+  }
+}
 
 // 聞き取り中は画面を消さない（スマホ）。裏に回って戻ってきたら認識を開き直す
 let wakeLock = null;
@@ -147,6 +190,7 @@ async function startMeter() {
       const rms = Math.sqrt(sum / buf.length);
       const v = Math.min(1, rms * 4);
       bar.style.transform = `scaleX(${v.toFixed(3)})`;
+      diagLevel(v);
       const t = performance.now();
       // VJ モードには声の大きさを送る（イコライザー用・毎秒20回まで）
       if (S.layout === 'vj' && t - lvlAt > 50 && !paused) { lvlAt = t; send({ t: 'lvl', v: Math.min(1, v * 1.6) }); }
@@ -745,6 +789,7 @@ async function handlePaymentReturn() {
 $('#lang').value = S.lang;
 $('#lang').addEventListener('change', () => {
   S.lang = $('#lang').value;
+  S.langChosen = true;
   ex.setLang(S.lang);
   rec.setLang(S.lang);
   pushSettings();
@@ -848,12 +893,12 @@ $('#clrTx').addEventListener('click', () => { transcript.length = 0; $('#tx').re
 // ------------------------------------------------------------ 表示まわりの小物
 function setStatus(kind, text) { $('#dot').className = 'dot ' + kind; $('#statusText').textContent = text; }
 let toastTm = 0;
-function toast(msg) {
+function toast(msg, ms) {
   const t = $('#toast');
   t.textContent = msg;
   t.classList.add('on');
   clearTimeout(toastTm);
-  toastTm = setTimeout(() => t.classList.remove('on'), 3600);
+  toastTm = setTimeout(() => t.classList.remove('on'), ms || Math.max(3600, String(msg).length * 70)); // 長い案内は長めに出す
 }
 
 // プレビューは読み込み完了後に設定を受け取る
