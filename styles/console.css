@@ -293,3 +293,21 @@ details.obs[open] { padding-bottom: 12px; }
   * { transition-duration: 0s !important; }
 }
 :lang(en) .bg-thumb:not(.has)::before { content: "None"; }
+
+/* ---- プランとお支払い ---- */
+.plan-badge { cursor: pointer; }
+.plan-badge.paid span { background: var(--raise2); color: var(--ink); }
+.plan-dialog { width: min(440px, calc(100vw - 32px)); }
+.plan-now { margin: 2px 0 0; font-size: 22px; font-weight: 900; letter-spacing: .02em; color: var(--ink); }
+.plan-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.plan-actions button { height: 42px; border-radius: 10px; font-weight: 700; font-size: 13.5px; }
+.plan-actions button:disabled { opacity: .6; cursor: progress; }
+.plan-msg { min-height: 1.2em; margin: 8px 0 0; font-size: 12px; color: var(--err); line-height: 1.6; }
+.plan-restore { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
+.plan-restore summary { cursor: pointer; font-size: 12px; color: var(--sub); }
+.plan-restore .hint { margin: 8px 0; }
+.plan-code { display: flex; gap: 6px; margin-top: 8px; }
+.plan-code input { flex: 1; min-width: 0; font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.plan-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 16px 0 0; font-size: 11.5px; }
+.plan-foot a { color: var(--sub); }
+.plan-close { margin-left: auto; height: 32px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line2); background: var(--raise); font-weight: 700; font-size: 12.5px; }

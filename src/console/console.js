@@ -1,13 +1,13 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111243';
-import { EN, L, tr } from '../core/i18n.js?v=202610111243';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111243';
-import { createBus } from '../core/bus.js?v=202610111243';
-import { connectObs } from '../core/obs.js?v=202610111243';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111243';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610111243';
-import { simulateSpeech } from './demo.js?v=202610111243';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610111243';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111338';
+import { EN, L, tr } from '../core/i18n.js?v=202610111338';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111338';
+import { createBus } from '../core/bus.js?v=202610111338';
+import { connectObs } from '../core/obs.js?v=202610111338';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111338';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610111338';
+import { simulateSpeech } from './demo.js?v=202610111338';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610111338';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -591,8 +591,152 @@ engineSel.addEventListener('change', () => {
   }
   $('#proNote').hidden = true;
 });
-if (currentPlan() !== 'free') {
-  $("#planBadge").innerHTML = `<b>${tr(PLANS[currentPlan()])}</b>`;
+// ------------------------------------------------------------ プランとお支払い（Stripe）
+const LANG2 = EN ? 'en' : 'ja';
+const fmtDate = (sec) => new Date(sec * 1000).toLocaleDateString(EN ? 'en-US' : 'ja-JP', { year: 'numeric', month: 'short', day: 'numeric' });
+function payError(e) {
+  const code = e && e.code;
+  if (code === 'not_configured' || code === 'price_missing' || code === 'http_404' || code === 'http_405')
+    return L('お申し込みの受付を準備しています。もうしばらくお待ちください', 'Sign-ups are being prepared. Please check back soon.');
+  if (code === 'plan_unavailable') return L('このプランはまだお申し込みいただけません', 'This plan isn’t available yet.');
+  if (code === 'bad_license' || code === 'not_found') return L('ライセンスコードを確認できませんでした', 'That license code couldn’t be verified.');
+  if (code === 'incomplete') return L('お支払いがまだ完了していません', 'The payment hasn’t completed yet.');
+  return L('通信できませんでした。少し待ってからもう一度お試しください', 'Couldn’t connect. Please try again in a moment.');
+}
+// プランが変わったら、鍵のかかった機能や「KANPE」表示を最新の状態にする
+function applyPlanUI() {
+  const plan = currentPlan();
+  const badge = $('#planBadge');
+  badge.innerHTML = plan === 'free'
+    ? `<b>${tr(PLANS.free)}</b><span>${L('アップグレード', 'Upgrade')}</span>`
+    : `<b>${tr(PLANS[plan])}</b><span>${L('管理', 'Manage')}</span>`;
+  badge.classList.toggle('paid', plan !== 'free');
+  renderThemes();
+  segButtons('#layouts', LAYOUTS, 'layout');
+  renderSpeakers();
+  renderBg();
+  updateTrial();
+  pushSettings(false);
+}
+
+let planDlg = null;
+function planDialog() {
+  if (planDlg) return planDlg;
+  planDlg = document.createElement('dialog');
+  planDlg.className = 'lang-dialog plan-dialog';
+  planDlg.setAttribute('aria-labelledby', 'planDlgTitle');
+  planDlg.addEventListener('click', (e) => { if (e.target === planDlg) planDlg.close(); });
+  document.body.appendChild(planDlg);
+  return planDlg;
+}
+function busy(btn, on, text) { btn.disabled = on; if (text) btn.textContent = text; }
+function renderPlanDialog() {
+  const d = planDialog();
+  const plan = currentPlan();
+  const lic = licenseInfo();
+  const box = document.createElement('div');
+  box.className = 'lang-box';
+  const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  box.append(h('p', 'lang-icon', 'K'));
+  const title = h('h2', null, L('プラン', 'Your plan')); title.id = 'planDlgTitle'; box.append(title);
+  box.append(h('p', 'plan-now', tr(PLANS[plan])));
+  if (plan !== 'free' && lic) {
+    box.append(h('p', 'lang-body', lic.cancelAtPeriodEnd
+      ? L(`解約済みです。${fmtDate(lic.expires - 3 * 86400)} まで使えます`, `Cancelled — available until ${fmtDate(lic.expires - 3 * 86400)}`)
+      : L(`次回の更新日：${fmtDate(lic.expires - 3 * 86400)}（${lic.interval === 'year' ? '年払い' : '月払い'}）`, `Renews on ${fmtDate(lic.expires - 3 * 86400)} (${lic.interval === 'year' ? 'yearly' : 'monthly'})`)));
+  } else if (lic && lic.plan !== 'free' && lic.expires * 1000 <= Date.now()) {
+    box.append(h('p', 'lang-body', L('ご契約の期限が切れています。更新するとまた使えます', 'Your subscription has ended. Renew to keep using paid features.')));
+  } else {
+    box.append(h('p', 'lang-body', L('お手軽プラン（月¥480・税込）で、VJ モード・話者の色分け・プレミアム書体・背景画像が使え、「KANPE」表示を消せます。いつでも解約できます。',
+      'Plus (¥480/mo incl. tax) unlocks VJ mode, speaker colors, premium typefaces and background images, and removes the “KANPE” mark. Cancel any time.')));
+  }
+  const actions = h('div', 'plan-actions');
+  const msg = h('p', 'plan-msg'); msg.setAttribute('aria-live', 'polite');
+  const btn = (text, cls, fn) => { const b = h('button', cls, text); b.type = 'button'; b.addEventListener('click', () => fn(b)); actions.append(b); return b; };
+  if (plan === 'free') {
+    btn(L('お手軽プランにする　月¥480', 'Get Plus — ¥480/mo'), 'lang-ok', async (b) => {
+      busy(b, true, L('お支払いページへ…', 'Opening checkout…'));
+      try { await startCheckout('plus', 'month', LANG2); } catch (e) { msg.textContent = payError(e); busy(b, false, L('お手軽プランにする　月¥480', 'Get Plus — ¥480/mo')); }
+    });
+    btn(L('年払い　¥4,800（2か月分おトク）', 'Yearly — ¥4,800 (2 months free)'), 'lang-cancel', async (b) => {
+      busy(b, true, L('お支払いページへ…', 'Opening checkout…'));
+      try { await startCheckout('plus', 'year', LANG2); } catch (e) { msg.textContent = payError(e); busy(b, false, L('年払い　¥4,800（2か月分おトク）', 'Yearly — ¥4,800 (2 months free)')); }
+    });
+  } else {
+    btn(L('支払い方法・解約・領収書', 'Billing, cancel, receipts'), 'lang-ok', async (b) => {
+      busy(b, true, L('開いています…', 'Opening…'));
+      try { await openPortal(LANG2); } catch (e) { msg.textContent = payError(e); busy(b, false, L('支払い方法・解約・領収書', 'Billing, cancel, receipts')); }
+    });
+    btn(L('ライセンスコードをコピー', 'Copy license code'), 'lang-cancel', async () => {
+      try { await navigator.clipboard.writeText(lic.token); msg.textContent = L('コピーしました。別の端末の「ライセンスコードで復元」に貼り付けてください', 'Copied. Paste it into “Restore with a license code” on your other device.'); }
+      catch { prompt(L('このコードを別の端末で入力してください', 'Enter this code on your other device'), lic.token); }
+    });
+  }
+  box.append(actions, msg);
+  // 別の端末で買った人：コードで復元
+  const det = h('details', 'plan-restore');
+  det.append(h('summary', null, plan === 'free' ? L('ライセンスコードで復元（別の端末で購入した方）', 'Restore with a license code (bought on another device)') : L('このブラウザから外す', 'Remove from this browser')));
+  if (plan === 'free') {
+    const row = h('form', 'plan-code');
+    const input = h('input'); input.placeholder = 'kanpe1.…'; input.autocomplete = 'off'; input.setAttribute('aria-label', L('ライセンスコード', 'License code'));
+    const go = h('button', 'btn', L('復元', 'Restore')); go.type = 'submit';
+    row.append(input, go);
+    row.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!input.value.trim()) return;
+      busy(go, true);
+      try { const l = await activateFromCode(input.value); applyPlanUI(); renderPlanDialog();
+        toast(l.plan === 'free' ? L('有効なご契約が見つかりませんでした', 'No active subscription was found') : L(`${tr(PLANS[l.plan])}を有効にしました`, `${tr(PLANS[l.plan])} is now active`)); }
+      catch (err) { msg.textContent = payError(err); busy(go, false); }
+    });
+    det.append(row);
+  } else {
+    const p = h('p', 'hint', L('この端末では無料プランに戻ります。ご契約は続くので、ライセンスコードでいつでも戻せます（解約は「支払い方法・解約・領収書」から）。', 'This browser goes back to Free. Your subscription continues — restore it any time with your license code (cancel from “Billing, cancel, receipts”).'));
+    const rm = h('button', 'btn', L('外す', 'Remove')); rm.type = 'button';
+    rm.addEventListener('click', () => { clearLicense(); applyPlanUI(); renderPlanDialog(); });
+    det.append(p, rm);
+  }
+  box.append(det);
+  const foot = h('p', 'plan-foot');
+  const a1 = h('a', null, L('料金を比べる', 'Compare plans')); a1.href = 'index.html#pricing';
+  const a2 = h('a', null, L('特定商取引法に基づく表記', 'Legal notice')); a2.href = 'legal/tokushoho.html';
+  const a3 = h('a', null, L('利用規約', 'Terms')); a3.href = 'legal/terms.html';
+  const close = h('button', 'plan-close', L('閉じる', 'Close')); close.type = 'button'; close.addEventListener('click', () => d.close());
+  foot.append(a1, a2, a3, close);
+  box.append(foot);
+  d.replaceChildren(box);
+}
+$('#planBadge').addEventListener('click', (e) => {
+  e.preventDefault();
+  renderPlanDialog();
+  const d = planDialog();
+  if (!d.open) d.showModal();
+});
+
+// 決済から戻ってきたとき / 顧客ポータルから戻ってきたとき（ファイルの最後で呼ぶ）
+async function handlePaymentReturn() {
+  const q = new URLSearchParams(location.search);
+  const clean = () => history.replaceState(null, '', location.pathname + location.hash);
+  if (q.get('checkout') === 'success' && q.get('session_id')) {
+    clean();
+    toast(L('お支払いを確認しています…', 'Confirming your payment…'));
+    for (let i = 0; i < 4; i++) { // 決済直後はまれに完了の反映が遅れるので、数回だけ待つ
+      try {
+        const l = await activateFromSession(q.get('session_id'));
+        applyPlanUI();
+        toast(l.plan === 'free' ? L('ご契約を確認できませんでした。少し待ってから「プラン」から確認してください', 'Couldn’t confirm the subscription yet. Check again from “Your plan” shortly.')
+          : L(`ありがとうございます！${tr(PLANS[l.plan])}が有効になりました`, `Thank you! ${tr(PLANS[l.plan])} is now active.`));
+        return;
+      } catch (e) {
+        if (e.code !== 'incomplete' || i === 3) { toast(payError(e)); return; }
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    }
+  }
+  if (q.get('portal') === 'return') { clean(); await refreshLicense(true); applyPlanUI(); return; }
+  const before = currentPlan();
+  await refreshLicense(false);
+  if (currentPlan() !== before) applyPlanUI();
 }
 
 $('#lang').value = S.lang;
@@ -721,4 +865,6 @@ window.__kanpeBeforeLeave = () => {
   saveSettings(S);
   saveTranscript();
 };
+applyPlanUI();
+handlePaymentReturn();
 window.__kanpeConsole = { onInterim, onFinal, get settings() { return S; } };

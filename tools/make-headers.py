@@ -3,7 +3,7 @@
 import base64, hashlib, pathlib, re
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 hashes = set()
-for f in ['index.html', 'en/index.html', 'app.html', 'en/app.html', 'display.html']:
+for f in ['index.html', 'en/index.html', 'app.html', 'en/app.html', 'display.html', *[str(x.relative_to(ROOT)) for x in sorted(ROOT.glob('legal/*.html')) + sorted(ROOT.glob('en/legal/*.html'))]]:
     for m in re.finditer(r'<script>(.*?)</script>', (ROOT / f).read_text(), re.S):
         hashes.add("'sha256-" + base64.b64encode(hashlib.sha256(m.group(1).encode()).digest()).decode() + "'")
 csp = '; '.join([

@@ -3,15 +3,15 @@
 # 使い方: ./tools/bump-version.sh   （番号は日時から自動で決まる）
 cd "$(dirname "$0")/.." || exit 1
 V=$(date +%Y%m%d%H%M)
-FILES=$(ls *.html en/*.html src/*/*.js)
+FILES=$(ls *.html en/*.html legal/*.html en/legal/*.html src/*/*.js)
 # 既存の ?v=… を外してから付け直す
 sed -i.bak -E \
   -e "s#(\.js|\.css)\?v=[0-9a-z]+#\1#g" \
   -e "s#(from '[^']+\.js)'#\1?v=$V'#g" \
   -e "s#(import\('[^']+\.js)'#\1?v=$V'#g" \
-  -e "s#(src=\"(\.\./)?src/[^\"]+\.js)\"#\1?v=$V\"#g" \
-  -e "s#(href=\"(\.\./)?styles/[^\"]+\.css)\"#\1?v=$V\"#g" \
+  -e "s#(src=\"(\.\./)*src/[^\"]+\.js)\"#\1?v=$V\"#g" \
+  -e "s#(href=\"(\.\./)*styles/[^\"]+\.css)\"#\1?v=$V\"#g" \
   $FILES
-rm -f *.html.bak en/*.html.bak src/*/*.js.bak
+rm -f *.html.bak en/*.html.bak legal/*.html.bak en/legal/*.html.bak src/*/*.js.bak
 python3 tools/make-headers.py
 echo "version: $V"

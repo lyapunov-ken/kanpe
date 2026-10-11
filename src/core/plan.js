@@ -10,14 +10,68 @@ export const PRO = {
   // 想定：2時間の配信を週3回（月約26時間）。話している区間は6〜7割なので月17時間前後。
   includedHours: 20,         // おトクプランの高精度クラウド認識（月・話している区間のみ）。上の想定がまるごと収まる
   extraPrice: '¥200 / 1時間',
-  checkoutUrl: '',           // Stripe Payment Link 等を設定すると「アップグレード」から決済へ進む
-  available: false,          // 有料プラン公開時に true
+  available: false,          // おトクプランのクラウド機能（高精度認識・話者分離）が動き始めたら true
   trialMs: 24 * 60 * 60 * 1000, // 無料プランでプレミアム機能を試せる期間（最初に使ってから1日・1回だけ）
 };
 
-// 現在のプラン。ライセンス確認ができるまでは常に free。
+// ---- ライセンス（Stripe で申し込むと /api/license が発行する署名つきの札）----
+// 端末のブラウザに保存し、半日に1回ほど /api/license で契約の最新の状態に更新する。
+// 表示まわりの機能はブラウザの中で動くため、ここでの判定は使い勝手のためのもの。
+// サーバーを使う機能（今後のクラウド認識など）は、サーバー側でライセンスを検証する。
+const LICENSE_KEY = 'kanpe.license.v1';
+const REFRESH_MS = 12 * 60 * 60 * 1000;
+export function licenseInfo() {
+  try {
+    const l = JSON.parse(localStorage.getItem(LICENSE_KEY) || 'null');
+    if (l && typeof l.token === 'string') return l;
+  } catch { /* noop */ }
+  return null;
+}
+function saveLicense(data) {
+  const l = { token: data.token, plan: PLANS[data.plan] ? data.plan : 'free', expires: data.expires || 0, status: data.status || '',
+    interval: data.interval || null, cancelAtPeriodEnd: !!data.cancelAtPeriodEnd, email: data.email || (licenseInfo() || {}).email || '', checkedAt: Date.now() };
+  try { localStorage.setItem(LICENSE_KEY, JSON.stringify(l)); } catch { /* noop */ }
+  return l;
+}
+export function clearLicense() { try { localStorage.removeItem(LICENSE_KEY); } catch { /* noop */ } }
+
+// 現在のプラン。有効なライセンスがなければ無料プラン
 export function currentPlan() {
-  return 'free';
+  const l = licenseInfo();
+  if (!l || !PLANS[l.plan] || l.plan === 'free') return 'free';
+  return l.expires * 1000 > Date.now() ? l.plan : 'free';
+}
+
+async function post(path, body) {
+  const res = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), credentials: 'same-origin' });
+  let data = {};
+  try { data = await res.json(); } catch { /* noop */ }
+  if (!res.ok) { const e = new Error((data.error && data.error.message) || `HTTP ${res.status}`); e.code = (data.error && data.error.code) || `http_${res.status}`; throw e; }
+  return data;
+}
+// 決済直後：Checkout の結果からライセンスを受け取る
+export async function activateFromSession(sessionId) { return saveLicense(await post('/api/license', { session_id: sessionId })); }
+// 別の端末で使う：ライセンスコードを入れて復元する
+export async function activateFromCode(code) { return saveLicense(await post('/api/license', { token: String(code || '').trim() })); }
+// 契約の最新の状態に更新する（force でなければ半日に1回まで。通信できないときは手元の情報のまま）
+export async function refreshLicense(force = false) {
+  const l = licenseInfo();
+  if (!l) return null;
+  if (!force && Date.now() - (l.checkedAt || 0) < REFRESH_MS) return l;
+  try { return saveLicense(await post('/api/license', { token: l.token })); }
+  catch (e) { if (e.code === 'bad_license') clearLicense(); return licenseInfo(); }
+}
+// Stripe の支払いページへ
+export async function startCheckout(plan, interval, lang) {
+  const { url } = await post('/api/checkout', { plan, interval, lang });
+  location.assign(url);
+}
+// Stripe の顧客ポータル（支払い方法の変更・解約・領収書）へ
+export async function openPortal(lang) {
+  const l = licenseInfo();
+  if (!l) throw Object.assign(new Error('no license'), { code: 'no_license' });
+  const { url } = await post('/api/portal', { token: l.token, lang });
+  location.assign(url);
 }
 const atLeast = (plan) => PLANS[currentPlan()].rank >= PLANS[plan].rank;
 

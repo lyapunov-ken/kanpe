@@ -146,6 +146,42 @@
     shows.forEach((f) => f.setAttribute('src', f.dataset.src));
   }
 
+  // ---- 申し込み（Stripe の支払いページへ）
+  const owned = (() => { // すでに有料プランを使っているブラウザなら、申し込みボタンをコンソールへの案内に変える
+    try { const l = JSON.parse(localStorage.getItem('kanpe.license.v1') || 'null'); return l && l.plan !== 'free' && l.expires * 1000 > Date.now() ? l.plan : null; } catch { return null; }
+  })();
+  for (const b of document.querySelectorAll('[data-checkout]')) {
+    if (owned) {
+      if (b.dataset.interval === 'year') { b.hidden = true; continue; }
+      b.textContent = EN ? 'You’re subscribed — open the console' : 'ご利用中です（コンソールへ）';
+      b.addEventListener('click', () => location.assign('app.html'));
+      continue;
+    }
+    b.addEventListener('click', async () => {
+      if (b.getAttribute('aria-busy') === 'true') return;
+      const msg = b.parentElement.querySelector('.buy-msg');
+      const label = b.textContent;
+      b.setAttribute('aria-busy', 'true');
+      b.textContent = EN ? 'Opening checkout…' : 'お支払いページへ移動しています…';
+      if (msg) msg.textContent = '';
+      try {
+        const res = await fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ plan: b.dataset.checkout, interval: b.dataset.interval, lang: EN ? 'en' : 'ja' }) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.url) throw Object.assign(new Error('checkout'), { code: (data.error && data.error.code) || res.status });
+        location.assign(data.url);
+        return;
+      } catch (e) {
+        const notReady = ['not_configured', 'price_missing', 404, 405].includes(e.code);
+        if (msg) msg.textContent = notReady
+          ? (EN ? 'Sign-ups are being prepared. Please check back soon.' : 'お申し込みの受付を準備しています。もうしばらくお待ちください')
+          : (EN ? 'Couldn’t connect. Please try again in a moment.' : '通信できませんでした。少し待ってからもう一度お試しください');
+      }
+      b.removeAttribute('aria-busy');
+      b.textContent = label;
+    });
+  }
+
   const y = $('year');
   if (y) y.textContent = String(new Date().getFullYear());
 })();

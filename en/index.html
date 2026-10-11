@@ -32,13 +32,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700&family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../styles/lp.css?v=202610111243">
+<link rel="stylesheet" href="../styles/lp.css?v=202610111338">
 <script>document.documentElement.classList.add('js');</script>
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 </head>
 <body id="top">
 <header class="nav">
-  <a class="logo" href="#top" aria-label="KANPE home"><span class="tally" aria-hidden="true"></span>KANPE</a>
+  <a class="logo" href="#top" aria-label="KANPE home"><span class="tally" aria-hidden="true"></span>KANPE<span class="beta mono">BETA</span></a>
   <nav class="links" aria-label="On this page">
     <a href="#features">Features</a>
     <a href="#how">How it works</a>
@@ -304,7 +304,7 @@
 
       <article class="plan reveal">
         <header>
-          <h3>Plus <span class="badge mono">SOON</span></h3>
+          <h3>Plus <span class="badge mono">BETA</span></h3>
           <p class="plan-for">Make the look and effects your own — affordable because they cost us nothing to run</p>
           <p class="price"><b>¥480</b><span>/ month</span></p>
         </header>
@@ -316,8 +316,12 @@
           <li>Remove the “KANPE” mark from the display</li>
           <li>Unlimited browser speech recognition</li>
         </ul>
-        <p class="plan-note">Or ¥4,800 / year (two months free)</p>
-        <button class="btn btn-line block" type="button" disabled>Coming soon</button>
+        <p class="plan-note">Renews automatically. Cancel any time and keep access until the end of the period.</p>
+        <div class="buy">
+          <button class="btn btn-ink block" type="button" data-checkout="plus" data-interval="month">Start monthly — ¥480</button>
+          <button class="btn btn-line block" type="button" data-checkout="plus" data-interval="year">Yearly — ¥4,800 (2 months free)</button>
+          <p class="buy-msg" aria-live="polite"></p>
+        </div>
       </article>
 
       <article class="plan pro reveal">
@@ -340,6 +344,7 @@
         <button class="btn btn-invert block" type="button" disabled>Coming soon</button>
       </article>
     </div>
+    <p class="fine center legal-links">Payment happens on Stripe’s page — your card details never pass through KANPE. Please read the <a href="legal/terms.html">Terms</a>, <a href="legal/tokushoho.html">Legal notice</a> and <a href="legal/privacy.html">Privacy policy</a> before subscribing.</p>
     <p class="fine center">High-accuracy hours count only the time you’re actually talking (a 2-hour stream is roughly 1.2–1.4 hours). Free and Plus use your browser’s built-in speech recognition, so audio is processed by Google in Chrome, Microsoft in Edge and Apple in Safari — never by KANPE. Get in touch about team plans.</p>
   </section>
 
@@ -388,6 +393,10 @@
           <p>Nothing is stored on KANPE’s servers. Transcripts, settings and background images live only in your own browser on this device, and you can delete them with the Clear button or by clearing site data. Only the step that turns audio into text is handled by your browser vendor’s service (Google in Chrome, Microsoft in Edge, Apple in Safari). For confidential topics, blocked words keep chosen terms off the screen and out of captions.</p>
         </details>
         <details>
+          <summary>How do payment and cancellation work?</summary>
+          <p>You pay on Stripe’s page by card or other methods — card details never pass through KANPE. Choose monthly or yearly; plans renew automatically. Cancel any time from “Your plan” → “Billing, cancel, receipts” in the console, and keep access until the end of the period (no prorated refunds). To use your plan on another device, restore it with the license code shown under “Your plan”.</p>
+        </details>
+        <details>
           <summary>What’s the difference between Plus and Pro?</summary>
           <p>Plus (¥480/mo) bundles the looks and effects — VJ mode, speaker colors, premium typefaces, background images — and keeps unlimited browser speech recognition. Pro (¥2,980/mo) adds 20 hours a month of high-accuracy cloud recognition, enough for three 2-hour streams a week, plus automatic speaker separation, AI key points and post-stream summaries.</p>
         </details>
@@ -415,6 +424,9 @@
     <a href="#pricing">Pricing</a>
     <a href="#privacy">Privacy</a>
     <a href="#faq">FAQ</a>
+    <a href="legal/terms.html">Terms</a>
+    <a href="legal/privacy.html">Privacy</a>
+    <a href="legal/tokushoho.html">Legal notice</a>
     <a href="../" hreflang="ja" lang="ja" data-lang-switch>日本語</a>
   </nav>
   <span class="fine">© <span id="year">2026</span> KANPE · Beta</span>
@@ -423,8 +435,8 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html" tabindex="-1">Start free in your browser<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="../src/ui/lang.js?v=202610111243" defer></script>
-<script src="../src/ui/mode.js?v=202610111243" defer></script>
-<script src="../src/lp/lp.js?v=202610111243" defer></script>
+<script src="../src/ui/lang.js?v=202610111338" defer></script>
+<script src="../src/ui/mode.js?v=202610111338" defer></script>
+<script src="../src/lp/lp.js?v=202610111338" defer></script>
 </body>
 </html>
