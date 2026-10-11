@@ -215,6 +215,7 @@ details.obs[open] { padding-bottom: 12px; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
 .transcript { flex: 1; min-height: 160px; display: flex; flex-direction: column; }
 .live { min-height: 1.5em; margin: 10px 0 6px; color: var(--sub); }
+.tx-note { margin-top: 6px; }
 .tx { list-style: none; margin: 0; padding: 0; overflow: auto; flex: 1; }
 .tx li { display: flex; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); }
 .tx time { color: var(--faint); font-variant-numeric: tabular-nums; font-size: 12px; padding-top: 1px; }

@@ -1,14 +1,18 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610111226';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610111226';
-import { createBus } from '../core/bus.js?v=202610111226';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610111226';
-import { runs } from '../core/extract.js?v=202610111226';
-import { EN, L, tr } from '../core/i18n.js?v=202610111226';
-import { createVJ } from './vj.js?v=202610111226';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610111243';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610111243';
+import { createBus } from '../core/bus.js?v=202610111243';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610111243';
+import { runs } from '../core/extract.js?v=202610111243';
+import { EN, L, tr } from '../core/i18n.js?v=202610111243';
+import { createVJ } from './vj.js?v=202610111243';
 
 const P = new URLSearchParams(location.search);
+// OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
+const H = new URLSearchParams(location.hash.slice(1));
+const OBS_URL = H.get('obs') || P.get('obs') || '';
+const OBS_PW = H.get('pw') || P.get('pw') || '';
 const LOCK = {};
 if (THEMES[P.get('theme')]) LOCK.theme = P.get('theme');
 if (/^[0-9a-f]{6}$/i.test(P.get('accent') || '')) LOCK.accent = '#' + P.get('accent');
@@ -446,9 +450,9 @@ function applySettings(s) {
 }
 
 const bus = createBus(onMessage);
-if (P.get('obs')) {
+if (OBS_URL) {
   const link = connectObs({
-    url: P.get('obs'), password: P.get('pw') || '',
+    url: OBS_URL, password: OBS_PW,
     onMessage: bus.receive,
     onStatus: (st) => { if (st === 'connected') bus.send({ t: 'hello' }); },
   });
@@ -458,7 +462,7 @@ if (P.get('obs')) {
 // ---------------------------------------------------------------- 別窓での書体切り替え
 // カンペ・組版を別窓で開いたときだけ、マウスを動かすと右上に書体の選択バーが出る。
 // 選んだ書体はこの窓だけに効く（URL に残るので再読み込みしても保たれる）。「連動」でコンソールの書体に戻る。
-const SHOW_UI = !EMBED && !P.get('obs') && P.get('ui') !== '0';
+const SHOW_UI = !EMBED && !OBS_URL && P.get('ui') !== '0';
 const isLocked = (id) => THEMES[id] && THEMES[id].pro && !canUse('theme:premium') && trialRemainingMs() <= 0;
 let picker = null, pickerNote = null, uiTimer = 0;
 
@@ -629,7 +633,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610111226').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered }));
+  import('../console/demo.js?v=202610111243').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered }));
 }
 
 // 検証用フック

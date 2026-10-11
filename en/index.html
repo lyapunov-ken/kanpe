@@ -32,7 +32,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700&family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../styles/lp.css?v=202610111226">
+<link rel="stylesheet" href="../styles/lp.css?v=202610111243">
 <script>document.documentElement.classList.add('js');</script>
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 </head>
@@ -69,6 +69,7 @@
         <li>No sign-up</li>
         <li>No install</li>
         <li>Desktop &amp; phone</li>
+        <li>Data stays on your device</li>
       </ul>
     </div>
 
@@ -339,14 +340,32 @@
         <button class="btn btn-invert block" type="button" disabled>Coming soon</button>
       </article>
     </div>
-    <p class="fine center">High-accuracy hours count only the time you’re actually talking (a 2-hour stream is roughly 1.2–1.4 hours). Free and Plus use your browser’s built-in speech recognition, so audio is processed by Google in Chrome and by Apple in Safari. Get in touch about team plans.</p>
+    <p class="fine center">High-accuracy hours count only the time you’re actually talking (a 2-hour stream is roughly 1.2–1.4 hours). Free and Plus use your browser’s built-in speech recognition, so audio is processed by Google in Chrome, Microsoft in Edge and Apple in Safari — never by KANPE. Get in touch about team plans.</p>
+  </section>
+
+  <!-- ============ Privacy ============ -->
+  <section class="section privacy" id="privacy" aria-labelledby="privacy-title">
+    <header class="section-head reveal">
+      <p class="label mono"><span class="no">05</span>PRIVACY</p>
+      <div>
+        <h2 id="privacy-title">What you say stays on your device.</h2>
+        <p>KANPE has no server that receives your transcripts or settings. Data moves as little as possible, so you can stream with peace of mind.</p>
+      </div>
+    </header>
+    <ul class="privacy-grid">
+      <li class="reveal"><span class="mono">LOCAL</span><b>Nothing kept on a server</b><p>Transcripts, settings and background images are stored only in your own browser. KANPE never receives or stores them.</p></li>
+      <li class="reveal"><span class="mono">BROWSER</span><b>Recognition by your browser</b><p>On Free and Plus, speech recognition is built into your browser. Your browser’s vendor turns audio into text (Google in Chrome, Microsoft in Edge, Apple in Safari) — it never reaches KANPE.</p></li>
+      <li class="reveal"><span class="mono">DIRECT</span><b>Screens talk directly</b><p>The console and display views talk to each other inside the same browser, and OBS connects straight to your own OBS. Your OBS password is never sent to a server.</p></li>
+      <li class="reveal"><span class="mono">ERASE</span><b>Delete any time</b><p>Clear the transcript with the Clear button; clear your browser’s site data to remove everything else. On a shared computer, clear it when you’re done.</p></li>
+    </ul>
+    <p class="fine privacy-note">All traffic is encrypted (https), and the pages carry no ads, analytics tags or third-party scripts. Pro’s cloud recognition (coming soon) will send audio only to be transcribed and is designed so nothing is stored on KANPE’s servers.</p>
   </section>
 
   <!-- ============ FAQ ============ -->
   <section class="section tint" id="faq" aria-labelledby="faq-title">
     <div class="inner faq-grid">
       <header class="section-head reveal">
-        <p class="label mono"><span class="no">05</span>FAQ</p>
+        <p class="label mono"><span class="no">06</span>FAQ</p>
         <div>
           <h2 id="faq-title">Questions</h2>
         </div>
@@ -366,7 +385,7 @@
         </details>
         <details>
           <summary>Is what I say stored anywhere?</summary>
-          <p>Transcripts are saved only in your own browser and are never sent to KANPE’s servers. The free version does use your browser vendor’s speech service, though. For confidential topics, use the blocked-words setting.</p>
+          <p>Nothing is stored on KANPE’s servers. Transcripts, settings and background images live only in your own browser on this device, and you can delete them with the Clear button or by clearing site data. Only the step that turns audio into text is handled by your browser vendor’s service (Google in Chrome, Microsoft in Edge, Apple in Safari). For confidential topics, blocked words keep chosen terms off the screen and out of captions.</p>
         </details>
         <details>
           <summary>What’s the difference between Plus and Pro?</summary>
@@ -394,6 +413,7 @@
   <nav class="foot-links" aria-label="Footer">
     <a href="app.html">Console</a>
     <a href="#pricing">Pricing</a>
+    <a href="#privacy">Privacy</a>
     <a href="#faq">FAQ</a>
     <a href="../" hreflang="ja" lang="ja" data-lang-switch>日本語</a>
   </nav>
@@ -403,8 +423,8 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html" tabindex="-1">Start free in your browser<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="../src/ui/lang.js?v=202610111226" defer></script>
-<script src="../src/ui/mode.js?v=202610111226" defer></script>
-<script src="../src/lp/lp.js?v=202610111226" defer></script>
+<script src="../src/ui/lang.js?v=202610111243" defer></script>
+<script src="../src/ui/mode.js?v=202610111243" defer></script>
+<script src="../src/lp/lp.js?v=202610111243" defer></script>
 </body>
 </html>

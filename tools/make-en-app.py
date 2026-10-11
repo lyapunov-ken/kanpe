@@ -97,6 +97,7 @@ T = [
   ('src="display.html?embed=1" title="表示プレビュー"', 'src="../display.html?embed=1&amp;hl=en" title="Display preview"'),
   ('<h2>文字起こし</h2>', '<h2>TRANSCRIPT</h2>'),
   ('class="ghost small">消去</button>', 'class="ghost small">Clear</button>'),
+  ('<p class="hint tx-note">この端末のブラウザにだけ保存されます（サーバーには送りません）</p>', '<p class="hint tx-note">Saved only in this browser on this device (never sent to a server)</p>'),
 ]
 for a, b in T:
     if a not in s:

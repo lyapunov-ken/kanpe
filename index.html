@@ -32,7 +32,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="styles/lp.css?v=202610111226">
+<link rel="stylesheet" href="styles/lp.css?v=202610111243">
 <script>document.documentElement.classList.add('js');</script>
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 </head>
@@ -69,6 +69,7 @@
         <li>登録不要</li>
         <li>インストール不要</li>
         <li>PC・スマホ対応</li>
+        <li>データは端末の中だけ</li>
       </ul>
     </div>
 
@@ -339,14 +340,32 @@
         <button class="btn btn-invert block" type="button" disabled>近日公開</button>
       </article>
     </div>
-    <p class="fine center">高精度認識の時間は、話している区間だけを数えます（2時間の配信で、おおよそ1.2〜1.4時間）。無料・お手軽プランの音声認識はブラウザの機能を使うため、Chrome では音声が Google のサーバーで、Safari では Apple のサーバーで処理されます。チームでの利用はご相談ください。</p>
+    <p class="fine center">高精度認識の時間は、話している区間だけを数えます（2時間の配信で、おおよそ1.2〜1.4時間）。無料・お手軽プランの音声認識はブラウザの機能を使うため、音声は Chrome では Google、Edge では Microsoft、Safari では Apple のサーバーで処理されます。KANPE のサーバーには届きません。チームでの利用はご相談ください。</p>
+  </section>
+
+  <!-- ============ データとセキュリティ ============ -->
+  <section class="section privacy" id="privacy" aria-labelledby="privacy-title">
+    <header class="section-head reveal">
+      <p class="label mono"><span class="no">05</span>PRIVACY</p>
+      <div>
+        <h2 id="privacy-title">話した言葉は、<wbr>あなたの端末の中だけに。</h2>
+        <p>KANPE には、文字起こしや設定を受け取るサーバーがありません。配信の内容を安心して扱えるよう、データの流れを最小限にしています。</p>
+      </div>
+    </header>
+    <ul class="privacy-grid">
+      <li class="reveal"><span class="mono">LOCAL</span><b>サーバーに残さない</b><p>文字起こし・設定・背景画像は、お使いのブラウザの中にだけ保存されます。KANPE が受け取ることも、保存することもありません。</p></li>
+      <li class="reveal"><span class="mono">BROWSER</span><b>音声認識はブラウザの機能</b><p>無料・お手軽プランの音声認識はブラウザに内蔵された機能です。音声はブラウザの提供元（Chrome は Google、Edge は Microsoft、Safari は Apple）が文字にし、KANPE には届きません。</p></li>
+      <li class="reveal"><span class="mono">DIRECT</span><b>画面どうしは直接つながる</b><p>コンソールと表示ビューは同じブラウザの中で直接やりとりし、OBS へは手元の OBS に直接つなぎます。OBS のパスワードがサーバーに送られることもありません。</p></li>
+      <li class="reveal"><span class="mono">ERASE</span><b>いつでも消せる</b><p>文字起こしは「消去」ボタンで、設定などはブラウザのサイトデータを削除すればすべて消えます。共用のパソコンでは、使い終わったら消去してください。</p></li>
+    </ul>
+    <p class="fine privacy-note">通信はすべて暗号化（https）され、ページには広告や解析のタグ、外部のスクリプトを入れていません。おトクプランのクラウド認識（近日公開）は、音声を認識のためだけに送り、KANPE のサーバーには保存しない設計です。</p>
   </section>
 
   <!-- ============ FAQ ============ -->
   <section class="section tint" id="faq" aria-labelledby="faq-title">
     <div class="inner faq-grid">
       <header class="section-head reveal">
-        <p class="label mono"><span class="no">05</span>FAQ</p>
+        <p class="label mono"><span class="no">06</span>FAQ</p>
         <div>
           <h2 id="faq-title">よくある質問</h2>
         </div>
@@ -366,7 +385,7 @@
         </details>
         <details>
           <summary>話した内容はどこかに保存されますか？</summary>
-          <p>文字起こしはお使いのブラウザの中にだけ保存されます。KANPE のサーバーには送りません。ただし無料版の音声認識はブラウザ提供元のサービスを使います。社外秘の内容を扱う場合は、NG ワードの設定をご利用ください。</p>
+          <p>KANPE のサーバーには何も保存されません。文字起こし・設定・背景画像は、お使いのブラウザの中（この端末）にだけ保存され、「消去」ボタンやブラウザのサイトデータ削除で消せます。音声を文字にする処理だけは、ブラウザの提供元のサービス（Chrome は Google、Edge は Microsoft、Safari は Apple）が行います。社外秘の内容を扱う場合は、NG ワードで画面と字幕に出さないようにできます。</p>
         </details>
         <details>
           <summary>お手軽プランとおトクプランの違いは？</summary>
@@ -390,6 +409,7 @@
   <nav class="foot-links" aria-label="フッター">
     <a href="app.html">コンソール</a>
     <a href="#pricing">料金</a>
+    <a href="#privacy">データの扱い</a>
     <a href="#faq">よくある質問</a>
     <a href="en/" hreflang="en" lang="en" data-lang-switch>English</a>
   </nav>
@@ -399,8 +419,8 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html" tabindex="-1">ブラウザで無料ではじめる<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="src/ui/lang.js?v=202610111226" defer></script>
-<script src="src/ui/mode.js?v=202610111226" defer></script>
-<script src="src/lp/lp.js?v=202610111226" defer></script>
+<script src="src/ui/lang.js?v=202610111243" defer></script>
+<script src="src/ui/mode.js?v=202610111243" defer></script>
+<script src="src/lp/lp.js?v=202610111243" defer></script>
 </body>
 </html>

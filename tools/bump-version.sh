@@ -13,4 +13,5 @@ sed -i.bak -E \
   -e "s#(href=\"(\.\./)?styles/[^\"]+\.css)\"#\1?v=$V\"#g" \
   $FILES
 rm -f *.html.bak en/*.html.bak src/*/*.js.bak
+python3 tools/make-headers.py
 echo "version: $V"

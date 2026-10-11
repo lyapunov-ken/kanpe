@@ -1,13 +1,13 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111226';
-import { EN, L, tr } from '../core/i18n.js?v=202610111226';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111226';
-import { createBus } from '../core/bus.js?v=202610111226';
-import { connectObs } from '../core/obs.js?v=202610111226';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111226';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610111226';
-import { simulateSpeech } from './demo.js?v=202610111226';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610111226';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111243';
+import { EN, L, tr } from '../core/i18n.js?v=202610111243';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111243';
+import { createBus } from '../core/bus.js?v=202610111243';
+import { connectObs } from '../core/obs.js?v=202610111243';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111243';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID } from './recognizer.js?v=202610111243';
+import { simulateSpeech } from './demo.js?v=202610111243';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted } from '../core/plan.js?v=202610111243';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -31,7 +31,9 @@ const clock = () => { if (t0 === null) t0 = performance.now(); return (performan
 function send(m) { bus.send(m); }
 function pushSettings(save = true) {
   if (save) saveSettings(S);
-  send({ t: 'settings', s: { ...S, credit: !canUse('credit:hide') } });
+  // OBS の接続先・パスワードは表示ビューに不要なので送らない
+  const { obsPassword, obsUrl, ...pub } = S; // eslint-disable-line no-unused-vars
+  send({ t: 'settings', s: { ...pub, credit: !canUse('credit:hide') } });
 }
 function deliverWords(events) {
   if (paused) return;
@@ -620,7 +622,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // ------------------------------------------------------------ 表示ビュー
-const base = new URL(ROOT, location.href).href;
+const base = new URL(ROOT || './', location.href).href; // 表示ビューのある場所（英語版は1つ上）
 $('#openKanpe').addEventListener('click', () => window.open(`${ROOT}display.html?layout=kanpe${HL ? '&' + HL : ''}`, 'kanpe-kanpe', 'width=1280,height=720'));
 $('#openStage').addEventListener('click', () => window.open(`${ROOT}display.html${HL ? '?' + HL : ''}`, 'kanpe-stage', 'width=1280,height=720'));
 
@@ -643,7 +645,8 @@ $('#obsConnect').addEventListener('click', () => {
   $('#obsConnect').textContent = L('切断', 'Disconnect');
 });
 $('#obsCopy').addEventListener('click', async () => {
-  const url = `${base}display.html?theme=clear${HL ? '&' + HL : ''}&obs=${encodeURIComponent($('#obsUrl').value.trim() || DEFAULTS.obsUrl)}` +
+  // 接続先とパスワードは # 以降に入れる（ブラウザはこの部分をサーバーへ送らない）
+  const url = `${base}display.html?theme=clear${HL ? '&' + HL : ''}#obs=${encodeURIComponent($('#obsUrl').value.trim() || DEFAULTS.obsUrl)}` +
     ($('#obsPassword').value ? `&pw=${encodeURIComponent($('#obsPassword').value)}` : '');
   try { await navigator.clipboard.writeText(url); toast(L('OBS 用の URL をコピーしました', 'OBS URL copied')); } catch { prompt(L('この URL を OBS のブラウザソースに貼ってください', 'Paste this URL into an OBS Browser Source'), url); }
 });

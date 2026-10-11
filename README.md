@@ -26,6 +26,13 @@
 
 URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / ticker / vj）、`vj`（led / neon / pixel）、`size`、`fonts=local`（Web フォントを読まず OS の書体を使う）、`demo=1&sp=1`（話者の色分けの見本）。
 
+## データとセキュリティ
+
+- KANPE にはデータを受け取るサーバーがない（Cloudflare Pages の静的配信のみ）。文字起こし・設定・背景画像はブラウザの localStorage にだけ保存
+- 無料・お手軽プランの音声認識はブラウザの Web Speech API。音声はブラウザの提供元（Chrome は Google、Edge は Microsoft、Safari は Apple）が処理する
+- 画面間の同期は BroadcastChannel（同じブラウザ内）、OBS へは手元の obs-websocket に直接接続。OBS 用 URL の接続先とパスワードは `#` 以降に入れ、サーバーへのリクエストに含めない。表示ビューへ送る設定からも外している
+- `_headers` で CSP（スクリプトは自サイトとハッシュ付きのインラインのみ、通信は自サイトと WebSocket のみ）などのセキュリティヘッダーを付ける。`tools/make-headers.py` が生成（bump-version.sh から自動実行）
+
 ## 英語版
 
 - `en/index.html`（英語の LP）と `en/app.html`（英語のコンソール）。表示ビューは共通の `display.html` を `hl=en` 付きで使う

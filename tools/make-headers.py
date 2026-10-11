@@ -1,0 +1,29 @@
+# Cloudflare Pages の _headers（セキュリティヘッダー）を作る。HTML 内の <script> の中身が変わったら再実行する
+# （bump-version.sh から自動で呼ばれる）。インラインスクリプトはハッシュで許可し、それ以外の外部スクリプトは読まない。
+import base64, hashlib, pathlib, re
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+hashes = set()
+for f in ['index.html', 'en/index.html', 'app.html', 'en/app.html', 'display.html']:
+    for m in re.finditer(r'<script>(.*?)</script>', (ROOT / f).read_text(), re.S):
+        hashes.add("'sha256-" + base64.b64encode(hashlib.sha256(m.group(1).encode()).digest()).decode() + "'")
+csp = '; '.join([
+    "default-src 'self'",
+    "script-src 'self' " + ' '.join(sorted(hashes)),
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob:",
+    "connect-src 'self' ws: wss:",          # OBS（手元の WebSocket）への接続だけ
+    "media-src 'self' blob:",
+    "frame-src 'self'", "frame-ancestors 'self'",
+    "object-src 'none'", "base-uri 'self'", "form-action 'self'",
+])
+(ROOT / '_headers').write_text(f"""/*
+  Cache-Control: public, max-age=0, must-revalidate
+  Content-Security-Policy: {csp}
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: microphone=(self), camera=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  Strict-Transport-Security: max-age=31536000
+""")
+print('_headers:', len(hashes), 'inline script hashes')
