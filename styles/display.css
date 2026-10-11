@@ -154,3 +154,34 @@ body {
 #bg::after { content: ""; position: absolute; inset: 0; background: var(--bg-dim-color, #000); opacity: var(--bg-dim, .4); }
 .has-bgimg #bg { display: block; }
 .has-bgimg #stage { background: transparent; }
+
+/* 話者のラベルと色分け（有料版） */
+.w.has-sp { color: color-mix(in oklab, var(--spc) 80%, var(--ink)); }
+.w.has-sp .bar { background: var(--spc); }
+.sp-tag {
+  position: absolute; left: 0; bottom: 100%; margin-bottom: .12em;
+  font-size: max(11px, .2em); font-weight: 900; line-height: 1; letter-spacing: .06em; white-space: nowrap;
+  color: var(--bg); background: var(--spc); padding: .3em .55em .32em; border-radius: 999px;
+  font-feature-settings: "palt" 1; writing-mode: horizontal-tb;
+}
+.theme-clear .sp-tag { color: #111; }
+.w.v .sp-tag { left: 50%; transform: translateX(-50%); }
+.layout-kanpe .sp-tag, .layout-ticker .sp-tag { font-size: max(11px, .28em); }
+.cap-sp {
+  display: inline-block; margin-right: .6em; padding: .12em .6em .14em; border-radius: 999px; vertical-align: .08em;
+  font-size: .78em; font-weight: 900; letter-spacing: .04em; color: var(--bg); background: var(--spc);
+}
+.theme-clear .cap-sp { color: #111; }
+
+/* VJ モード（有料版）：ドットアートを描く canvas */
+.vj-canvas { position: absolute; inset: 0; display: block; }
+.layout-vj #stage::after { /* 走査線をうっすら */
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background: repeating-linear-gradient(to bottom, rgba(0,0,0,.18) 0 1px, transparent 1px 3px);
+}
+.theme-clear.layout-vj #stage::after { display: none; }
+.layout-vj { background: #040506; }
+.layout-vj.theme-clear, .layout-vj.has-bgimg { background: transparent; }
+.layout-vj #caption { font-family: "DotGothic16", var(--font); font-weight: 400; letter-spacing: .06em; color: rgba(255,255,255,.7); }
+.layout-vj #caption.final { color: #fff; }
+.layout-vj #hint { font-family: "DotGothic16", var(--font); color: rgba(255,255,255,.5); }

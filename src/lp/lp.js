@@ -118,6 +118,21 @@
     select(0);
   }
 
+  // ---- 演出のデモ：見えている間だけ動かす（スマホの電池と描画負荷のため）
+  const shows = document.querySelectorAll('iframe[data-src]');
+  if ('IntersectionObserver' in window) {
+    const io2 = new IntersectionObserver((entries) => {
+      for (const en of entries) {
+        const f = en.target;
+        const want = en.isIntersecting ? f.dataset.src + (calm ? '&calm=1' : '') : 'about:blank';
+        if (f.getAttribute('src') !== want && (en.isIntersecting || f.getAttribute('src'))) f.setAttribute('src', want);
+      }
+    }, { rootMargin: '200px 0px' });
+    shows.forEach((f) => io2.observe(f));
+  } else {
+    shows.forEach((f) => f.setAttribute('src', f.dataset.src));
+  }
+
   const y = $('year');
   if (y) y.textContent = String(new Date().getFullYear());
 })();

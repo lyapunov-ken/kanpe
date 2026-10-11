@@ -67,7 +67,25 @@ export const LAYOUTS = {
   compose: { label: '組版', note: '画面いっぱいに文字を組む' },
   kanpe: { label: 'カンペ', note: '下から積み上がる大きな文字' },
   ticker: { label: 'テロップ', note: '下部を横に流れる' },
+  vj: { label: 'VJ', note: 'ドットアートで言葉を描く VJ 演出（お手軽プラン以上）', pro: true },
 };
+
+// VJ モードの見た目
+export const VJ_STYLES = {
+  led: { label: 'LED', note: '丸い電球のドット。アクセント色で光る' },
+  neon: { label: 'ネオン', note: '色が移ろうネオン管のドット' },
+  pixel: { label: 'ピクセル', note: '角ドットのレトロゲーム風' },
+};
+
+// 話者の色（ラベルと文字色に使う）
+export const SPEAKER_COLORS = ['#ffb020', '#3fb6ff', '#ff5c8a', '#4cd97b', '#b18cff', '#ffffff'];
+export const MAX_SPEAKERS = 4;
+export const DEFAULT_SPEAKERS = [
+  { name: 'わたし', color: '#ffb020', f0: 0 },
+  { name: 'ゲスト', color: '#3fb6ff', f0: 0 },
+  { name: 'ゲスト2', color: '#ff5c8a', f0: 0 },
+  { name: 'ゲスト3', color: '#4cd97b', f0: 0 },
+];
 
 export const DEFAULTS = {
   theme: 'yoru',
@@ -79,6 +97,10 @@ export const DEFAULTS = {
   caption: true,     // 最新の発話を字幕ラインで出す
   reduceMotion: false,
   accent: '',        // アクセントカラー（空＝書体テーマ標準）
+  vjStyle: 'led',    // VJ モードの見た目
+  speakerMode: 'off', // 話者の色分け：off / manual（手動で切り替え）/ auto（声の高さで推定）
+  speakerCount: 2,
+  speakers: DEFAULT_SPEAKERS,
   bgImage: '',       // 背景画像（data URL。長辺1000px以下に縮小済み）
   bgDim: 0.4,        // 背景画像の上に重ねる地色の濃さ（文字を読みやすくする）
   lang: 'ja-JP',

@@ -1,16 +1,18 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610110918';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610110918';
-import { createBus } from '../core/bus.js?v=202610110918';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610110918';
-import { runs } from '../core/extract.js?v=202610110918';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610111152';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610111152';
+import { createBus } from '../core/bus.js?v=202610111152';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610111152';
+import { runs } from '../core/extract.js?v=202610111152';
+import { createVJ } from './vj.js?v=202610111152';
 
 const P = new URLSearchParams(location.search);
 const LOCK = {};
 if (THEMES[P.get('theme')]) LOCK.theme = P.get('theme');
 if (/^[0-9a-f]{6}$/i.test(P.get('accent') || '')) LOCK.accent = '#' + P.get('accent');
-if (['compose', 'kanpe', 'ticker'].includes(P.get('layout'))) LOCK.layout = P.get('layout');
+if (['compose', 'kanpe', 'ticker', 'vj'].includes(P.get('layout'))) LOCK.layout = P.get('layout');
+if (['led', 'neon', 'pixel'].includes(P.get('vj'))) LOCK.vjStyle = P.get('vj');
 if (+P.get('size') > 0) LOCK.baseSize = +P.get('size');
 if (P.get('calm') === '1') LOCK.reduceMotion = true;
 if (P.get('cap') === '0') LOCK.caption = false;
@@ -27,6 +29,8 @@ const items = new Map();
 let host = stage;
 let trackX = 0;
 let lastWordAt = performance.now();
+let vj = null; // VJ モードの描画エンジン
+let lastSp = null; // 直前に表示した話者（話者が替わった最初の語にだけラベルを付ける）
 
 // ジャンプ率：組版は大胆に、カンペ・テロップは読みやすさ優先で控えめに
 const RATIOS = { compose: [1, 1.5, 2.25, 3.4], kanpe: [1, 1.2, 1.42, 1.7], ticker: [1, 1.14, 1.3, 1.48] };
@@ -68,6 +72,7 @@ function applyTheme() {
     l.href = `https://fonts.googleapis.com/css2?family=${th.gf}&display=swap`;
     document.head.appendChild(l);
   }
+  configureVJ();
 }
 
 // 表示する語の字形だけを先読み（Google Fonts は文字範囲ごとに分割配信）。最大120msで見切る。
@@ -85,8 +90,14 @@ function fontReady(text, px) {
 function setupLayout() {
   for (const it of items.values()) it.el.remove();
   items.clear();
+  if (vj) { vj.destroy(); vj = null; }
   stage.replaceChildren();
-  if (S.layout === 'kanpe') {
+  lastSp = null;
+  if (S.layout === 'vj') {
+    vj = createVJ(stage, { localFonts: LOCAL_FONTS });
+    configureVJ();
+    host = stage;
+  } else if (S.layout === 'kanpe') {
     host = el('flow');
     stage.appendChild(host);
   } else if (S.layout === 'ticker') {
@@ -103,7 +114,13 @@ function setupLayout() {
 }
 
 function updateHint() {
-  if (hint) hint.classList.toggle('on', EMBED && items.size === 0);
+  if (hint) hint.classList.toggle('on', EMBED && (vj ? vj.count() === 0 : items.size === 0));
+}
+function configureVJ() {
+  if (!vj) return;
+  const th = THEMES[S.theme] || THEMES.yoru;
+  vj.configure({ style: S.vjStyle || 'led', accent: S.accent || th.accent, accent2: th.accent2,
+    transparent: th.bg === 'transparent' || !!S.bgImage, calm: !!S.reduceMotion, caption: !!S.caption, ttl: S.ttl });
 }
 
 function level(kind, text, count) {
@@ -188,6 +205,7 @@ async function addWord(m) {
   const text = m.text;
   if (!text) return;
   lastWordAt = now();
+  if (vj) { await vj.add(m); updateHint(); return; }
   const key = text.toLowerCase();
   const prev = items.get(key);
   if (prev && !prev.leaving) { bump(prev, m.count); return; }
@@ -201,6 +219,12 @@ async function addWord(m) {
   await fontReady(text, px);
 
   const { node, inner, parts } = build(text, kind, vertical);
+  if (m.spc) { // 話者の色とラベル（話者が替わった最初の語にだけ名前を添える）
+    node.classList.add('has-sp');
+    node.style.setProperty('--spc', m.spc);
+    if (m.spn && m.sp !== lastSp) node.appendChild(el('sp-tag', m.spn));
+    lastSp = m.sp;
+  }
   node.style.fontSize = px + 'px';
   node.style.letterSpacing = TRACK[lv] + 'em';
   const ttl = S.ttl * 1000 * (kind === 'new' ? 1.25 : 1) * (lv >= 2 ? 1.15 : 1);
@@ -331,6 +355,8 @@ function removeItem(it) {
 }
 
 function clearAll() {
+  if (vj) vj.clear();
+  lastSp = null;
   for (const it of [...items.values()]) expire(it);
   cap.classList.remove('on');
 }
@@ -374,10 +400,17 @@ setInterval(() => {
 
 // ---------------------------------------------------------------- 字幕ライン
 let capTimer = 0;
-function caption(text, final) {
+function caption(text, final, m = {}) {
   if (!S.caption || !text) return;
   const arr = [...text];
-  cap.textContent = arr.length > 44 ? '…' + arr.slice(-43).join('') : text;
+  const body = arr.length > 44 ? '…' + arr.slice(-43).join('') : text;
+  if (m.spn) {
+    const tag = el('cap-sp', m.spn);
+    tag.style.setProperty('--spc', m.spc || 'currentColor');
+    cap.replaceChildren(tag, document.createTextNode(body));
+  } else {
+    cap.textContent = body;
+  }
   cap.classList.toggle('final', !!final);
   cap.classList.add('on');
   clearTimeout(capTimer);
@@ -392,8 +425,9 @@ function onMessage(m) {
   if (m.t === 'word') {
     pending++;
     queue = queue.then(() => addWord(m)).then(() => sleep(pending > 6 ? 0 : 90)).catch(() => {}).finally(() => { pending--; });
-  } else if (m.t === 'caption') caption(m.text, m.final);
+  } else if (m.t === 'caption') caption(m.text, m.final, m);
   else if (m.t === 'clear') clearAll();
+  else if (m.t === 'lvl') { if (vj) vj.level(m.v); }
   else if (m.t === 'settings') applySettings(m.s);
 }
 
@@ -405,6 +439,7 @@ function applySettings(s) {
   S = { ...DEFAULTS, ...s, ...LOCK };
   applyTheme();
   if (prev.layout !== S.layout) setupLayout();
+  else configureVJ();
   if (!S.caption) cap.classList.remove('on');
 }
 
@@ -586,7 +621,13 @@ bus.send({ t: 'hello' });
 
 // 単体デモ：display.html?demo=1
 if (P.get('demo') === '1') {
-  import('../console/demo.js?v=202610110918').then(({ runDemo }) => runDemo({ lang: S.lang, deliver: onMessage, registered: S.registered }));
+  // sp=1：話者の色分けの見本（2人が交互に話す）
+  const SPK = [{ n: 'わたし', c: '#ffb020' }, { n: 'ゲスト', c: '#3fb6ff' }];
+  let cur = 0;
+  const deliver = P.get('sp') === '1'
+    ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
+    : onMessage;
+  import('../console/demo.js?v=202610111152').then(({ runDemo }) => runDemo({ lang: S.lang, deliver, registered: S.registered }));
 }
 
 // 検証用フック

@@ -202,6 +202,33 @@ details.obs[open] { padding-bottom: 12px; }
   padding: 9px 16px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity .25s, translate .25s; max-width: 90vw; }
 .toast.on { opacity: 1; translate: -50% 0; }
 
+/* ---- VJ モード・話者（有料版） ---- */
+.segmented.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.segmented button { position: relative; }
+.seg-tag { position: absolute; top: 3px; right: 5px; font-style: normal; font-size: 9px; font-weight: 900; line-height: 1; color: var(--accent); }
+.segmented button.locked { opacity: .45; }
+.vj-opts { padding: 12px; border-radius: 10px; background: var(--bg); border: 1px dashed var(--line2); }
+#speakerSec h2 { display: flex; align-items: center; }
+.sp-body { display: flex; flex-direction: column; gap: 16px; }
+.sp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.sp-item { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.sp-item:not(:has(.sp-reg)) { grid-template-columns: 32px minmax(0, 1fr); }
+.sp-color { position: relative; width: 32px; height: 32px; border-radius: 8px; background: var(--c); cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.sp-color input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.sp-name { height: 32px; }
+.sp-reg { height: 32px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sp-reg.done { color: var(--on); border-color: color-mix(in srgb, var(--on) 40%, var(--line2)); }
+.sp-now { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.sp-now button { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line2);
+  background: var(--raise); color: var(--sub); font-weight: 700; font-size: 13px; text-align: left; transition: background .15s, color .15s, border-color .15s; }
+.sp-now button kbd { margin: 0; flex: none; }
+.sp-now button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-now button::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; order: -1; }
+.sp-now button[aria-pressed="true"] { color: var(--ink); border-color: var(--c); background: color-mix(in srgb, var(--c) 16%, var(--raise)); }
+#speakerSec.locked .sp-body { opacity: .5; }
+.tx-sp { display: inline-block; margin-right: 8px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 800; line-height: 18px;
+  color: #111; background: var(--c); vertical-align: 1px; }
+
 @media (max-width: 900px) {
   /* スマホ・タブレット縦：マイク → プレビュー → 設定 → 文字起こし の順に1列で並べる */
   .grid { display: flex; flex-direction: column; gap: 12px; height: auto; }

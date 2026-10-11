@@ -26,7 +26,7 @@
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97&display=swap">
-<link rel="stylesheet" href="styles/console.css?v=202610110918">
+<link rel="stylesheet" href="styles/console.css?v=202610111152">
 </head>
 <body>
 <header class="top">
@@ -64,7 +64,7 @@
       </div>
       <div id="proNote" class="pro-note" hidden>
         <b>高精度認識はおトクプランの機能です</b>
-        <p>固有名詞や専門用語に強いクラウド認識で、拾う言葉の精度が上がります。おトクプラン（月 ¥1,980・月20時間つき。週3回×2時間の配信がまるごと収まります）で使えます（近日公開）。</p>
+        <p>固有名詞や専門用語に強いクラウド認識で、拾う言葉の精度が上がります。おトクプラン（月 ¥2,980・月20時間つき。週3回×2時間の配信がまるごと収まります）で使えます。話している人の自動聞き分けも入ります（近日公開）。</p>
         <a href="index.html#pricing">料金を見る</a>
       </div>
       <div class="field try">
@@ -80,16 +80,16 @@
       <h2>表示</h2>
       <div class="field"><span class="lbl">書体テーマ</span><div id="themes" class="themes" role="radiogroup" aria-label="書体テーマ"></div></div>
       <div class="field pro-themes">
-        <span class="lbl">プレミアム書体 <em class="pro-tag">¥100〜</em></span>
+        <span class="lbl">プレミアム書体 <em class="pro-tag">¥480〜</em></span>
         <div id="proThemes" class="themes" role="radiogroup" aria-label="プレミアム書体"></div>
       </div>
       <div class="field">
-        <span class="lbl">アクセントカラー <em class="pro-tag">¥100〜</em></span>
+        <span class="lbl">アクセントカラー <em class="pro-tag">¥480〜</em></span>
         <div id="accents" class="accents" role="radiogroup" aria-label="アクセントカラー"></div>
         <p class="hint">初めて出た言葉の色と下線に使います</p>
       </div>
       <div class="field">
-        <span class="lbl">背景画像 <em class="pro-tag">¥100〜</em></span>
+        <span class="lbl">背景画像 <em class="pro-tag">¥480〜</em></span>
         <div class="bg-row">
           <div id="bgThumb" class="bg-thumb" aria-hidden="true"></div>
           <div class="bg-actions">
@@ -102,9 +102,15 @@
       </div>
       <div id="trialBox" class="trial">
         <div class="trial-bar"><i id="trialFill"></i></div>
-        <p id="trialNote" class="hint">プレミアム書体・アクセントカラー・背景画像は、無料プランでも1日（24時間）お試しできます</p>
+        <p id="trialNote" class="hint">プレミアム書体・アクセントカラー・背景画像・VJ モード・話者の色分けは、無料プランでも1日（24時間）お試しできます</p>
       </div>
-      <div class="field"><span class="lbl">レイアウト</span><div id="layouts" class="segmented" role="radiogroup" aria-label="レイアウト"></div><p id="layoutNote" class="hint"></p></div>
+      <div class="field"><span class="lbl">レイアウト</span><div id="layouts" class="segmented four" role="radiogroup" aria-label="レイアウト"></div><p id="layoutNote" class="hint"></p></div>
+      <div id="vjOpts" class="field vj-opts" hidden>
+        <span class="lbl">VJ スタイル <em class="pro-tag">¥480〜</em></span>
+        <div id="vjStyles" class="segmented" role="radiogroup" aria-label="VJ スタイル"></div>
+        <p id="vjStyleNote" class="hint"></p>
+        <p class="hint">PC では、マイクの音量で画面の上下のイコライザーが揺れます</p>
+      </div>
       <div class="sliders">
         <label class="slider"><span class="lbl">文字サイズ</span><output id="vSize"></output><input id="baseSize" type="range" min="20" max="90" step="1"></label>
         <label class="slider"><span class="lbl">表示時間</span><output id="vTtl"></output><input id="ttl" type="range" min="3" max="30" step="1"></label>
@@ -115,6 +121,21 @@
         <label class="switch"><span>字幕ライン</span><input id="caption" type="checkbox" role="switch"></label>
         <label class="switch"><span>動きを控えめに</span><input id="reduceMotion" type="checkbox" role="switch"></label>
       </div>
+    </div>
+
+    <div class="sec" id="speakerSec">
+      <h2>話者 <em class="pro-tag">¥480〜</em></h2>
+      <div class="field">
+        <span class="lbl">ラベルと色分け</span>
+        <div id="spModes" class="segmented" role="radiogroup" aria-label="話者の色分け"></div>
+        <p id="spModeNote" class="hint"></p>
+      </div>
+      <div id="spBody" class="sp-body" hidden>
+        <div class="field"><span class="lbl">人数</span><div id="spCounts" class="segmented" role="radiogroup" aria-label="話者の人数"></div></div>
+        <div class="field"><span class="lbl">名前と色</span><ul id="spList" class="sp-list"></ul></div>
+        <div class="field"><span class="lbl">いま話している人 <kbd>1</kbd>〜<kbd>4</kbd></span><div id="spNow" class="sp-now" role="group" aria-label="いま話している人"></div></div>
+      </div>
+      <p class="hint">おトクプランでは、クラウド認識が声を聞き分けて自動で色分けします（近日公開）</p>
     </div>
 
     <div class="sec">
@@ -174,6 +195,6 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script type="module" src="src/console/console.js?v=202610110918"></script>
+<script type="module" src="src/console/console.js?v=202610111152"></script>
 </body>
 </html>

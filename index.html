@@ -30,7 +30,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="styles/lp.css?v=202610110918">
+<link rel="stylesheet" href="styles/lp.css?v=202610111152">
 <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -187,11 +187,44 @@
     <p class="swipe-hint mono" aria-hidden="true"><span id="specCount">01 / 06</span><span>スワイプで次へ →</span></p>
   </section>
 
+  <!-- ============ 有料プランの演出 ============ -->
+  <section class="section dark" id="plus" aria-labelledby="plus-title">
+    <div class="inner">
+      <header class="section-head reveal">
+        <p class="label mono"><span class="no">02</span>PLUS</p>
+        <div>
+          <h2 id="plus-title">配信を、<wbr>演出する。</h2>
+          <p>お手軽プラン以上で使える、2つの演出。無料プランでも1日お試しできます。</p>
+        </div>
+      </header>
+      <div class="showcase">
+        <article class="show reveal">
+          <div class="show-screen"><iframe data-src="display.html?demo=1&amp;ui=0&amp;layout=vj&amp;vj=neon" title="VJ モードのデモ" tabindex="-1"></iframe></div>
+          <div class="show-copy">
+            <p class="label mono">VJ MODE</p>
+            <h3>言葉が、<wbr>ドットで光る。</h3>
+            <p>話した言葉をドット絵で描く VJ モード。最新の言葉が中央に大きく灯り、ひとつ前の言葉は小さくなって周りを漂います。新しい言葉が来ると画面に波紋が走り、声の大きさでイコライザーが揺れます。</p>
+            <ul class="chips-row" aria-label="スタイル"><li>LED</li><li>ネオン</li><li>ピクセル</li></ul>
+          </div>
+        </article>
+        <article class="show reveal">
+          <div class="show-screen"><iframe data-src="display.html?demo=1&amp;ui=0&amp;layout=compose&amp;theme=yoru&amp;sp=1" title="話者の色分けのデモ" tabindex="-1"></iframe></div>
+          <div class="show-copy">
+            <p class="label mono">SPEAKERS</p>
+            <h3>誰の言葉か、<wbr>色でわかる。</h3>
+            <p>コラボ配信や対談で、話している人ごとに名前のラベルと色を付けます。切り替えはボタンかキーボードの 1〜4。PC なら声の高さで自動でも切り替わります。文字起こしにも名前が残ります。</p>
+            <ul class="chips-row" aria-label="できること"><li>最大4人</li><li>名前と色</li><li>TXT・SRT に名前</li></ul>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ 使い方 ============ -->
   <section class="section tint" id="how" aria-labelledby="how-title">
     <div class="inner">
       <header class="section-head reveal">
-        <p class="label mono"><span class="no">02</span>HOW IT WORKS</p>
+        <p class="label mono"><span class="no">03</span>HOW IT WORKS</p>
         <div>
           <h2 id="how-title">はじめるのに、<wbr>3分もかからない。</h2>
           <p>アカウント登録もインストールもいりません。ブラウザで開いて、話すだけ。</p>
@@ -232,17 +265,17 @@
   <!-- ============ 料金 ============ -->
   <section class="section" id="pricing" aria-labelledby="pricing-title">
     <header class="section-head reveal">
-      <p class="label mono"><span class="no">03</span>PRICING</p>
+      <p class="label mono"><span class="no">04</span>PRICING</p>
       <div>
         <h2 id="pricing-title">無料で、<wbr>ずっと使える。</h2>
-        <p>プランは3つだけ。2時間の配信を週3回する人を基準に決めました。まずは無料で、見た目にこだわるなら「お手軽」、認識の精度まで欲しいなら「おトク」に。</p>
+        <p>プランは3つだけ。2時間の配信を週3回する人を基準に決めました。まずは無料で、見た目と演出にこだわるなら「お手軽」、認識の精度と自動化まで欲しいなら「おトク」に。</p>
       </div>
     </header>
 
     <div class="plan-tabs" role="tablist" aria-label="プランを選ぶ" id="planTabs">
       <button type="button" role="tab" aria-selected="true" data-plan="0"><span>無料</span><b>¥0</b></button>
-      <button type="button" role="tab" aria-selected="false" data-plan="1"><span>お手軽</span><b>¥100</b></button>
-      <button type="button" role="tab" aria-selected="false" data-plan="2"><span>おトク</span><b>¥1,980</b></button>
+      <button type="button" role="tab" aria-selected="false" data-plan="1"><span>お手軽</span><b>¥480</b></button>
+      <button type="button" role="tab" aria-selected="false" data-plan="2"><span>おトク</span><b>¥2,980</b></button>
     </div>
     <div class="plans" id="plans" data-show="0">
       <article class="plan reveal">
@@ -257,7 +290,7 @@
           <li>カンペ表示・OBS オーバーレイ</li>
           <li>登録キーワード・NG ワード</li>
           <li>文字起こしの TXT / SRT 書き出し</li>
-          <li>プレミアム書体・アクセントカラー・背景画像を1日（24時間）お試し</li>
+          <li>有料プランの見た目と演出（プレミアム書体・背景画像・VJ モード・話者の色分けなど）を1日（24時間）お試し</li>
         </ul>
         <p class="plan-note">配信画面の隅に小さく「KANPE」と表示されます</p>
         <a class="btn btn-ink block" href="app.html">無料ではじめる</a>
@@ -266,18 +299,18 @@
       <article class="plan reveal">
         <header>
           <h3>お手軽プラン <span class="badge mono">SOON</span></h3>
-          <p class="plan-for">週3回の配信でも定額。見た目を自分らしく</p>
-          <p class="price"><b>¥100</b><span>/ 月（税込）</span></p>
+          <p class="plan-for">見た目と演出を、自分らしく。原価がかからないぶん、手頃に</p>
+          <p class="price"><b>¥480</b><span>/ 月（税込）</span></p>
         </header>
         <ul>
-          <li><b>プレミアム書体がすべて使える</b>（「筆」「ドット」ほか毎月追加）</li>
-          <li>アクセントカラーを自由に変えられる</li>
-          <li>背景画像をアップロード（自動で縮小・窓に合わせてトリミング）</li>
+          <li><b>VJ モード</b>：言葉をドット絵で描く演出（LED・ネオン・ピクセル）</li>
+          <li><b>話者のラベルと色分け</b>：最大4人。ボタン・キーボードで切り替え、PC は声の高さで自動も</li>
+          <li>プレミアム書体がすべて使える（「筆」「ドット」ほか毎月追加）</li>
+          <li>アクセントカラー・背景画像を自由に</li>
           <li>配信画面の「KANPE」表示を消せる</li>
-          <li>プリセットの保存・追加のエフェクト</li>
           <li>音声認識はブラウザのものを時間無制限で</li>
         </ul>
-        <p class="plan-note">年払いなら ¥1,000 / 年（2か月分おトク）</p>
+        <p class="plan-note">年払いなら ¥4,800 / 年（2か月分おトク）</p>
         <button class="btn btn-line block" type="button" disabled>近日公開</button>
       </article>
 
@@ -286,17 +319,18 @@
         <header>
           <h3>おトクプラン <span class="badge mono">SOON</span></h3>
           <p class="plan-for">毎週しっかり配信する人のぜんぶ入り</p>
-          <p class="price"><b>¥1,980</b><span>/ 月（税込）</span></p>
+          <p class="price"><b>¥2,980</b><span>/ 月（税込）</span></p>
         </header>
         <ul>
           <li><b>高精度クラウド認識　月20時間</b><br>週3回×2時間の配信がまるごと収まる量です</li>
-          <li>1時間あたり約 ¥99。追加は1時間 ¥150</li>
+          <li>1時間あたり約 ¥149。追加は1時間 ¥200</li>
+          <li><b>話している人を自動で聞き分けて色分け</b>（クラウドの話者分離）</li>
           <li>登録キーワードを認識に反映して、名前や専門用語の聞き間違いを減らす</li>
           <li>AI が話の要点やアイデアを短く拾って表示</li>
           <li>配信後のサマリー（要点・話題の流れ）</li>
           <li>お手軽プランのすべての機能</li>
         </ul>
-        <p class="plan-note">年払いなら ¥19,800 / 年（2か月分おトク）</p>
+        <p class="plan-note">年払いなら ¥29,800 / 年（2か月分おトク）</p>
         <button class="btn btn-invert block" type="button" disabled>近日公開</button>
       </article>
     </div>
@@ -307,7 +341,7 @@
   <section class="section tint" id="faq" aria-labelledby="faq-title">
     <div class="inner faq-grid">
       <header class="section-head reveal">
-        <p class="label mono"><span class="no">04</span>FAQ</p>
+        <p class="label mono"><span class="no">05</span>FAQ</p>
         <div>
           <h2 id="faq-title">よくある質問</h2>
         </div>
@@ -331,7 +365,7 @@
         </details>
         <details>
           <summary>お手軽プランとおトクプランの違いは？</summary>
-          <p>お手軽プラン（月¥100）は、プレミアム書体やアクセントカラー、背景画像など見た目の機能をまとめた、いちばん安いプランです。音声認識はブラウザのものを時間無制限で使えます。おトクプラン（月¥1,980）は、それに加えてクラウドの高精度認識を月20時間ぶん含み、2時間の配信を週3回しても収まります。AI の要点抽出と配信後のサマリーも入ったぜんぶ入りです。</p>
+          <p>お手軽プラン（月¥480）は、VJ モードや話者の色分け、プレミアム書体、背景画像など、見た目と演出の機能をまとめたプランです。音声認識はブラウザのものを時間無制限で使えます。おトクプラン（月¥2,980）は、それに加えてクラウドの高精度認識を月20時間ぶん含み、2時間の配信を週3回しても収まります。話している人の自動聞き分け、AI の要点抽出、配信後のサマリーも入ったぜんぶ入りです。</p>
         </details>
       </div>
     </div>
@@ -359,6 +393,6 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html" tabindex="-1">ブラウザで無料ではじめる<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="src/lp/lp.js?v=202610110918" defer></script>
+<script src="src/lp/lp.js?v=202610111152" defer></script>
 </body>
 </html>

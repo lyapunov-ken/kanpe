@@ -1,15 +1,15 @@
 // フリーミアムの設定。決済・ライセンス確認はサーバー側（今後）で行い、ここはその結果を受け取る窓口。
 // プランは3つ：無料プラン → お手軽プラン（見た目）→ おトクプラン（見た目＋精度と賢さ）。
 export const PLANS = {
-  free: { label: '無料プラン',   short: '無料',   price: '¥0',      rank: 0 },
-  plus: { label: 'お手軽プラン', short: 'お手軽', price: '¥100/月', rank: 1 },
-  pro:  { label: 'おトクプラン', short: 'おトク', price: '¥1,980/月', rank: 2 },
+  free: { label: '無料プラン',   short: '無料',   price: '¥0',      yen: '¥0', rank: 0 },
+  plus: { label: 'お手軽プラン', short: 'お手軽', price: '¥480/月', yen: '¥480', rank: 1 },
+  pro:  { label: 'おトクプラン', short: 'おトク', price: '¥2,980/月', yen: '¥2,980', rank: 2 },
 };
 
 export const PRO = {
   // 想定：2時間の配信を週3回（月約26時間）。話している区間は6〜7割なので月17時間前後。
   includedHours: 20,         // おトクプランの高精度クラウド認識（月・話している区間のみ）。上の想定がまるごと収まる
-  extraPrice: '¥150 / 1時間',
+  extraPrice: '¥200 / 1時間',
   checkoutUrl: '',           // Stripe Payment Link 等を設定すると「アップグレード」から決済へ進む
   available: false,          // 有料プラン公開時に true
   trialMs: 24 * 60 * 60 * 1000, // 無料プランでプレミアム機能を試せる期間（最初に使ってから1日・1回だけ）
@@ -27,6 +27,9 @@ export const REQUIRES = {
   'credit:hide': 'plus',     // 配信画面の「KANPE」表示を消す
   'accent:custom': 'plus',   // アクセントカラーの変更
   'bg:image': 'plus',        // 背景画像のアップロード
+  'layout:vj': 'plus',       // ドットアートの VJ モード
+  'speaker:labels': 'plus',  // 話者のラベルと色分け（手動切り替え・声の高さで自動）
+  'speaker:diarize': 'pro',  // クラウド認識による話者の自動聞き分け
   'engine:cloud': 'pro',     // 高精度クラウド認識
   'ai:ideas': 'pro',         // AI の要点・アイデア抽出
 };
@@ -34,7 +37,7 @@ export const REQUIRES = {
 export function canUse(feature) {
   const need = REQUIRES[feature];
   if (!need) return true;
-  if (feature === 'engine:cloud' && !PRO.available) return false;
+  if ((feature === 'engine:cloud' || feature === 'speaker:diarize') && !PRO.available) return false;
   return atLeast(need);
 }
 
