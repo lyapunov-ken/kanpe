@@ -12,7 +12,7 @@ SELLER = {
     'manager': '',   # 運営責任者
     'address': '',   # 所在地
     'phone': '',     # 電話番号
-    'email': '',     # 問い合わせ用メールアドレス（公開用）
+    'email': 'yoneken@mail.grokbot.com',  # 問い合わせ用メールアドレス（公開用・本人の指定）
 }
 
 def v(key, ja=True):
