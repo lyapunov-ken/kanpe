@@ -26,6 +26,7 @@ export class Recognizer {
     this.mobile = ONE_SHOT;
     this.netFails = 0;
     this.lastResultAt = 0;
+    this.audioAt = 0; this.soundAt = 0; this.speechAt = 0; // 認識側にマイクの音・声が届いた時刻（診断用）
     this.renew = false; // 次に開き直すとき、認識オブジェクトを作り直す
     this.settleTimer = 0;
     this.watchdog = 0;
@@ -47,14 +48,16 @@ export class Recognizer {
   _create(SR) {
     if (this.r) { // 古いものは切り離す（作り直したあとに古いイベントが届いても無視する）
       const o = this.r;
-      o.onstart = o.onresult = o.onerror = o.onend = null;
+      o.onstart = o.onresult = o.onerror = o.onend = o.onaudiostart = o.onsoundstart = o.onspeechstart = null;
       try { o.abort(); } catch { /* noop */ }
     }
     const r = new SR();
     r.interimResults = true;
     r.maxAlternatives = 1;
     r.onstart = () => { this.onState && this.onState('listening'); this._kick(); };
-    r.onresult = (e) => {
+    r.onaudiostart = () => { this.audioAt = Date.now(); this.onAudio && this.onAudio('audio'); };
+    r.onsoundstart = () => { this.soundAt = Date.now(); };
+    r.onspeechstart = () => { this.speechAt = Date.now(); };    r.onresult = (e) => {
       this._kick();
       this.netFails = 0;
       this.lastResultAt = Date.now();
