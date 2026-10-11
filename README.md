@@ -106,6 +106,8 @@ styles/                 CSS
 - 同じ Stripe アカウントの他プロジェクトと混ざらないよう、商品・価格・Checkout・契約に `metadata.project=kanpe`、価格の lookup_key は `kanpe_` で始め、明細書の表記は `KANPE`。他プロジェクトの価格や契約は無視する
 - 準備：`STRIPE_SECRET_KEY=sk_test_… node tools/stripe-setup.mjs` で商品・価格・顧客ポータルを作り、表示された値を Cloudflare Pages の環境変数（`STRIPE_SECRET_KEY`、`LICENSE_SECRET`、`STRIPE_PORTAL_CONFIG`）に入れる。未設定の間、申し込みボタンは「受付を準備しています」と表示する
 - テスト：`node tools/test-api.mjs`（Stripe は偽物に置き換えるので通信不要）
+- Stripe の推奨構成（implementation planner）との対応：ホスト型 Checkout／定額／フリーミアム（無料プランはカード不要）／顧客ポータル／Smart Retries と自動メール（ダッシュボードで設定）／Stripe Tax はしきい値モニタリングから。契約は flexible billing mode で作成し、商品には税コード（既定 `txcd_10103000`）を付ける
+- Connect は使わない（他の事業者への支払いがないため）。他プロジェクトとの入金の分離は、同じ組織（Organization）の中に KANPE 専用アカウントを作って行う
 
 ## 規約ページ
 

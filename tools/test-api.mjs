@@ -70,6 +70,7 @@ await t('checkout: plus monthly → Stripe Checkout URL, tagged project=kanpe', 
   assert.equal(c['metadata[project]'], 'kanpe'); assert.equal(c['subscription_data[metadata][project]'], 'kanpe');
   assert.equal(c.success_url, `${SITE}/app?checkout=success&session_id={CHECKOUT_SESSION_ID}`);
   assert.equal(c.locale, 'ja');
+  assert.equal(c['subscription_data[billing_mode][type]'], 'flexible');
 });
 await t('checkout: English yearly uses /en paths', async () => {
   const r = await call(checkout, '/api/checkout', { plan: 'plus', interval: 'year', lang: 'en' });

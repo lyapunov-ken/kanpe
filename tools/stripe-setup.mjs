@@ -8,6 +8,9 @@
 const KEY = process.env.STRIPE_SECRET_KEY;
 const SITE = (process.env.SITE_URL || 'https://kanpe.yoneken.xyz').replace(/\/+$/, '');
 const PLUS_ONLY = process.argv.includes('--plus-only');
+// 税コード：txcd_10103000 = Software as a Service (SaaS) - Personal Use。業務利用が中心なら txcd_10103001（Business Use）に。
+// 分類の最終判断はご自身（または税理士）で。KANPE_TAX_CODE で上書きできる。
+const TAX_CODE = process.env.KANPE_TAX_CODE || 'txcd_10103000';
 if (!KEY) { console.error('STRIPE_SECRET_KEY を設定してください'); process.exit(1); }
 const LIVE = KEY.includes('_live_');
 
@@ -44,9 +47,10 @@ async function ensureProduct(p) {
   let prod = list.data.find((x) => x.metadata && x.metadata.project === 'kanpe' && x.metadata.plan === p.plan);
   if (!prod) {
     prod = await api('POST', 'products', { name: p.name, description: p.description, statement_descriptor: 'KANPE',
-      metadata: { project: 'kanpe', plan: p.plan } });
+      tax_code: TAX_CODE, metadata: { project: 'kanpe', plan: p.plan } });
     console.log(`  + 商品を作成  ${prod.id}  ${p.name}`);
   } else {
+    if (prod.tax_code !== TAX_CODE) prod = await api('POST', `products/${prod.id}`, { tax_code: TAX_CODE });
     console.log(`  = 商品あり    ${prod.id}  ${prod.name}`);
   }
   return prod;
@@ -103,3 +107,7 @@ console.log(`  STRIPE_SECRET_KEY     = （このキー。KANPE 用の制限付�
 console.log(`  LICENSE_SECRET        = （32文字以上のランダムな文字列。例：openssl rand -base64 48）`);
 console.log(`  STRIPE_PORTAL_CONFIG  = ${portal.id}`);
 console.log('  PRO_ENABLED           = （おトクプランの機能が揃ったら 1）');
+console.log('\nダッシュボードで確認してください：');
+console.log('  Billing → 収益回収：Smart Retries・支払い失敗メール・カード情報の自動更新をオン（すべて設定のみ）');
+console.log('  設定 → 税金：本社住所を登録し、しきい値のモニタリングを有効に（課税事業者なら日本の登録を追加）');
+console.log('  設定 → 公開情報：明細書の表記（カナ・漢字）を KANPE に');
