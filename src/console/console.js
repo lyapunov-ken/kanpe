@@ -1,13 +1,13 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111544';
-import { EN, L, tr } from '../core/i18n.js?v=202610111544';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111544';
-import { createBus } from '../core/bus.js?v=202610111544';
-import { connectObs } from '../core/obs.js?v=202610111544';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111544';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610111544';
-import { simulateSpeech } from './demo.js?v=202610111544';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610111544';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610111553';
+import { EN, L, tr } from '../core/i18n.js?v=202610111553';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610111553';
+import { createBus } from '../core/bus.js?v=202610111553';
+import { connectObs } from '../core/obs.js?v=202610111553';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610111553';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610111553';
+import { simulateSpeech } from './demo.js?v=202610111553';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610111553';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -149,7 +149,8 @@ function guideLangBrowser() {
   if (diag.guided) return;
   diag.guided = true;
   const langName = S.lang === 'en-US' ? L('英語', 'English') : L('日本語', 'Japanese');
-  toast(L(`音声認識から文字が返ってきません。「言語」が話している言葉（いまは${langName}）になっているか確認し、Google Chrome か Microsoft Edge の最新版で開いてください`, `The speech service isn’t returning any text. Make sure “Language” matches what you’re speaking (now: ${langName}), and use the latest Google Chrome or Microsoft Edge.`), 9000);
+  // ブラウザには声が届いているのに、ブラウザの音声認識が文字を返していない（KANPE の外の問題）。試せることを案内する
+  toast(L(`ブラウザには声が届いていますが、ブラウザの音声認識が文字を返していません。「言語」（いまは${langName}）を確認し、直らなければブラウザの再起動、パソコンの入力マイクの切り替え、別のブラウザ（Edge / Safari）を試してください`, `Your browser hears you, but its speech recognition isn’t returning text. Check “Language” (now: ${langName}); if that doesn’t help, restart the browser, switch your computer’s input mic, or try another browser (Edge / Safari).`), 10000);
 }
 function checkDiag() {
   if (!rec.wanted || !diag.since || paused) return;
