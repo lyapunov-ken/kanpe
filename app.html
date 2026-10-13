@@ -27,10 +27,10 @@
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97%20BGMPRcdefhilnotux%E3%82%AF%E3%82%B4%E3%82%B7%E3%83%83%E3%83%88%E3%83%89%E4%B8%B8%E5%A4%AA%E6%98%8E%E6%9C%9D%E6%A5%B5&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="styles/console.css?v=202610132108">
+<link rel="stylesheet" href="styles/console.css?v=202610132136">
 </head>
 <body>
 <header class="top">
@@ -125,9 +125,14 @@
       <div class="field"><span class="lbl">レイアウト</span><div id="layouts" class="segmented four" role="radiogroup" aria-label="レイアウト"></div><p id="layoutNote" class="hint"></p></div>
       <div id="vjOpts" class="field vj-opts" hidden>
         <span class="lbl">VJ スタイル <em class="pro-tag">¥480〜</em></span>
-        <div id="vjStyles" class="segmented" role="radiogroup" aria-label="VJ スタイル"></div>
+        <div id="vjStyles" class="segmented four" role="radiogroup" aria-label="VJ スタイル"></div>
         <p id="vjStyleNote" class="hint"></p>
-        <p class="hint">PC では、マイクの音量で画面の上下のイコライザーが揺れます</p>
+        <span class="lbl vj-sub">VJ の書体</span>
+        <div id="vjFonts" class="segmented five vj-fonts" role="radiogroup" aria-label="VJ の書体"></div>
+        <p id="vjFontNote" class="hint"></p>
+        <div id="vjDetailRow" class="vj-row"><span class="lbl">ドットの細かさ</span><div id="vjDetails" class="segmented" role="radiogroup" aria-label="ドットの細かさ"></div></div>
+        <div class="vj-row"><span class="lbl">演出の強さ</span><div id="vjFxs" class="segmented" role="radiogroup" aria-label="演出の強さ"></div></div>
+        <p class="hint">声の大きさで文字が脈打ち、背景が強まります。同じ言葉を繰り返すとコンボ（×2, ×3…）、初めて出た言葉では閃光が走ります。「動きを控えめに」がオンのときは動きを止めます</p>
       </div>
       <div class="sliders">
         <label class="slider"><span class="lbl">文字サイズ</span><output id="vSize"></output><input id="baseSize" type="range" min="20" max="90" step="1"></label>
@@ -214,9 +219,9 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="src/ui/lang.js?v=202610132108" defer></script>
-<script src="src/ui/menu.js?v=202610132108" defer></script>
-<script src="src/ui/mode.js?v=202610132108" defer></script>
-<script type="module" src="src/console/console.js?v=202610132108"></script>
+<script src="src/ui/lang.js?v=202610132136" defer></script>
+<script src="src/ui/menu.js?v=202610132136" defer></script>
+<script src="src/ui/mode.js?v=202610132136" defer></script>
+<script type="module" src="src/console/console.js?v=202610132136"></script>
 </body>
 </html>

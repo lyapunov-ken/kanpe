@@ -1,14 +1,14 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610132108';
-import { EN, L, tr } from '../core/i18n.js?v=202610132108';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610132108';
-import { createBus } from '../core/bus.js?v=202610132108';
-import { connectObs } from '../core/obs.js?v=202610132108';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610132108';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610132108';
-import { simulateSpeech } from './demo.js?v=202610132108';
-import { initHelp } from './help.js?v=202610132108';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610132108';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, VJ_DETAILS, VJ_FX, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610132136';
+import { EN, L, tr } from '../core/i18n.js?v=202610132136';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610132136';
+import { createBus } from '../core/bus.js?v=202610132136';
+import { connectObs } from '../core/obs.js?v=202610132136';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610132136';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610132136';
+import { simulateSpeech } from './demo.js?v=202610132136';
+import { initHelp } from './help.js?v=202610132136';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610132136';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -296,6 +296,7 @@ function segButtons(container, entries, key) {
       b.append(tile, name);
     } else {
       b.textContent = tr(def);
+      if (key === 'vjFont') { b.style.fontFamily = `${def.family}, sans-serif`; b.style.fontWeight = def.weight; } // 書体の名前をその書体で見せる
     }
     if (def.pro && plusLocked(key === 'layout' ? 'layout:vj' : 'theme:premium')) b.classList.add('locked');
     if (def.pro && key === 'layout') { const t = document.createElement('em'); t.className = 'seg-tag'; t.textContent = '+'; b.appendChild(t); }
@@ -329,6 +330,7 @@ function pick(container, entries, key, id, def) {
   S[key] = id;
   if (key === 'theme') renderThemes(); else segButtons(container, entries, key);
   if (key === 'vjStyle') $('#vjStyleNote').textContent = tr(VJ_STYLES[id], 'note');
+  if (key === 'vjFont') syncVjFont();
   updateTrial();
   pushSettings();
 }
@@ -571,10 +573,22 @@ if (S.layout === 'vj' && plusLocked('layout:vj')) S.layout = 'compose';
 if (!LAYOUTS[S.layout]) S.layout = 'compose';
 if (S.speakerMode !== 'off' && plusLocked('speaker:labels')) S.speakerMode = 'off';
 if (!VJ_STYLES[S.vjStyle]) S.vjStyle = 'led';
+if (!VJ_FONTS[S.vjFont]) S.vjFont = 'gothic';
+if (!VJ_DETAILS[S.vjDetail]) S.vjDetail = 'mid';
+if (!VJ_FX[S.vjFx]) S.vjFx = 'mid';
 renderThemes();
 segButtons('#layouts', LAYOUTS, 'layout');
 segButtons('#vjStyles', VJ_STYLES, 'vjStyle');
 $('#vjStyleNote').textContent = tr(VJ_STYLES[S.vjStyle], 'note');
+segButtons('#vjFonts', VJ_FONTS, 'vjFont');
+segButtons('#vjDetails', VJ_DETAILS, 'vjDetail');
+segButtons('#vjFxs', VJ_FX, 'vjFx');
+// ドット書体は16段で固定なので、細かさは選べない
+function syncVjFont() {
+  $('#vjFontNote').textContent = tr(VJ_FONTS[S.vjFont], 'note');
+  $('#vjDetailRow').hidden = !!VJ_FONTS[S.vjFont].fixed;
+}
+syncVjFont();
 bindRange('baseSize', 'vSize', (v) => `${v}`);
 bindRange('ttl', 'vTtl', (v) => L(`${v}秒`, `${v}s`));
 bindRange('maxWords', 'vMax', (v) => L(`${v}語`, `${v} words`));

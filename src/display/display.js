@@ -1,12 +1,12 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, loadSettings } from '../core/settings.js?v=202610132108';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610132108';
-import { createBus } from '../core/bus.js?v=202610132108';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610132108';
-import { runs } from '../core/extract.js?v=202610132108';
-import { EN, L, tr } from '../core/i18n.js?v=202610132108';
-import { createVJ } from './vj.js?v=202610132108';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610132136';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610132136';
+import { createBus } from '../core/bus.js?v=202610132136';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610132136';
+import { runs } from '../core/extract.js?v=202610132136';
+import { EN, L, tr } from '../core/i18n.js?v=202610132136';
+import { createVJ } from './vj.js?v=202610132136';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -17,7 +17,10 @@ const LOCK = {};
 if (THEMES[P.get('theme')]) LOCK.theme = P.get('theme');
 if (/^[0-9a-f]{6}$/i.test(P.get('accent') || '')) LOCK.accent = '#' + P.get('accent');
 if (['compose', 'kanpe', 'ticker', 'vj'].includes(P.get('layout'))) LOCK.layout = P.get('layout');
-if (['led', 'neon', 'pixel'].includes(P.get('vj'))) LOCK.vjStyle = P.get('vj');
+if (['led', 'neon', 'pixel', 'holo'].includes(P.get('vj'))) LOCK.vjStyle = P.get('vj');
+if (VJ_FONTS[P.get('vjfont')]) LOCK.vjFont = P.get('vjfont');
+if (VJ_DETAILS[P.get('detail')]) LOCK.vjDetail = P.get('detail');
+if (VJ_FX[P.get('fx')]) LOCK.vjFx = P.get('fx');
 if (+P.get('size') > 0) LOCK.baseSize = +P.get('size');
 if (P.get('calm') === '1') LOCK.reduceMotion = true;
 if (P.get('cap') === '0') LOCK.caption = false;
@@ -170,8 +173,12 @@ function updateHint() {
 function configureVJ() {
   if (!vj) return;
   const th = THEMES[S.theme] || THEMES.yoru;
+  const font = VJ_FONTS[S.vjFont] ? S.vjFont : 'gothic';
+  root.style.setProperty('--vj-font', VJ_FONTS[font].family); // 字幕も VJ の書体にそろえる
+  root.style.setProperty('--vj-weight', String(VJ_FONTS[font].weight));
   vj.configure({ style: S.vjStyle || 'led', accent: S.accent || th.accent, accent2: th.accent2,
-    transparent: th.bg === 'transparent' || !!S.bgImage || !!camStream, calm: !!S.reduceMotion, caption: !!S.caption, ttl: S.ttl });
+    transparent: th.bg === 'transparent' || !!S.bgImage || !!camStream, calm: !!S.reduceMotion, caption: !!S.caption, ttl: S.ttl,
+    font, detail: S.vjDetail || 'mid', fx: S.vjFx || 'mid' });
 }
 
 function level(kind, text, count) {
@@ -678,9 +685,9 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610132108').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610132136').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 
 // 検証用フック
-window.__kanpe = { onMessage, items, get settings() { return S; } };
+window.__kanpe = { onMessage, items, get settings() { return S; }, get vj() { return vj; } };

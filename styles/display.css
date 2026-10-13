@@ -184,6 +184,6 @@ body {
 .theme-clear.layout-vj #stage::after { display: none; }
 .layout-vj { background: #040506; }
 .layout-vj.theme-clear, .layout-vj.has-bgimg { background: transparent; }
-.layout-vj #caption { font-family: "DotGothic16", var(--font); font-weight: 400; letter-spacing: .06em; color: rgba(255,255,255,.7); }
+.layout-vj #caption { font-family: var(--vj-font, "DotGothic16"), var(--font); font-weight: var(--vj-weight, 400); font-synthesis: none; letter-spacing: .06em; color: rgba(255,255,255,.7); }
 .layout-vj #caption.final { color: #fff; }
-.layout-vj #hint { font-family: "DotGothic16", var(--font); color: rgba(255,255,255,.5); }
+.layout-vj #hint { font-family: var(--vj-font, "DotGothic16"), var(--font); color: rgba(255,255,255,.5); }

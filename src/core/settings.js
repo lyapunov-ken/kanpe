@@ -74,7 +74,34 @@ export const LAYOUTS = {
 export const VJ_STYLES = {
   led: { label: 'LED', labelEn: 'LED', note: '丸い電球のドット。アクセント色で光る', noteEn: 'Round bulb dots glowing in the accent color' },
   neon: { label: 'ネオン', labelEn: 'Neon', note: '色が移ろうネオン管のドット', noteEn: 'Neon-tube dots with drifting colors' },
-  pixel: { label: 'ピクセル', labelEn: 'Pixel', note: '角ドットのレトロゲーム風', noteEn: 'Square pixels, retro game style' },
+  pixel: { label: 'ピクセル', labelEn: 'Pixel', note: '角ドットのレトロゲーム風。文字が1字ずつ跳ねる', noteEn: 'Square pixels, retro game style. Letters hop one by one' },
+  holo: { label: 'ホロ', labelEn: 'Holo', note: 'ホログラム。立体的に回って現れ、色ずれと走査線がゆらぐ', noteEn: 'Hologram: flips in in 3D, with color fringing and scanlines' },
+};
+
+// VJ モードの書体。rows はドットの段数（多いほど細かく、読みやすい）。ドット書体は16段で設計されているので固定
+export const VJ_FONTS = {
+  gothic: { label: 'ゴシック', labelEn: 'Gothic', note: '太いゴシック。いちばん読みやすい', noteEn: 'Heavy gothic. The easiest to read',
+    family: '"Zen Kaku Gothic New"', weight: 900, gf: 'Zen+Kaku+Gothic+New:wght@900', rows: 24 },
+  maru: { label: '丸ゴ', labelEn: 'Round', note: '丸ゴシック。やわらかい印象', noteEn: 'Rounded gothic. Soft and friendly',
+    family: '"Zen Maru Gothic"', weight: 900, gf: 'Zen+Maru+Gothic:wght@900', rows: 24 },
+  mincho: { label: '明朝', labelEn: 'Mincho', note: '太い明朝。和の看板のように', noteEn: 'Bold Mincho, like a Japanese shop sign',
+    family: '"Shippori Mincho B1"', weight: 800, gf: 'Shippori+Mincho+B1:wght@800', rows: 28 },
+  pop: { label: '極太', labelEn: 'Bold', note: '極太のポップ体。遠くからでも目立つ', noteEn: 'Ultra-bold display face. Stands out from afar',
+    family: '"Dela Gothic One"', weight: 400, gf: 'Dela+Gothic+One', rows: 22 },
+  dot: { label: 'ドット', labelEn: 'Pixel', note: '16 ドットのレトロな書体。細かい漢字は読みにくくなります', noteEn: 'Retro 16-dot font. Complex kanji get hard to read',
+    family: '"DotGothic16"', weight: 400, gf: 'DotGothic16', rows: 16, fixed: true },
+};
+// ドットの細かさ（段数にかける倍率）
+export const VJ_DETAILS = {
+  coarse: { label: '粗い', labelEn: 'Coarse', k: 0.75 },
+  mid: { label: '標準', labelEn: 'Standard', k: 1 },
+  fine: { label: '細かい', labelEn: 'Fine', k: 1.35 },
+};
+// 演出の強さ（「動きを控えめに」がオンなら、強さに関係なく動きを止める）
+export const VJ_FX = {
+  low: { label: '控えめ', labelEn: 'Subtle', k: 0.35 },
+  mid: { label: '標準', labelEn: 'Standard', k: 0.7 },
+  high: { label: '派手', labelEn: 'Intense', k: 1 },
 };
 
 // 話者の色（ラベルと文字色に使う）
@@ -98,6 +125,9 @@ export const DEFAULTS = {
   reduceMotion: false,
   accent: '',        // アクセントカラー（空＝書体テーマ標準）
   vjStyle: 'led',    // VJ モードの見た目
+  vjFont: 'gothic',  // VJ モードの書体
+  vjDetail: 'mid',   // ドットの細かさ
+  vjFx: 'mid',       // 演出の強さ
   speakerMode: 'off', // 話者の色分け：off / manual（手動で切り替え）/ auto（声の高さで推定）
   speakerCount: 2,
   speakers: DEFAULT_SPEAKERS,

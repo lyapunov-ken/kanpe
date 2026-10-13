@@ -465,3 +465,11 @@ details.obs[open] { padding-bottom: 12px; }
 .plan-mail-hint { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); }
 .plan-mail { margin-top: 6px; }
 .plan-mail input { font-family: inherit; font-size: 13px; }
+
+/* ---- VJ の書体・細かさ・演出 ---- */
+.segmented.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.vj-fonts button { font-size: 12.5px; letter-spacing: -.02em; padding: 0 1px; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+.vj-opts .vj-sub { margin-top: 8px; }
+.vj-row { display: grid; grid-template-columns: 6.5em minmax(0, 1fr); align-items: center; gap: 10px; margin-top: 6px; }
+.vj-row .lbl { margin: 0; }
+:lang(en) .vj-row { grid-template-columns: 5.5em minmax(0, 1fr); }

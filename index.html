@@ -32,7 +32,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="styles/lp.css?v=202610132108">
+<link rel="stylesheet" href="styles/lp.css?v=202610132136">
 <script>document.documentElement.classList.add('js');</script>
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 </head>
@@ -211,12 +211,12 @@
       </header>
       <div class="showcase">
         <article class="show reveal">
-          <div class="show-screen"><iframe data-src="display.html?demo=1&amp;ui=0&amp;layout=vj&amp;vj=neon" title="VJ モードのデモ" tabindex="-1"></iframe></div>
+          <div class="show-screen"><iframe data-src="display.html?demo=1&amp;ui=0&amp;layout=vj&amp;vj=holo&amp;vjfont=gothic&amp;fx=high" title="VJ モードのデモ" tabindex="-1"></iframe></div>
           <div class="show-copy">
             <p class="label mono">VJ MODE</p>
             <h3>言葉が、<wbr>ドットで光る。</h3>
-            <p>話した言葉をドット絵で描く VJ モード。最新の言葉が中央に大きく灯り、ひとつ前の言葉は小さくなって周りを漂います。新しい言葉が来ると画面に波紋が走り、声の大きさでイコライザーが揺れます。</p>
-            <ul class="chips-row" aria-label="スタイル"><li>LED</li><li>ネオン</li><li>ピクセル</li></ul>
+            <p>話した言葉をドット絵で描く VJ モード。最新の言葉が中央に大きく灯り、声に合わせて脈打ちます。同じ言葉を繰り返すとコンボ（×2, ×3…）が決まり、初めて出た言葉では閃光とグリッチが走ります。背景のステージライトやネオンの床も、声の大きさで強まります。</p>
+            <ul class="chips-row" aria-label="スタイル"><li>LED</li><li>ネオン</li><li>ピクセル</li><li>ホロ</li><li>書体5種</li></ul>
           </div>
         </article>
         <article class="show reveal">
@@ -360,7 +360,7 @@
           <p class="price"><b>¥480</b><span>/ 月（税込）</span></p>
         </header>
         <ul>
-          <li><b>VJ モード</b>：言葉をドット絵で描く演出（LED・ネオン・ピクセル）</li>
+          <li><b>VJ モード</b>：言葉をドット絵で描く演出（LED・ネオン・ピクセル・ホロ。書体5種・演出の強さを選べる）</li>
           <li><b>話者のラベルと色分け</b>：最大4人。ボタン・キーボードで切り替え、PC は声の高さで自動も</li>
           <li>プレミアム書体がすべて使える（「筆」「ドット」ほか毎月追加）</li>
           <li>アクセントカラー・背景画像・背景にカメラの映像</li>
@@ -492,9 +492,9 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html" tabindex="-1">ブラウザで無料ではじめる<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="src/ui/lang.js?v=202610132108" defer></script>
-<script src="src/ui/menu.js?v=202610132108" defer></script>
-<script src="src/ui/mode.js?v=202610132108" defer></script>
-<script src="src/lp/lp.js?v=202610132108" defer></script>
+<script src="src/ui/lang.js?v=202610132136" defer></script>
+<script src="src/ui/menu.js?v=202610132136" defer></script>
+<script src="src/ui/mode.js?v=202610132136" defer></script>
+<script src="src/lp/lp.js?v=202610132136" defer></script>
 </body>
 </html>
