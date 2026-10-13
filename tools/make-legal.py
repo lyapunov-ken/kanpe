@@ -167,10 +167,16 @@ def page(slug, ja):
 <body id="top" class="legal-page">
 <header class="nav scrolled">
   <a class="logo" href="{home}" aria-label="{"KANPE トップ" if ja else "KANPE home"}"><span class="tally" aria-hidden="true"></span>KANPE<span class="beta mono">BETA</span></a>
-  <nav class="links" aria-label="{"規約" if ja else "Legal"}">{nav}</nav>
+  <nav class="links" id="siteMenu" aria-label="{"規約" if ja else "Legal"}">{nav}
+    <div class="menu-extra">
+      <a class="menu-row" href="{other}" hreflang="{"en" if ja else "ja"}" lang="{"en" if ja else "ja"}" data-lang-switch><span class="mi" aria-hidden="true">{"EN" if ja else "JA"}</span>{"English" if ja else "日本語"}</a>
+      <button class="menu-row" type="button" data-mode-toggle><span class="mi" aria-hidden="true">{MOON}{SUN}</span><span class="when-light">{"ダークモード" if ja else "Dark mode"}</span><span class="when-dark">{"ライトモード" if ja else "Light mode"}</span></button>
+    </div>
+  </nav>
   <a class="lang-link" href="{other}" hreflang="{"en" if ja else "ja"}" lang="{"en" if ja else "ja"}" data-lang-switch title="{"English version" if ja else "日本語版"}">{"EN" if ja else "JA"}</a>
   <button class="mode-btn" type="button" data-mode-toggle aria-label="{"表示モードを切り替える" if ja else "Toggle light or dark mode"}">{MOON}{SUN}</button>
   <a class="btn btn-ink small" href="{"../app.html" if ja else "../app.html"}">{"無料で使う" if ja else "Try free"}</a>
+  <button class="menu-btn" type="button" data-menu-btn aria-controls="siteMenu" aria-expanded="false" aria-label="{"メニュー" if ja else "Menu"}"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="b1" d="M4 7h16"/><path class="b2" d="M4 12h16"/><path class="b3" d="M4 17h16"/></svg></button>
 </header>
 <main class="legal">
   <p class="label mono">LEGAL</p>
@@ -189,6 +195,7 @@ def page(slug, ja):
   <span class="fine">© 2026 KANPE · {"ベータ版" if ja else "Beta"}</span>
 </footer>
 <script src="{up}src/ui/lang.js" defer></script>
+<script src="{up}src/ui/menu.js" defer></script>
 <script src="{up}src/ui/mode.js" defer></script>
 </body>
 </html>

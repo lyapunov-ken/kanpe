@@ -1,14 +1,14 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610131647';
-import { EN, L, tr } from '../core/i18n.js?v=202610131647';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610131647';
-import { createBus } from '../core/bus.js?v=202610131647';
-import { connectObs } from '../core/obs.js?v=202610131647';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610131647';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610131647';
-import { simulateSpeech } from './demo.js?v=202610131647';
-import { initHelp } from './help.js?v=202610131647';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610131647';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610131801';
+import { EN, L, tr } from '../core/i18n.js?v=202610131801';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610131801';
+import { createBus } from '../core/bus.js?v=202610131801';
+import { connectObs } from '../core/obs.js?v=202610131801';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610131801';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610131801';
+import { simulateSpeech } from './demo.js?v=202610131801';
+import { initHelp } from './help.js?v=202610131801';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610131801';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);

@@ -13,7 +13,8 @@
     const mode = effective();
     root.dataset.mode = mode;
     for (const b of document.querySelectorAll('[data-mode-toggle]')) {
-      const label = mode === 'dark' ? 'ライトモードにする' : 'ダークモードにする';
+      const en = (root.lang || '').toLowerCase().startsWith('en');
+      const label = mode === 'dark' ? (en ? 'Switch to light mode' : 'ライトモードにする') : (en ? 'Switch to dark mode' : 'ダークモードにする');
       b.setAttribute('aria-label', label);
       b.title = label;
     }

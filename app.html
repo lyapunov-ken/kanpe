@@ -30,7 +30,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="styles/console.css?v=202610131647">
+<link rel="stylesheet" href="styles/console.css?v=202610131801">
 </head>
 <body>
 <header class="top">
@@ -41,6 +41,12 @@
     <a class="lang-link" href="en/app.html" hreflang="en" lang="en" data-lang-switch title="English version">EN</a>
     <button class="mode-btn" type="button" data-mode-toggle aria-label="表示モードを切り替える"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg></button>
     <a id="planBadge" class="plan-badge" href="index.html#pricing"><b>無料プラン</b><span>アップグレード</span></a>
+    <button class="menu-btn" type="button" data-menu-btn aria-controls="appMenu" aria-expanded="false" aria-label="メニュー"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="b1" d="M4 7h16"/><path class="b2" d="M4 12h16"/><path class="b3" d="M4 17h16"/></svg></button>
+    <div id="appMenu" class="menu-panel">
+      <button class="menu-row" type="button" data-help-open data-menu-close><span class="mi" aria-hidden="true">?</span>使い方ガイド</button>
+      <a class="menu-row" href="en/app.html" hreflang="en" lang="en" data-lang-switch><span class="mi" aria-hidden="true">EN</span>English</a>
+      <button class="menu-row" type="button" data-mode-toggle><span class="mi" aria-hidden="true"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg></span><span class="when-light">ダークモード</span><span class="when-dark">ライトモード</span></button>
+    </div>
   </div>
 </header>
 
@@ -208,8 +214,9 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="src/ui/lang.js?v=202610131647" defer></script>
-<script src="src/ui/mode.js?v=202610131647" defer></script>
-<script type="module" src="src/console/console.js?v=202610131647"></script>
+<script src="src/ui/lang.js?v=202610131801" defer></script>
+<script src="src/ui/menu.js?v=202610131801" defer></script>
+<script src="src/ui/mode.js?v=202610131801" defer></script>
+<script type="module" src="src/console/console.js?v=202610131801"></script>
 </body>
 </html>

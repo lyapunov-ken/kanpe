@@ -32,23 +32,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700&family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../styles/lp.css?v=202610131647">
+<link rel="stylesheet" href="../styles/lp.css?v=202610131801">
 <script>document.documentElement.classList.add('js');</script>
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 </head>
 <body id="top">
 <header class="nav">
   <a class="logo" href="#top" aria-label="KANPE home"><span class="tally" aria-hidden="true"></span>KANPE<span class="beta mono">BETA</span></a>
-  <nav class="links" aria-label="On this page">
+  <nav class="links" id="siteMenu" aria-label="On this page">
     <a href="#features">Features</a>
     <a href="#business">Business</a>
     <a href="#how">How it works</a>
     <a href="#pricing">Pricing</a>
     <a href="#faq">FAQ</a>
+    <div class="menu-extra">
+      <a class="menu-row" href="../" hreflang="ja" lang="ja" data-lang-switch><span class="mi" aria-hidden="true">JA</span>日本語</a>
+      <button class="menu-row" type="button" data-mode-toggle><span class="mi" aria-hidden="true"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg></span><span class="when-light">Dark mode</span><span class="when-dark">Light mode</span></button>
+    </div>
   </nav>
   <a class="lang-link jp" href="../" hreflang="ja" lang="ja" data-lang-switch title="日本語版">日本語</a>
   <button class="mode-btn" type="button" data-mode-toggle aria-label="Switch color mode"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg></button>
   <a class="btn btn-ink small" href="app.html">Try free</a>
+  <button class="menu-btn" type="button" data-menu-btn aria-controls="siteMenu" aria-expanded="false" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="b1" d="M4 7h16"/><path class="b2" d="M4 12h16"/><path class="b3" d="M4 17h16"/></svg></button>
 </header>
 
 <main>
@@ -491,8 +496,9 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html" tabindex="-1">Start free in your browser<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="../src/ui/lang.js?v=202610131647" defer></script>
-<script src="../src/ui/mode.js?v=202610131647" defer></script>
-<script src="../src/lp/lp.js?v=202610131647" defer></script>
+<script src="../src/ui/lang.js?v=202610131801" defer></script>
+<script src="../src/ui/menu.js?v=202610131801" defer></script>
+<script src="../src/ui/mode.js?v=202610131801" defer></script>
+<script src="../src/lp/lp.js?v=202610131801" defer></script>
 </body>
 </html>
