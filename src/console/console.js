@@ -1,13 +1,14 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610112307';
-import { EN, L, tr } from '../core/i18n.js?v=202610112307';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610112307';
-import { createBus } from '../core/bus.js?v=202610112307';
-import { connectObs } from '../core/obs.js?v=202610112307';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610112307';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610112307';
-import { simulateSpeech } from './demo.js?v=202610112307';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610112307';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610131647';
+import { EN, L, tr } from '../core/i18n.js?v=202610131647';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610131647';
+import { createBus } from '../core/bus.js?v=202610131647';
+import { connectObs } from '../core/obs.js?v=202610131647';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610131647';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610131647';
+import { simulateSpeech } from './demo.js?v=202610131647';
+import { initHelp } from './help.js?v=202610131647';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610131647';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -587,6 +588,19 @@ bindCheck('reduceMotion');
 bindText('registered', () => ex.setDict(S));
 bindText('ng', () => ex.setDict(S));
 
+// ------------------------------------------------------------ 使い方ガイド（ヘルプ）とシーン別のおすすめ設定
+function applyPreset(p) {
+  Object.assign(S, p.s);
+  renderThemes();
+  segButtons('#layouts', LAYOUTS, 'layout');
+  for (const id of ['baseSize', 'ttl', 'maxWords']) { const r = $('#' + id); r.value = S[id]; r.dispatchEvent(new Event('input')); }
+  for (const id of ['vertical', 'caption']) $('#' + id).checked = !!S[id];
+  updateTrial();
+  pushSettings();
+  toast(L(`「${p.label}」向けの設定にしました`, `Switched to settings for: ${p.label}`));
+}
+const help = initHelp({ onPreset: applyPreset });
+
 
 // ------------------------------------------------------------ 話者のラベルと色分け（お手軽プラン以上。無料プランは1日お試し）
 // 手動：ボタンかキーボードの 1〜4 で「いま話している人」を切り替える
@@ -899,8 +913,10 @@ function clearAll() { send({ t: 'clear' }); }
 $('#btnPause').addEventListener('click', togglePause);
 $('#btnClear').addEventListener('click', clearAll);
 window.addEventListener('keydown', (e) => {
+  if (help.isOpen() || document.querySelector('dialog[open]')) return; // 窓が開いている間の Esc は窓を閉じるだけ
   const tag = (e.target && e.target.tagName) || '';
   if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
+  if (e.key === '?') { e.preventDefault(); help.open(); return; }
   if (e.key === 'p' || e.key === 'P') { e.preventDefault(); togglePause(); }
   if (e.key === 'Escape') { e.preventDefault(); clearAll(); }
   if (/^[1-4]$/.test(e.key) && speakersOn() && +e.key <= S.speakerCount) { e.preventDefault(); setSpeaker(+e.key - 1); }

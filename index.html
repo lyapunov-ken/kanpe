@@ -32,7 +32,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="styles/lp.css?v=202610112307">
+<link rel="stylesheet" href="styles/lp.css?v=202610131647">
 <script>document.documentElement.classList.add('js');</script>
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 </head>
@@ -41,6 +41,7 @@
   <a class="logo" href="#top" aria-label="KANPE トップ"><span class="tally" aria-hidden="true"></span>KANPE<span class="beta mono">BETA</span></a>
   <nav class="links" aria-label="ページ内">
     <a href="#features">特徴</a>
+    <a href="#business">ビジネス</a>
     <a href="#how">使い方</a>
     <a href="#pricing">料金</a>
     <a href="#faq">よくある質問</a>
@@ -226,11 +227,56 @@
     </div>
   </section>
 
+  <!-- ============ ビジネスでの利用 ============ -->
+  <section class="section" id="business" aria-labelledby="business-title">
+    <header class="section-head reveal">
+      <p class="label mono"><span class="no">03</span>BUSINESS</p>
+      <div>
+        <h2 id="business-title">会議室でも、<wbr>演台でも。</h2>
+        <p>配信のためにつくったカンペは、仕事の場でも働きます。話した言葉がその場で見えると、会議は議論の中心がぶれにくく、講演は話の流れを見失いにくくなります。</p>
+      </div>
+    </header>
+    <div class="showcase">
+      <article class="show reveal">
+        <div class="show-screen"><iframe data-src="display.html?demo=1&amp;ui=0&amp;layout=compose&amp;theme=sumi&amp;script=meeting&amp;ttl=30&amp;vert=0&amp;cap=0" title="ブレスト会議のデモ" tabindex="-1"></iframe></div>
+        <div class="show-copy">
+          <p class="label mono">BRAINSTORM</p>
+          <h3>ブレスト会議は、<wbr>出た言葉をみんなで眺める。</h3>
+          <p>会議室のディスプレイに映しておくだけ。誰かが話すたびに言葉が画面に置かれ、ホワイトボードに書き出す手間なく、アイデアが場に並んでいきます。</p>
+          <ul class="biz-points">
+            <li><b>繰り返し出た言葉ほど大きく残る</b>いま議論の中心が何かが、画面を見れば分かります</li>
+            <li><b>初めて出た言葉はハイライト</b>ぽろっと出た小さなアイデアも拾い逃しません</li>
+            <li><b>そのまま議事録の下書きに</b>終わったら文字起こしを TXT で保存できます</li>
+            <li><b>社外秘は画面に出さない</b>NG ワードに入れた名称は、画面にも字幕にも出しません</li>
+          </ul>
+        </div>
+      </article>
+      <article class="show reveal">
+        <div class="show-screen"><iframe data-src="display.html?demo=1&amp;ui=0&amp;layout=kanpe&amp;theme=yoru&amp;script=speech&amp;cap=1&amp;size=52&amp;max=8&amp;ttl=20" title="スピーチ・講演のデモ" tabindex="-1"></iframe></div>
+        <div class="show-copy">
+          <p class="label mono">SPEECH</p>
+          <h3>スピーチ・講演は、<wbr>話した要点が手元に積み上がる。</h3>
+          <p>演台や手元のモニターに、話し終えた要点が大きな文字で下から積み上がります。原稿を読み上げなくても、いまどこまで話したかが一目で分かります。</p>
+          <ul class="biz-points">
+            <li><b>話の現在地が分かる</b>言い忘れや、同じ話の繰り返しを防ぎます</li>
+            <li><b>会場のスクリーンに字幕を</b>字幕ラインを映せば、後ろの席や聞き取りにくい方にも内容が届きます</li>
+            <li><b>録画にはそのまま字幕を</b>SRT を書き出して、講演動画の字幕に使えます</li>
+            <li><b>固有名詞は登録しておく</b>製品名や登壇者名を登録キーワードに入れると、優先して拾います</li>
+          </ul>
+        </div>
+      </article>
+    </div>
+    <div class="biz-foot reveal">
+      <p><b>ほかにも</b>ウェビナー・オンライン研修・社内勉強会・朝会など、話す場面ならどこでも。コンソールの「ヘルプ」にある「シーン別の設定」から、ブレスト会議・スピーチ向けの表示にワンタップで切り替えられます。</p>
+      <a class="btn btn-ink" href="app.html#help-scenes">会議・講演向けの設定を見る<span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </section>
+
   <!-- ============ 使い方 ============ -->
   <section class="section tint" id="how" aria-labelledby="how-title">
     <div class="inner">
       <header class="section-head reveal">
-        <p class="label mono"><span class="no">03</span>HOW IT WORKS</p>
+        <p class="label mono"><span class="no">04</span>HOW IT WORKS</p>
         <div>
           <h2 id="how-title">はじめるのに、<wbr>3分もかからない。</h2>
           <p>アカウント登録もインストールもいりません。ブラウザで開いて、話すだけ。</p>
@@ -262,8 +308,8 @@
       <ul class="uses" aria-label="こんな場面で">
         <li class="reveal"><b>ひとり雑談</b><span>話題が目に見えて、話が続く</span></li>
         <li class="reveal"><b>ゲーム実況</b><span>テロップ帯で画面の邪魔をしない</span></li>
-        <li class="reveal"><b>ウェビナー・登壇</b><span>言い忘れを防ぐカンペとして</span></li>
-        <li class="reveal"><b>社内勉強会</b><span>終わったら文字起こしを SRT で保存</span></li>
+        <li class="reveal"><a href="#business"><b>ブレスト会議</b><span>出た言葉を、みんなで眺める</span></a></li>
+        <li class="reveal"><a href="#business"><b>スピーチ・講演</b><span>話した要点が、手元に積み上がる</span></a></li>
       </ul>
     </div>
   </section>
@@ -271,7 +317,7 @@
   <!-- ============ 料金 ============ -->
   <section class="section" id="pricing" aria-labelledby="pricing-title">
     <header class="section-head reveal">
-      <p class="label mono"><span class="no">04</span>PRICING</p>
+      <p class="label mono"><span class="no">05</span>PRICING</p>
       <div>
         <h2 id="pricing-title">無料で、<wbr>ずっと使える。</h2>
         <p>プランは3つだけ。2時間の配信を週3回する人を基準に決めました。まずは無料で、見た目と演出にこだわるなら「お手軽」、認識の精度と自動化まで欲しいなら「おトク」に。</p>
@@ -351,7 +397,7 @@
   <!-- ============ データとセキュリティ ============ -->
   <section class="section privacy" id="privacy" aria-labelledby="privacy-title">
     <header class="section-head reveal">
-      <p class="label mono"><span class="no">05</span>PRIVACY</p>
+      <p class="label mono"><span class="no">06</span>PRIVACY</p>
       <div>
         <h2 id="privacy-title">話した言葉は、<wbr>あなたの端末の中だけに。</h2>
         <p>KANPE には、文字起こしや設定を受け取るサーバーがありません。配信の内容を安心して扱えるよう、データの流れを最小限にしています。</p>
@@ -370,7 +416,7 @@
   <section class="section tint" id="faq" aria-labelledby="faq-title">
     <div class="inner faq-grid">
       <header class="section-head reveal">
-        <p class="label mono"><span class="no">06</span>FAQ</p>
+        <p class="label mono"><span class="no">07</span>FAQ</p>
         <div>
           <h2 id="faq-title">よくある質問</h2>
         </div>
@@ -391,6 +437,14 @@
         <details>
           <summary>話した内容はどこかに保存されますか？</summary>
           <p>KANPE のサーバーには何も保存されません。文字起こし・設定・背景画像は、お使いのブラウザの中（この端末）にだけ保存され、「消去」ボタンやブラウザのサイトデータ削除で消せます。音声を文字にする処理だけは、ブラウザの提供元のサービス（Chrome は Google、Edge は Microsoft、Safari は Apple）が行います。社外秘の内容を扱う場合は、NG ワードで画面と字幕に出さないようにできます。</p>
+        </details>
+        <details>
+          <summary>会議や講演でも使えますか？</summary>
+          <p>はい。会議室のディスプレイや演台のモニターに表示ビューを映して使えます。複数人の声も拾いますが、誰が話したかは自動では区別しません（話者の色分けは、ボタンかキーボードで切り替えます。お手軽プラン）。マイクから離れた席の声は拾いにくいので、話す人の近くにマイクを置いてください。機密性の高い会議では、社内のルールに沿って利用できるかご確認ください。</p>
+        </details>
+        <details>
+          <summary>詳しい使い方はどこで見られますか？</summary>
+          <p>コンソール右上の「ヘルプ」に、はじめかた・画面の見かた・シーン別のおすすめ設定・OBS の設定・うまくいかないときの対処をまとめています。<a href="app.html#help">使い方ガイドを開く</a></p>
         </details>
         <details>
           <summary>支払い方法と解約について教えてください</summary>
@@ -417,6 +471,8 @@
   <span class="logo small"><span class="tally" aria-hidden="true"></span>KANPE</span>
   <nav class="foot-links" aria-label="フッター">
     <a href="app.html">コンソール</a>
+    <a href="app.html#help">使い方ガイド</a>
+    <a href="#business">ビジネスでの利用</a>
     <a href="#pricing">料金</a>
     <a href="#privacy">データの扱い</a>
     <a href="#faq">よくある質問</a>
@@ -431,8 +487,8 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html" tabindex="-1">ブラウザで無料ではじめる<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="src/ui/lang.js?v=202610112307" defer></script>
-<script src="src/ui/mode.js?v=202610112307" defer></script>
-<script src="src/lp/lp.js?v=202610112307" defer></script>
+<script src="src/ui/lang.js?v=202610131647" defer></script>
+<script src="src/ui/mode.js?v=202610131647" defer></script>
+<script src="src/lp/lp.js?v=202610131647" defer></script>
 </body>
 </html>

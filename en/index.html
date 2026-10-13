@@ -32,7 +32,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700&family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../styles/lp.css?v=202610112307">
+<link rel="stylesheet" href="../styles/lp.css?v=202610131647">
 <script>document.documentElement.classList.add('js');</script>
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 </head>
@@ -41,6 +41,7 @@
   <a class="logo" href="#top" aria-label="KANPE home"><span class="tally" aria-hidden="true"></span>KANPE<span class="beta mono">BETA</span></a>
   <nav class="links" aria-label="On this page">
     <a href="#features">Features</a>
+    <a href="#business">Business</a>
     <a href="#how">How it works</a>
     <a href="#pricing">Pricing</a>
     <a href="#faq">FAQ</a>
@@ -226,11 +227,56 @@
     </div>
   </section>
 
+  <!-- ============ For business ============ -->
+  <section class="section" id="business" aria-labelledby="business-title">
+    <header class="section-head reveal">
+      <p class="label mono"><span class="no">03</span>BUSINESS</p>
+      <div>
+        <h2 id="business-title">In the meeting room, <wbr>and at the lectern.</h2>
+        <p>Built for streamers, KANPE works just as well at work. When the words you say appear as you say them, meetings stay focused on what matters and speakers never lose their place.</p>
+      </div>
+    </header>
+    <div class="showcase">
+      <article class="show reveal">
+        <div class="show-screen"><iframe data-src="../display.html?demo=1&amp;ui=0&amp;layout=compose&amp;theme=sumi&amp;script=meeting&amp;ttl=30&amp;vert=0&amp;cap=0&amp;hl=en" title="Brainstorming meeting demo" tabindex="-1"></iframe></div>
+        <div class="show-copy">
+          <p class="label mono">BRAINSTORM</p>
+          <h3>Brainstorms where everyone sees the ideas.</h3>
+          <p>Just put it on the meeting-room display. Each time someone speaks, their words land on screen — ideas pile up without anyone standing at the whiteboard.</p>
+          <ul class="biz-points">
+            <li><b>Repeated words grow bigger</b>One look at the screen shows where the discussion is centered</li>
+            <li><b>New words get highlighted</b>Even a passing idea doesn’t slip by</li>
+            <li><b>A head start on the minutes</b>Save the transcript as TXT when you’re done</li>
+            <li><b>Confidential names stay hidden</b>Blocked words never appear on screen or in captions</li>
+          </ul>
+        </div>
+      </article>
+      <article class="show reveal">
+        <div class="show-screen"><iframe data-src="../display.html?demo=1&amp;ui=0&amp;layout=kanpe&amp;theme=yoru&amp;script=speech&amp;cap=1&amp;size=52&amp;max=8&amp;ttl=20&amp;hl=en" title="Speech demo" tabindex="-1"></iframe></div>
+        <div class="show-copy">
+          <p class="label mono">SPEECH</p>
+          <h3>Talks where your points stack up in front of you.</h3>
+          <p>On the lectern or a confidence monitor, the points you’ve covered stack up from the bottom in big type. No script to read — you always know where you are.</p>
+          <ul class="biz-points">
+            <li><b>Always know where you are</b>No forgotten points, no repeating yourself</li>
+            <li><b>Captions on the venue screen</b>Show the caption line so people in the back — and anyone hard of hearing — can follow</li>
+            <li><b>Subtitles for the recording</b>Export an SRT and use it for the video</li>
+            <li><b>Register names in advance</b>Add product and speaker names to Keywords so they’re picked up first</li>
+          </ul>
+        </div>
+      </article>
+    </div>
+    <div class="biz-foot reveal">
+      <p><b>And more</b>Webinars, online training, study sessions, morning stand-ups — anywhere people talk. In the console, “Settings by scene” under Help switches to a brainstorm or speech setup in one tap.</p>
+      <a class="btn btn-ink" href="app.html#help-scenes">See meeting &amp; talk settings<span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </section>
+
   <!-- ============ How it works ============ -->
   <section class="section tint" id="how" aria-labelledby="how-title">
     <div class="inner">
       <header class="section-head reveal">
-        <p class="label mono"><span class="no">03</span>HOW IT WORKS</p>
+        <p class="label mono"><span class="no">04</span>HOW IT WORKS</p>
         <div>
           <h2 id="how-title">Up and running in under three minutes.</h2>
           <p>No account, no install. Open it in your browser and start talking.</p>
@@ -262,8 +308,8 @@
       <ul class="uses" aria-label="Great for">
         <li class="reveal"><b>Solo chat streams</b><span>Topics you can see keep the talk going</span></li>
         <li class="reveal"><b>Game streams</b><span>A ticker band that stays out of the way</span></li>
-        <li class="reveal"><b>Webinars &amp; talks</b><span>A cue card so nothing gets forgotten</span></li>
-        <li class="reveal"><b>Study sessions</b><span>Save the transcript as SRT afterwards</span></li>
+        <li class="reveal"><a href="#business"><b>Brainstorming meetings</b><span>Everyone sees the ideas as they come</span></a></li>
+        <li class="reveal"><a href="#business"><b>Speeches &amp; talks</b><span>Your points stack up in front of you</span></a></li>
       </ul>
     </div>
   </section>
@@ -271,7 +317,7 @@
   <!-- ============ Pricing ============ -->
   <section class="section" id="pricing" aria-labelledby="pricing-title">
     <header class="section-head reveal">
-      <p class="label mono"><span class="no">04</span>PRICING</p>
+      <p class="label mono"><span class="no">05</span>PRICING</p>
       <div>
         <h2 id="pricing-title">Free, for as long as you like.</h2>
         <p>Just three plans, designed around streaming two hours, three times a week. Start free; pick Plus for looks and effects, or Pro for accuracy and automation. Prices are in Japanese yen and include tax.</p>
@@ -351,7 +397,7 @@
   <!-- ============ Privacy ============ -->
   <section class="section privacy" id="privacy" aria-labelledby="privacy-title">
     <header class="section-head reveal">
-      <p class="label mono"><span class="no">05</span>PRIVACY</p>
+      <p class="label mono"><span class="no">06</span>PRIVACY</p>
       <div>
         <h2 id="privacy-title">What you say stays on your device.</h2>
         <p>KANPE has no server that receives your transcripts or settings. Data moves as little as possible, so you can stream with peace of mind.</p>
@@ -370,7 +416,7 @@
   <section class="section tint" id="faq" aria-labelledby="faq-title">
     <div class="inner faq-grid">
       <header class="section-head reveal">
-        <p class="label mono"><span class="no">06</span>FAQ</p>
+        <p class="label mono"><span class="no">07</span>FAQ</p>
         <div>
           <h2 id="faq-title">Questions</h2>
         </div>
@@ -391,6 +437,14 @@
         <details>
           <summary>Is what I say stored anywhere?</summary>
           <p>Nothing is stored on KANPE’s servers. Transcripts, settings and background images live only in your own browser on this device, and you can delete them with the Clear button or by clearing site data. Only the step that turns audio into text is handled by your browser vendor’s service (Google in Chrome, Microsoft in Edge, Apple in Safari). For confidential topics, blocked words keep chosen terms off the screen and out of captions.</p>
+        </details>
+        <details>
+          <summary>Can I use it in meetings or talks?</summary>
+          <p>Yes. Show a display view on the meeting-room screen or a lectern monitor. It picks up several voices but doesn’t tell them apart automatically (with Plus you can color-code speakers using the buttons or keys). Voices far from the mic are harder to pick up, so keep the mic near whoever is talking. For confidential meetings, check your organization’s rules first.</p>
+        </details>
+        <details>
+          <summary>Where can I find detailed instructions?</summary>
+          <p>Press Help at the top right of the console for getting started, a tour of the screen, recommended settings by scene, OBS setup and troubleshooting. <a href="app.html#help">Open the guide</a></p>
         </details>
         <details>
           <summary>How do payment and cancellation work?</summary>
@@ -421,6 +475,8 @@
   <span class="logo small"><span class="tally" aria-hidden="true"></span>KANPE</span>
   <nav class="foot-links" aria-label="Footer">
     <a href="app.html">Console</a>
+    <a href="app.html#help">Guide</a>
+    <a href="#business">For business</a>
     <a href="#pricing">Pricing</a>
     <a href="#privacy">Privacy</a>
     <a href="#faq">FAQ</a>
@@ -435,8 +491,8 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html" tabindex="-1">Start free in your browser<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="../src/ui/lang.js?v=202610112307" defer></script>
-<script src="../src/ui/mode.js?v=202610112307" defer></script>
-<script src="../src/lp/lp.js?v=202610112307" defer></script>
+<script src="../src/ui/lang.js?v=202610131647" defer></script>
+<script src="../src/ui/mode.js?v=202610131647" defer></script>
+<script src="../src/lp/lp.js?v=202610131647" defer></script>
 </body>
 </html>

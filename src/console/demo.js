@@ -1,5 +1,5 @@
 // マイクなしで試すためのデモ。音声認識の途中結果が少しずつ伸びる様子を再現する。
-import { Extractor, cleanCaption } from '../core/extract.js?v=202610112307';
+import { Extractor, cleanCaption } from '../core/extract.js?v=202610131647';
 
 export const DEMO_LINES = {
   ja: [
@@ -24,8 +24,59 @@ export const DEMO_LINES = {
   ],
 };
 
-export async function simulateSpeech({ lang = 'ja-JP', onInterim, onFinal, shouldStop = () => false, loop = false }) {
-  const lines = DEMO_LINES[lang.startsWith('en') ? 'en' : 'ja'];
+// ランディングページのビジネス利用の見本（display.html?demo=1&script=meeting / speech）
+export const SCRIPTS = {
+  meeting: {
+    ja: [
+      'じゃあ、新規顧客を増やす方法をブレストしていきましょう',
+      'まず紹介制度はどうですか、既存のお客様から新規顧客を紹介してもらう形です',
+      'それなら紹介した人にも特典があるといいですね',
+      'オンボーディングも見直したいです、最初の一週間でやめてしまう人が多いので',
+      '解約率でいうと、無料トライアルの終わりが一番の山です',
+      'サブスクに年払いプランを作れば、解約率は下がりそうです',
+      '地方の中小企業向けに、オンラインセミナーを開くのはどうでしょう',
+      'セミナーで紹介制度を案内すれば、新規顧客にもつながりますね',
+      'いいですね、紹介制度とオンボーディングを来月の施策にしましょう',
+    ],
+    en: [
+      'Brainstorm: how do we win New Customers',
+      'a Referral Program for existing customers',
+      'Rewards for both sides',
+      'Rework Onboarding for the first week',
+      'Churn peaks when the Free Trial ends',
+      'an Annual Plan could lower Churn',
+      'Webinars for small businesses',
+      'Mention the Referral Program in Webinars',
+      'Next month: Referral Program and Onboarding',
+    ],
+  },
+  speech: {
+    ja: [
+      'えー、本日のテーマは三つです',
+      '一つ目は、この一年の市場の変化について',
+      '国内の利用者は前年比で120%に伸びました',
+      '二つ目は、私たちの三つの施策です',
+      'サポート体制、価格、そしてパートナー企業との連携です',
+      '三つ目は、来期の目標です',
+      '来期は継続率95%を目標にします',
+      'ありがとうございました、それでは質疑応答に移ります',
+    ],
+    en: [
+      'Um, three Topics today',
+      'First, the Market this year',
+      'Users grew 120% year over year',
+      'Second, our three Initiatives',
+      'Better Support, new Pricing, and Partnerships',
+      'Third, Goals for next year',
+      'Goal: Customer Retention at 95%',
+      'Thank you, now Questions',
+    ],
+  },
+};
+
+export async function simulateSpeech({ lang = 'ja-JP', onInterim, onFinal, shouldStop = () => false, loop = false, script = '' }) {
+  const set = SCRIPTS[script] || DEMO_LINES;
+  const lines = set[lang.startsWith('en') ? 'en' : 'ja'];
   let n = 0;
   do {
     for (const line of lines) {
@@ -46,10 +97,10 @@ export async function simulateSpeech({ lang = 'ja-JP', onInterim, onFinal, shoul
 }
 
 // 表示ビュー単体で回すデモ（display.html?demo=1）
-export function runDemo({ lang = 'ja-JP', deliver, registered = '' }) {
+export function runDemo({ lang = 'ja-JP', deliver, registered = '', script = '' }) {
   const ex = new Extractor({ lang, registered });
   simulateSpeech({
-    lang, loop: true,
+    lang, loop: true, script,
     onInterim: (id, t) => {
       for (const e of ex.interim(id, t)) deliver({ t: 'word', ...e });
       deliver({ t: 'caption', text: cleanCaption(t), final: false });

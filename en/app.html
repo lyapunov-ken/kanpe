@@ -30,13 +30,14 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="../styles/console.css?v=202610112307">
+<link rel="stylesheet" href="../styles/console.css?v=202610131647">
 </head>
 <body>
 <header class="top">
   <a class="brand" href="index.html" title="Back to the KANPE home page"><span class="mark">K</span>KANPE<small>Real-time cue cards</small></a>
   <div class="top-right">
     <div class="status"><span id="dot" class="dot"></span><span id="statusText">Idle</span></div>
+    <button id="btnHelp" class="help-btn" type="button" aria-haspopup="dialog" title="How to use KANPE (?)"><span aria-hidden="true">?</span><b>Help</b></button>
     <a class="lang-link jp" href="../app.html" hreflang="ja" lang="ja" data-lang-switch title="日本語版">日本語</a>
     <button class="mode-btn" type="button" data-mode-toggle aria-label="Switch color mode"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg></button>
     <a id="planBadge" class="plan-badge" href="index.html#pricing"><b>Free</b><span>Upgrade</span></a>
@@ -207,8 +208,8 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="../src/ui/lang.js?v=202610112307" defer></script>
-<script src="../src/ui/mode.js?v=202610112307" defer></script>
-<script type="module" src="../src/console/console.js?v=202610112307"></script>
+<script src="../src/ui/lang.js?v=202610131647" defer></script>
+<script src="../src/ui/mode.js?v=202610131647" defer></script>
+<script type="module" src="../src/console/console.js?v=202610131647"></script>
 </body>
 </html>

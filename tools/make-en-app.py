@@ -19,6 +19,7 @@ T = [
   ('title="KANPE のトップへ"', 'title="Back to the KANPE home page"'),
   ('<small>リアルタイムカンペ</small>', '<small>Real-time cue cards</small>'),
   ('<span id="statusText">待機中</span>', '<span id="statusText">Idle</span>'),
+  ('title="使い方ガイド（?）"><span aria-hidden="true">?</span><b>ヘルプ</b>', 'title="How to use KANPE (?)"><span aria-hidden="true">?</span><b>Help</b>'),
   ('<a class="lang-link" href="en/app.html" hreflang="en" lang="en" data-lang-switch title="English version">EN</a>', '<a class="lang-link jp" href="../app.html" hreflang="ja" lang="ja" data-lang-switch title="日本語版">日本語</a>'),
   ('aria-label="表示モードを切り替える"', 'aria-label="Switch color mode"'),
   ('<b>無料プラン</b><span>アップグレード</span>', '<b>Free</b><span>Upgrade</span>'),
