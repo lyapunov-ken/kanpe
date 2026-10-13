@@ -32,6 +32,7 @@ T = [
   ('<b id="micLabel">話しはじめる</b>', '<b id="micLabel">Start talking</b>'),
   ('<span id="micHint" class="hint">押すとマイクで聞き取りを始めます</span>', '<span id="micHint" class="hint">Press to start listening with your mic</span>'),
   ('title="入力レベル"', 'title="Input level"'),
+  ('type="button" hidden>レベル表示を戻す</button>', 'type="button" hidden>Show level meter</button>'),
   ('<span class="lbl">言語</span>', '<span class="lbl">Speech language</span>'),
   ('<span class="lbl">認識エンジン</span>', '<span class="lbl">Recognition</span>'),
   ('<option value="browser">ブラウザ（無料）</option>', '<option value="browser">Browser (free)</option>'),

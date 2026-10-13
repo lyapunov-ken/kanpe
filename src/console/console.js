@@ -1,14 +1,14 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, VJ_DETAILS, VJ_FX, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610132136';
-import { EN, L, tr } from '../core/i18n.js?v=202610132136';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610132136';
-import { createBus } from '../core/bus.js?v=202610132136';
-import { connectObs } from '../core/obs.js?v=202610132136';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610132136';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610132136';
-import { simulateSpeech } from './demo.js?v=202610132136';
-import { initHelp } from './help.js?v=202610132136';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610132136';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, VJ_DETAILS, VJ_FX, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610132242';
+import { EN, L, tr } from '../core/i18n.js?v=202610132242';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610132242';
+import { createBus } from '../core/bus.js?v=202610132242';
+import { connectObs } from '../core/obs.js?v=202610132242';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610132242';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610132242';
+import { simulateSpeech } from './demo.js?v=202610132242';
+import { initHelp } from './help.js?v=202610132242';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610132242';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -131,15 +131,36 @@ $('#btnMic').addEventListener('click', async () => {
 //    レベル表示を止め（この端末では以後開かない）、認識を開き直す
 //  - 認識側にも声が届いているのに結果が返らない → 認識を作り直して再開。それでもだめなら言語設定・ブラウザを案内
 //  - マイクの音がほとんど届いていない → 入力デバイスを案内
-const METER_OFF_KEY = 'kanpe.meter.off';
-function meterOff() { try { return localStorage.getItem(METER_OFF_KEY) === '1'; } catch { return false; } }
-const diag = { since: 0, voiceMs: 0, peak: 0, step: 0, silentWarned: false, timer: 0, last: 0, guided: false };
+//  レベル表示を止めるのは、まず「その回の聞き取りの間だけ」（お試し）。止めたあとに認識が戻ったときだけ取り合いと確定し、
+//  この端末では 7 日間レベル表示を開かない。戻らなければレベル表示は関係なかったので、すぐ元に戻す。
+//  （以前は1回の判定で永久に止めていたため、認識が一時的に固まっただけでもレベル表示が二度と動かなくなっていた）
+const METER_OFF_KEY = 'kanpe.meter.off.v2';
+const METER_OFF_DAYS = 7;
+try { localStorage.removeItem('kanpe.meter.off'); } catch { /* 古い永久の印は消す */ }
+function meterOff() {
+  try {
+    const v = JSON.parse(localStorage.getItem(METER_OFF_KEY) || 'null');
+    if (v && v.until > Date.now()) return true;
+    if (v) localStorage.removeItem(METER_OFF_KEY);
+  } catch { /* noop */ }
+  return false;
+}
+function setMeterOff(on) {
+  try { if (on) localStorage.setItem(METER_OFF_KEY, JSON.stringify({ until: Date.now() + METER_OFF_DAYS * 86400000 })); else localStorage.removeItem(METER_OFF_KEY); } catch { /* noop */ }
+  syncMeterNote();
+}
+// レベル表示を止めているときは、その旨と「戻す」ボタンを出す
+function syncMeterNote() {
+  const b = $('#meterOn');
+  if (b) b.hidden = ONE_SHOT || !meterOff();
+}
+const diag = { since: 0, voiceMs: 0, peak: 0, step: 0, silentWarned: false, timer: 0, last: 0, guided: false, trialAt: 0 };
 function startDiag() {
   stopDiag();
-  Object.assign(diag, { since: 0, voiceMs: 0, peak: 0, step: 0, silentWarned: false, last: performance.now(), guided: false });
+  Object.assign(diag, { since: 0, voiceMs: 0, peak: 0, step: 0, silentWarned: false, last: performance.now(), guided: false, trialAt: 0 });
   diag.timer = setInterval(checkDiag, 1000);
 }
-function stopDiag() { clearInterval(diag.timer); diag.timer = 0; diag.since = 0; }
+function stopDiag() { clearInterval(diag.timer); diag.timer = 0; diag.since = 0; diag.trialAt = 0; }
 function diagLevel(v) { // メーターから毎フレーム呼ばれる
   const t = performance.now();
   if (v > 0.12) diag.voiceMs += Math.min(100, t - diag.last);
@@ -156,6 +177,22 @@ function guideLangBrowser() {
 function checkDiag() {
   if (!rec.wanted || !diag.since || paused) return;
   const now = Date.now();
+  if (diag.trialAt) { // レベル表示をお試しで止めている
+    if (rec.lastResultAt >= diag.trialAt) { // 止めたら認識が戻った → 取り合いだったと確定
+      diag.trialAt = 0;
+      setMeterOff(true);
+      Object.assign(diag, { since: now, voiceMs: 0, peak: 0, step: 0 });
+      toast(L(`この端末では、レベル表示と音声認識がマイクを取り合うため、レベル表示を${METER_OFF_DAYS}日間止めます（メーターの下の「レベル表示を戻す」でいつでも戻せます）`, `On this device the level meter and speech recognition compete for the mic, so the meter is off for ${METER_OFF_DAYS} days (use “Show level meter” under it to bring it back).`), 8000);
+      return;
+    }
+    if (now - diag.trialAt > 12000) { // 止めても戻らない → レベル表示は関係なかった。元に戻して、認識側の対処へ
+      diag.trialAt = 0;
+      if (rec.wanted && !meterAnalyser) startMeter();
+      Object.assign(diag, { since: now, voiceMs: 0, peak: 0, step: 1 });
+      guideLangBrowser();
+    }
+    return;
+  }
   if (rec.lastResultAt >= diag.since) { Object.assign(diag, { since: now, voiceMs: 0, peak: 0, step: 0 }); return; } // 正常
   const elapsed = now - diag.since;
   if (!meterAnalyser) { // レベル表示なし：声の有無は分からないので、認識側の手がかりだけで判断する
@@ -171,12 +208,11 @@ function checkDiag() {
   if (elapsed < 8000 || diag.voiceMs < 4000) return;
   const recHears = rec.soundAt >= diag.since || rec.speechAt >= diag.since;
   if (!recHears) {
-    // マイクの取り合い：レベル表示を止めて、認識だけにマイクを渡す
-    try { localStorage.setItem(METER_OFF_KEY, '1'); } catch { /* noop */ }
+    // マイクの取り合いかもしれない：この回だけレベル表示を止めて、認識だけにマイクを渡して確かめる
     stopMeter();
-    Object.assign(diag, { since: now, voiceMs: 0, peak: 0, step: 1 });
+    diag.trialAt = now;
     rec.reset();
-    toast(L('音声認識にマイクの音が届いていなかったため、レベル表示を止めて聞き取りを開き直しました。もう一度話してみてください', 'Your mic sound wasn’t reaching speech recognition, so the level meter was turned off and listening restarted. Please try speaking again.'), 7000);
+    toast(L('音声認識にマイクの音が届いていないようなので、レベル表示をいったん止めて聞き取りを開き直しました。もう一度話してみてください', 'Speech recognition doesn’t seem to be getting your mic, so the level meter was paused and listening restarted. Please try speaking again.'), 7000);
     return;
   }
   if (diag.step === 0) {
@@ -210,6 +246,7 @@ async function startMeter() {
     meterStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
     if (!rec.wanted) { meterStream.getTracks().forEach((t) => t.stop()); meterStream = null; return; }
     meterCtx = new AudioContext();
+    if (meterCtx.state === 'suspended') meterCtx.resume().catch(() => {}); // 自動再生の制限で止まった状態で作られることがある
     const src = meterCtx.createMediaStreamSource(meterStream);
     const an = meterCtx.createAnalyser();
     an.fftSize = 2048; // 声の高さ（話者の推定）にも使うので長めに取る
@@ -246,6 +283,13 @@ function stopMeter() {
   meterStream = meterCtx = meterAnalyser = null;
   $('#meter').style.transform = 'scaleX(0)';
 }
+
+$('#meterOn').addEventListener('click', () => {
+  setMeterOff(false);
+  if (rec.wanted && !meterAnalyser) startMeter();
+  toast(L('レベル表示を戻しました', 'The level meter is back on'));
+});
+syncMeterNote();
 
 // ------------------------------------------------------------ デモとテキスト入力
 let demoRunning = false;
