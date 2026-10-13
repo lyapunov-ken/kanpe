@@ -1,14 +1,14 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, VJ_DETAILS, VJ_FX, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610132242';
-import { EN, L, tr } from '../core/i18n.js?v=202610132242';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610132242';
-import { createBus } from '../core/bus.js?v=202610132242';
-import { connectObs } from '../core/obs.js?v=202610132242';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610132242';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610132242';
-import { simulateSpeech } from './demo.js?v=202610132242';
-import { initHelp } from './help.js?v=202610132242';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610132242';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, VJ_DETAILS, VJ_FX, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610140215';
+import { EN, L, tr } from '../core/i18n.js?v=202610140215';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610140215';
+import { createBus } from '../core/bus.js?v=202610140215';
+import { connectObs } from '../core/obs.js?v=202610140215';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610140215';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610140215';
+import { simulateSpeech } from './demo.js?v=202610140215';
+import { initHelp } from './help.js?v=202610140215';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610140215';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -103,9 +103,42 @@ function setMic(on) {
   $('#micLabel').textContent = on ? L('聞き取り中', 'Listening') : L('話しはじめる', 'Start talking');
   $('#micHint').textContent = on ? L('もう一度押すと止まります', 'Press again to stop') : L('押すとマイクで聞き取りを始めます', 'Press to start listening with your mic');
 }
+// Android：音声認識だけに任せると、開き直すたびにマイクの許可を確かめに行き、確認が何度も出ることがある。
+// まだ許可が決まっていなければ、最初に1回だけマイクの許可を取ってから始める（取ったマイクはすぐ閉じる）
+let micAsked = false; // このページを開いている間に、もう許可を取ったか
+async function micState() {
+  try { const st = navigator.permissions && await navigator.permissions.query({ name: 'microphone' }); return st ? st.state : ''; } catch { return ''; }
+}
+async function ensureMicPermission() {
+  if (!IS_ANDROID || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return true;
+  const st = await micState();
+  if (st === 'granted') return true;
+  if (st === 'denied') { rec.onError('not-allowed'); return false; }
+  if (micAsked) return true;
+  try {
+    const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
+    ms.getTracks().forEach((t) => t.stop());
+    micAsked = true;
+    // 「今回のみ許可」を選ぶと許可が残らず、聞き取りを開き直すたびに確認が出ることがある。常に許可にする方法を1回だけ案内する
+    if ((await micState()) === 'prompt') {
+      setTimeout(() => toast(L('マイクの確認が何度も出るときは、アドレスバー左のアイコン →「権限」→「マイク」を「許可」にしてください（「今回のみ」だと、聞き取りを開き直すたびに確認が出ます）',
+        'If the microphone prompt keeps coming back, tap the icon left of the address bar → Permissions → Microphone and choose Allow (“Only this time” asks again each time listening restarts).'), 10000), 1500);
+    }
+    return true;
+  } catch (e) {
+    if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) { rec.onError('not-allowed'); return false; }
+    return true; // そのほかの失敗は、音声認識側に任せる
+  }
+}
+let micBusy = false; // 許可を待っている間の二度押しを防ぐ
 $('#btnMic').addEventListener('click', async () => {
   if (rec.wanted) { rec.stop(); setMic(false); stopMeter(); releaseWake(); stopDiag(); return; }
   if (!Recognizer.supported()) { rec.onError('unsupported'); return; }
+  if (micBusy) return;
+  micBusy = true;
+  const ok = await ensureMicPermission();
+  micBusy = false;
+  if (!ok) return;
   stopDemo();
   clock();
   if (rec.start()) {
@@ -125,6 +158,12 @@ $('#btnMic').addEventListener('click', async () => {
     startDiag();
   }
 });
+
+// Android：長く声がなかったので止めた（開き直すたびにシステムの音が鳴るため）
+rec.onIdle = () => {
+  toast(L('3分間声が聞こえなかったので、聞き取りを止めました（Android は聞き取りを開き直すたびに通知音が鳴るため）。もう一度押すと再開します',
+    'No voice for 3 minutes, so listening stopped (Android plays a sound every time listening restarts). Press again to resume.'), 8000);
+};
 
 // 聞き取りの自己診断：「聞き取り中」なのに文字が出ないとき、原因を推定して直す・知らせる
 //  - 声はマイクに届いているのに、認識側には音が届いていない → レベル表示用のマイクとの取り合い。

@@ -1,6 +1,6 @@
 // 使い方ガイド（アプリ内ヘルプ）。右上の「ヘルプ」、? キー、または app.html#help（#help-scenes など）で開く。
 // 文言は L('日本語', 'English') で持つので、英語版のコンソールでもそのまま使える。
-import { L } from '../core/i18n.js?v=202610132242';
+import { L } from '../core/i18n.js?v=202610140215';
 
 // シーン別のおすすめ設定（無料プランの機能だけで組む。アクセントカラーや背景などは触らない）
 export const PRESETS = {
@@ -170,6 +170,9 @@ function html() {
         ${qa(L('「マイクの使用が許可されていません」と出る', '“Microphone access is not allowed”'),
           L('アドレスバーのアイコン（鍵や設定マーク）からサイトの設定を開き、マイクを「許可」にして再読み込みしてください。OS 側でブラウザのマイクが止められていることもあります（macOS：システム設定 → プライバシーとセキュリティ → マイク）。',
             'Open the site settings from the icon in the address bar, set Microphone to Allow, and reload. Your operating system may also be blocking the browser’s mic (macOS: System Settings → Privacy &amp; Security → Microphone).'))}
+        ${qa(L('Android で「ピコン」と音が鳴る・マイクの確認が何度も出る', 'On Android, it beeps or keeps asking for the microphone'),
+          L('Android の Chrome は、音声認識を始めるたびに端末のシステムの音が鳴ります（ページからは消せません）。KANPE は Android では聞き取りを開いたまま続けるので、鳴るのは話しはじめと、しばらく黙ったあとだけです。3分間声がなければ、音が鳴り続けないよう聞き取りを止めます。マイクの確認が何度も出るときは、アドレスバー左のアイコン →「権限」→「マイク」を「許可」にしてください（「今回のみ」を選ぶと、聞き取りを開き直すたびに確認が出ます）。',
+            'Chrome on Android plays a system sound every time speech recognition starts (a web page can’t turn it off). On Android, KANPE keeps listening instead of restarting after every sentence, so you’ll only hear it when you start and after a long pause. After 3 minutes without a voice, listening stops so the sound doesn’t keep repeating. If the microphone prompt keeps coming back, tap the icon left of the address bar → Permissions → Microphone and choose Allow (“Only this time” asks again on every restart).'))}
         ${qa(L('「音声認識非対応のブラウザ」と出る', '“No speech recognition here”'),
           L('PC は Chrome か Edge、スマホは Safari（iPhone）か Chrome（Android）で開き直してください。アプリ内ブラウザでは使えません。iPhone では「設定」で Siri（または音声入力）をオンにしておく必要があります。',
             'Reopen the page in Chrome or Edge on a computer, or Safari (iPhone) / Chrome (Android) on a phone. In-app browsers won’t work. On iPhone, Siri (or Dictation) must be turned on in Settings.'))}
