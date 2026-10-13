@@ -1,6 +1,6 @@
 // 使い方ガイド（アプリ内ヘルプ）。右上の「ヘルプ」、? キー、または app.html#help（#help-scenes など）で開く。
 // 文言は L('日本語', 'English') で持つので、英語版のコンソールでもそのまま使える。
-import { L } from '../core/i18n.js?v=202610131801';
+import { L } from '../core/i18n.js?v=202610131811';
 
 // シーン別のおすすめ設定（無料プランの機能だけで組む。アクセントカラーや背景などは触らない）
 export const PRESETS = {
@@ -194,6 +194,8 @@ function html() {
         <li>${L('文字起こし・設定・背景画像は、このブラウザの中にだけ保存されます。KANPE のサーバーには送りません。', 'Your transcript, settings and background images are stored only in this browser. Nothing is sent to KANPE’s servers.')}</li>
         <li>${L('無料・お手軽プランの音声認識はブラウザの機能です。音声はブラウザの提供元（Chrome は Google、Edge は Microsoft、Safari は Apple）が文字にします。', 'On the Free and Plus plans, recognition is a browser feature: your browser’s maker (Google for Chrome, Microsoft for Edge, Apple for Safari) turns speech into text.')}</li>
         <li>${L('プランの確認・解約・別の端末での復元は、右上のプランのボタンから行えます。', 'Check your plan, cancel, or restore it on another device from the plan button at the top right.')}</li>
+        <li>${L('<b>ライセンスコードはメールでは届きません。</b>お申し込みの直後に表示されるので、コピーかファイルに保存して控えてください。あとからでも、プランのボタン →「ライセンスコードを表示・保存」で確認できます。ブラウザのデータを消したときや別の端末では、このコードで復元します。',
+          '<b>Your license code is not sent by email.</b> It’s shown right after you subscribe — copy it or save it to a file. You can find it again under the plan button → “View or save license code”, and use it to restore your plan on another device or after clearing browser data.')}</li>
         <li>${L('文字起こしは「消去」で、設定などはブラウザのサイトデータを削除すると消えます。', 'Clear the transcript with Clear; other data goes when you delete this site’s data in your browser.')}</li>
       </ul>
       <p class="hp-tip">${L('機密性の高い会議では、社内のルールに沿って利用できるか確認してください。', 'For confidential meetings, check your organization’s rules first.')}</p>

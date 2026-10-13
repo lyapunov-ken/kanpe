@@ -451,3 +451,14 @@ details.obs[open] { padding-bottom: 12px; }
 }
 @media (max-width: 340px) { .brand { letter-spacing: .08em; } .plan-badge span { padding: 6px 10px; } }
 @media (prefers-reduced-motion: reduce) { .menu-panel.open { animation: none; } }
+
+/* ---- ライセンスコードを控えてもらう窓 ---- */
+.license-dialog { width: min(460px, calc(100vw - 32px)); }
+.lic-thanks { margin: 0 0 2px; font-size: 12.5px; font-weight: 700; color: var(--accent-text); }
+.lic-code { width: 100%; margin-top: 12px; padding: 10px 12px; resize: none; border-radius: 10px; border: 1px solid var(--line2); background: var(--raise);
+  font: 12px/1.55 ui-monospace, Menlo, Consolas, monospace; word-break: break-all; color: var(--ink); }
+.lic-code:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.lic-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.lic-actions button { height: 42px; border-radius: 10px; font-weight: 700; font-size: 13.5px; }
+.lic-msg { color: var(--accent-text); }
+.lic-later { margin-top: 4px; }

@@ -1,14 +1,14 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610131801';
-import { EN, L, tr } from '../core/i18n.js?v=202610131801';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610131801';
-import { createBus } from '../core/bus.js?v=202610131801';
-import { connectObs } from '../core/obs.js?v=202610131801';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610131801';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610131801';
-import { simulateSpeech } from './demo.js?v=202610131801';
-import { initHelp } from './help.js?v=202610131801';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610131801';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610131811';
+import { EN, L, tr } from '../core/i18n.js?v=202610131811';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610131811';
+import { createBus } from '../core/bus.js?v=202610131811';
+import { connectObs } from '../core/obs.js?v=202610131811';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610131811';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610131811';
+import { simulateSpeech } from './demo.js?v=202610131811';
+import { initHelp } from './help.js?v=202610131811';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610131811';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -821,15 +821,12 @@ function renderPlanDialog() {
       busy(b, true, L('開いています…', 'Opening…'));
       try { await openPortal(LANG2); } catch (e) { msg.textContent = payError(e); busy(b, false, L('支払い方法・解約・領収書', 'Billing, cancel, receipts')); }
     });
-    btn(L('ライセンスコードをコピー', 'Copy license code'), 'lang-cancel', async () => {
-      try { await navigator.clipboard.writeText(lic.token); msg.textContent = L('コピーしました。別の端末の「ライセンスコードで復元」に貼り付けてください', 'Copied. Paste it into “Restore with a license code” on your other device.'); }
-      catch { prompt(L('このコードを別の端末で入力してください', 'Enter this code on your other device'), lic.token); }
-    });
+    btn(L('ライセンスコードを表示・保存', 'View or save license code'), 'lang-cancel', () => { d.close(); showLicenseDialog(false); });
   }
   box.append(actions, msg);
   // 別の端末で買った人：コードで復元
   const det = h('details', 'plan-restore');
-  det.append(h('summary', null, plan === 'free' ? L('ライセンスコードで復元（別の端末で購入した方）', 'Restore with a license code (bought on another device)') : L('このブラウザから外す', 'Remove from this browser')));
+  det.append(h('summary', null, plan === 'free' ? L('ライセンスコードで復元（別の端末で購入した方・ブラウザのデータを消した方）', 'Restore with a license code (bought on another device, or cleared this browser)') : L('このブラウザから外す', 'Remove from this browser')));
   if (plan === 'free') {
     const row = h('form', 'plan-code');
     const input = h('input'); input.placeholder = 'kanpe1.…'; input.autocomplete = 'off'; input.setAttribute('aria-label', L('ライセンスコード', 'License code'));
@@ -860,6 +857,81 @@ function renderPlanDialog() {
   box.append(foot);
   d.replaceChildren(box);
 }
+// ライセンスコードを控えてもらう窓。コードはメールでは届かないので、申し込み直後に必ず見せる。
+// 保存したコードは、署名が正しければ期限が切れても復元に使える（復元のたびに Stripe で契約を確かめ直す）。
+let licDlg = null;
+function showLicenseDialog(afterPurchase) {
+  const lic = licenseInfo();
+  if (!lic || !lic.token) return;
+  if (!licDlg) {
+    licDlg = document.createElement('dialog');
+    licDlg.className = 'lang-dialog plan-dialog license-dialog';
+    licDlg.setAttribute('aria-labelledby', 'licDlgTitle');
+    document.body.appendChild(licDlg);
+  }
+  const d = licDlg;
+  const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const planName = tr(PLANS[lic.plan] || PLANS.free);
+  const box = h('div', 'lang-box');
+  box.append(h('p', 'lang-icon', afterPurchase ? '✓' : 'K'));
+  if (afterPurchase) box.append(h('p', 'lic-thanks', L(`ありがとうございます！${planName}が有効になりました`, `Thank you! ${planName} is now active.`)));
+  const title = h('h2', null, L('ライセンスコードを控えてください', 'Save your license code')); title.id = 'licDlgTitle';
+  box.append(title);
+  box.append(h('p', 'lang-body', L(
+    'このコードがあれば、別の端末で使うときや、ブラウザのデータを消したあとでも、プランを復元できます。コードはメールでは届かないので、いまコピーするかファイルに保存してください。',
+    'With this code you can restore your plan on another device, or after clearing this browser’s data. It is not sent by email, so please copy it or save it to a file now.')));
+  const code = h('textarea', 'lic-code');
+  code.readOnly = true; code.rows = 4; code.value = lic.token; code.spellcheck = false;
+  code.setAttribute('aria-label', L('ライセンスコード', 'License code'));
+  code.addEventListener('focus', () => code.select());
+  box.append(code);
+  const msg = h('p', 'plan-msg lic-msg'); msg.setAttribute('aria-live', 'polite');
+  const actions = h('div', 'lic-actions');
+  const mk = (text, cls, fn) => { const b = h('button', cls, text); b.type = 'button'; b.addEventListener('click', fn); actions.append(b); return b; };
+  const done = () => { try { localStorage.setItem('kanpe.licenseSaved', '1'); } catch { /* noop */ } };
+  const copyBtn = mk(L('コピー', 'Copy'), 'lang-ok', async () => {
+    try { await navigator.clipboard.writeText(lic.token); msg.textContent = L('コピーしました。メモアプリなど、なくさない場所に貼り付けておいてください', 'Copied. Paste it somewhere safe, like a notes app.'); }
+    catch { code.focus(); code.select(); msg.textContent = L('コードを選択しました。長押しかショートカットでコピーしてください', 'The code is selected — copy it with a long press or shortcut.'); }
+    done();
+  });
+  mk(L('ファイルに保存', 'Save to file'), 'lang-cancel', () => {
+    const lines = EN ? [
+      'KANPE license code', '',
+      `Plan: ${planName}`,
+      lic.email ? `Email used to subscribe: ${lic.email}` : '',
+      `Saved on: ${new Date().toLocaleDateString('en-US')}`, '',
+      lic.token, '',
+      'How to restore: open the KANPE console, press the “Free / Upgrade” button at the top right,',
+      'open “Restore with a license code” and paste the code above.',
+      `${location.origin}/en/app`,
+    ] : [
+      'KANPE ライセンスコード', '',
+      `プラン：${planName}`,
+      lic.email ? `お申し込みのメールアドレス：${lic.email}` : '',
+      `保存日：${new Date().toLocaleDateString('ja-JP')}`, '',
+      lic.token, '',
+      '復元のしかた：KANPE のコンソール右上の「無料プラン／アップグレード」のボタンを押し、',
+      '「ライセンスコードで復元」を開いて、上のコードを貼り付けてください。',
+      `${location.origin}/app`,
+    ];
+    download('kanpe-license.txt', lines.filter((x, i) => x !== '' || lines[i - 1] !== '').join('\n') + '\n');
+    msg.textContent = L('「kanpe-license.txt」を保存しました', 'Saved “kanpe-license.txt”.');
+    done();
+  });
+  box.append(actions, msg);
+  box.append(h('p', 'hint lic-later', L('あとからでも、右上のプランのボタン →「ライセンスコードを表示・保存」でいつでも確認できます。', 'You can always find it again under the plan button at the top right → “View or save license code”.')));
+  const foot = h('p', 'plan-foot');
+  const close = h('button', 'plan-close', L('閉じる', 'Close')); close.type = 'button'; close.addEventListener('click', () => d.close());
+  foot.append(close);
+  box.append(foot);
+  d.replaceChildren(box);
+  // 申し込み直後は、窓の外を押しただけで閉じないようにする（見逃し防止）。閉じるボタンと Esc では閉じられる
+  d.onclick = afterPurchase ? null : (e) => { if (e.target === d) d.close(); };
+  copyBtn.autofocus = true; // 開いたときはコピーのボタンに（スマホでコード欄の選択が出ないように）
+  $('#toast').classList.remove('on');
+  if (!d.open) d.showModal();
+}
+
 $('#planBadge').addEventListener('click', (e) => {
   e.preventDefault();
   renderPlanDialog();
@@ -878,8 +950,8 @@ async function handlePaymentReturn() {
       try {
         const l = await activateFromSession(q.get('session_id'));
         applyPlanUI();
-        toast(l.plan === 'free' ? L('ご契約を確認できませんでした。少し待ってから「プラン」から確認してください', 'Couldn’t confirm the subscription yet. Check again from “Your plan” shortly.')
-          : L(`ありがとうございます！${tr(PLANS[l.plan])}が有効になりました`, `Thank you! ${tr(PLANS[l.plan])} is now active.`));
+        if (l.plan === 'free') toast(L('ご契約を確認できませんでした。少し待ってから「プラン」から確認してください', 'Couldn’t confirm the subscription yet. Check again from “Your plan” shortly.'));
+        else showLicenseDialog(true);
         return;
       } catch (e) {
         if (e.code !== 'incomplete' || i === 3) { toast(payError(e)); return; }
