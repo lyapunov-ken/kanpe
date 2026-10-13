@@ -537,8 +537,11 @@ i { font-style: normal; }
 .biz-foot b { color: var(--ink); margin-right: 10px; }
 .faq details p a { color: var(--ink); }
 @media (max-width: 640px) {
-  .uses li:has(> a) { padding: 0; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; }
+  /* リンクの行は、外側の2列の格子を外して、リンクの中で同じ2列に組む（外側の1列目に押し込まれて縦書き状に崩れていた） */
+  .uses li:has(> a) { display: block; padding: 0; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; }
   .uses li > a { display: grid; grid-template-columns: 8.2em minmax(0, 1fr); align-items: baseline; gap: 12px; padding: 16px 0; }
+  .uses li > a b::after { content: none; }
+  .uses li > a span::after { content: " →"; color: var(--ink-3); }
   .biz-foot { padding: 20px; }
   .biz-foot .btn { width: 100%; }
 }
