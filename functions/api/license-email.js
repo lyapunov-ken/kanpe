@@ -7,7 +7,17 @@ import { configured, fail, isEmail, json, mailConfigured, planForCustomer, readJ
 const GAP = 10 * 60; // 秒
 
 export async function onRequestGet({ env }) {
-  return json({ enabled: configured(env) && mailConfigured(env) });
+  // 設定の確認用。値は返さず、入っているかどうかだけを返す
+  return json({
+    enabled: configured(env) && mailConfigured(env),
+    payments: configured(env),
+    stripeKey: !!env.STRIPE_SECRET_KEY,
+    licenseSecret: !!(env.LICENSE_SECRET && env.LICENSE_SECRET.length >= 32),
+    mail: mailConfigured(env),
+    resendKey: !!env.RESEND_API_KEY,
+    mailFrom: !!env.MAIL_FROM,
+    webhook: !!env.STRIPE_WEBHOOK_SECRET,
+  });
 }
 
 export async function onRequestPost({ request, env }) {
