@@ -27,7 +27,7 @@ export async function onRequestPost({ request, env }) {
       allow_promotion_codes: 'true',
       billing_address_collection: 'auto',
       // 他のプロジェクトの売上と分けて集計できるよう、すべてに目印を付ける
-      metadata: { project: PROJECT, plan, interval },
+      metadata: { project: PROJECT, plan, interval, lang: en ? 'en' : 'ja' },
       // flexible は API 2025-09-30.clover の既定だが、版を変えても挙動が変わらないよう明示する（Stripe の推奨）
       subscription_data: { billing_mode: { type: 'flexible' }, metadata: { project: PROJECT, plan, interval } },
       client_reference_id: `kanpe-${plan}-${interval}`,

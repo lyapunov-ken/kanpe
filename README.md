@@ -105,6 +105,8 @@ styles/                 CSS
 - サーバー側は Cloudflare Pages Functions（`functions/api/`）。データベースは持たず、契約状態は毎回 Stripe に問い合わせ、端末には署名つきのライセンスコード（`kanpe1.…`）だけを保存する。ライセンスは約12時間ごとに更新し、更新日から3日は猶予
 - 同じ Stripe アカウントの他プロジェクトと混ざらないよう、商品・価格・Checkout・契約に `metadata.project=kanpe`、価格の lookup_key は `kanpe_` で始め、明細書の表記は `KANPE`。他プロジェクトの価格や契約は無視する
 - 準備：`STRIPE_SECRET_KEY=sk_test_… node tools/stripe-setup.mjs` で商品・価格・顧客ポータルを作り、表示された値を Cloudflare Pages の環境変数（`STRIPE_SECRET_KEY`、`LICENSE_SECRET`、`STRIPE_PORTAL_CONFIG`）に入れる。未設定の間、申し込みボタンは「受付を準備しています」と表示する
+- ライセンスコードのお届け：申し込み直後にコンソールで表示（コピー・ファイル保存）するほか、Stripe の Webhook（`checkout.session.completed` → `/api/stripe-webhook`）を受けて、お申し込みのメールアドレスへメールでも送る。送信は Resend。同じ申し込みの通知が再送されても、Resend の Idempotency-Key で二重に届かない。コードをなくした人は、コンソールの「ライセンスコードで復元」からメールで送り直せる（`/api/license-email`。契約の有無は返さず、Stripe に登録されたアドレスにだけ、同じ顧客には10分に1通まで）
+- メールの準備：Resend でドメイン（例 `yoneken.xyz`）を認証し（Cloudflare の DNS に表示されたレコードを追加）、API キーを作る。Cloudflare Pages の環境変数に `RESEND_API_KEY`、`MAIL_FROM`（例 `KANPE <noreply@yoneken.xyz>`）、任意で `MAIL_REPLY_TO`、それに `tools/stripe-setup.mjs` が表示する `STRIPE_WEBHOOK_SECRET` を入れる。未設定の間はメールを送らず、画面の案内も「メールでは届かない」表示のまま。制限付きキー（rk_…）を使う場合は、Customers の読み取り・書き込みも許可する
 - テスト：`node tools/test-api.mjs`（Stripe は偽物に置き換えるので通信不要）
 - Stripe の推奨構成（implementation planner）との対応：ホスト型 Checkout／定額／フリーミアム（無料プランはカード不要）／顧客ポータル／Smart Retries と自動メール（ダッシュボードで設定）／Stripe Tax はしきい値モニタリングから。契約は flexible billing mode で作成し、商品には税コード（既定 `txcd_10103000`）を付ける
 - Connect は使わない（他の事業者への支払いがないため）。他プロジェクトとの入金の分離は、同じ組織（Organization）の中に KANPE 専用アカウントを作って行う

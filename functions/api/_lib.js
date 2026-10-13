@@ -10,6 +10,11 @@
 //   SITE_URL            … 例 https://kanpe.yoneken.xyz（未設定ならリクエスト元から決める）
 //   STRIPE_PORTAL_CONFIG … 顧客ポータルの設定 ID（bpc_…）。未設定なら Stripe の既定の設定
 //   PRO_ENABLED         … "1" でおトクプランの申し込みを受け付ける（機能が揃うまでは未設定のまま）
+// ライセンスコードをメールで送る（未設定ならメールは送らず、画面に表示するだけ）
+//   STRIPE_WEBHOOK_SECRET … Stripe の Webhook の署名シークレット（whsec_…）。/api/stripe-webhook で使う
+//   RESEND_API_KEY        … メール配信サービス Resend の API キー（re_…）
+//   MAIL_FROM             … 差出人。例 KANPE <noreply@yoneken.xyz>（Resend で認証したドメインのアドレス）
+//   MAIL_REPLY_TO         … 返信先（任意）。例 問い合わせ用のアドレス
 
 export const PROJECT = 'kanpe';
 export const PRICES = {
@@ -164,5 +169,105 @@ export async function licenseResponse(env, customer, extra = {}) {
   const info = await planForCustomer(env, customer);
   const { token, payload } = await signLicense(env, { customer, plan: info.plan, periodEnd: info.periodEnd });
   return json({ token, plan: info.plan, expires: payload.e, status: info.status, interval: info.interval,
-    cancelAtPeriodEnd: info.cancelAtPeriodEnd, ...extra });
+    cancelAtPeriodEnd: info.cancelAtPeriodEnd, mail: mailConfigured(env), ...extra });
+}
+
+// ---------------------------------------------------------------- Stripe の Webhook の署名
+// Stripe-Signature: t=時刻,v1=署名（HMAC-SHA256(シークレット, "時刻.本文") の16進）。古すぎる通知（既定5分）は受け付けない
+const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+function safeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+}
+export async function verifyStripeSignature(secret, header, payload, toleranceSec = 300, nowSec = Math.floor(Date.now() / 1000)) {
+  if (!secret || typeof header !== 'string') return false;
+  let t = 0;
+  const sigs = [];
+  for (const part of header.split(',')) {
+    const [k, v] = part.split('=');
+    if (k === 't') t = Number(v);
+    else if (k === 'v1' && v) sigs.push(v.trim());
+  }
+  if (!t || !sigs.length || Math.abs(nowSec - t) > toleranceSec) return false;
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const expected = hex(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${t}.${payload}`)));
+  return sigs.some((s) => safeEqual(s, expected));
+}
+
+// ---------------------------------------------------------------- メール（Resend）
+export function mailConfigured(env) { return !!(env.RESEND_API_KEY && env.MAIL_FROM); }
+export const isEmail = (s) => typeof s === 'string' && s.length <= 254 && /^[^\s@<>",;]+@[^\s@<>",;]+\.[^\s@<>",;]+$/.test(s);
+
+export async function sendMail(env, { to, subject, text, html, idempotencyKey }) {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json',
+      ...(idempotencyKey ? { 'idempotency-key': idempotencyKey.slice(0, 256) } : {}) },
+    body: JSON.stringify({ from: env.MAIL_FROM, to: [to], subject, text, html, ...(env.MAIL_REPLY_TO ? { reply_to: env.MAIL_REPLY_TO } : {}) }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { const e = new Error(data.message || `Resend ${res.status}`); e.status = res.status; throw e; }
+  return data;
+}
+
+const PLAN_NAME = { ja: { plus: 'お手軽プラン', pro: 'おトクプラン' }, en: { plus: 'Plus', pro: 'Pro' } };
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+// ライセンスコードのお知らせメール（日本語 / 英語）。テキスト版と HTML 版を同じ文面から作る
+export function licenseMail({ lang, plan, token, site }) {
+  const en = lang === 'en';
+  const name = (en ? PLAN_NAME.en : PLAN_NAME.ja)[plan] || (en ? 'KANPE' : 'KANPE の有料プラン');
+  const app = `${site}${en ? '/en' : ''}/app`;
+  const T = en ? {
+    subject: `Your KANPE license code (${name})`,
+    thanks: `Thank you for subscribing to KANPE ${name}.`,
+    codeLabel: 'Your license code',
+    keep: 'Keep this email. Use the code to restore your plan on another device or after clearing your browser’s data.',
+    howTitle: 'How to restore',
+    steps: ['Open the KANPE console', 'Press the “Free / Upgrade” button at the top right', 'Open “Restore with a license code” and paste the code'],
+    billTitle: 'Billing, cancellation and receipts',
+    bill: 'Press the plan button at the top right of the console → “Billing, cancel, receipts”.',
+    ignore: 'If you didn’t expect this email, you can safely ignore it.',
+  } : {
+    subject: `【KANPE】ライセンスコードのお知らせ（${name}）`,
+    thanks: `KANPE ${name}へのお申し込み、ありがとうございます。`,
+    codeLabel: 'ライセンスコード',
+    keep: 'このコードは、別の端末で使うときや、ブラウザのデータを消したときに、プランを復元するためのものです。このメールは大切に保管してください。',
+    howTitle: '復元のしかた',
+    steps: ['KANPE のコンソールを開く', '右上の「無料プラン／アップグレード」を押す', '「ライセンスコードで復元」を開き、上のコードを貼り付ける'],
+    billTitle: 'ご契約の確認・解約・領収書',
+    bill: 'コンソール右上のプランのボタン →「支払い方法・解約・領収書」から行えます。',
+    ignore: 'このメールに心当たりがない場合は、お手数ですが破棄してください。',
+  };
+  const sep = en ? ': ' : '：';
+  const text = [
+    T.thanks, '', `${T.codeLabel}${sep}`, token, '', T.keep, '',
+    `■ ${T.howTitle}`, `1. ${T.steps[0]}${sep}${app}`, `2. ${T.steps[1]}`, `3. ${T.steps[2]}`, '',
+    `■ ${T.billTitle}`, T.bill, '', T.ignore, '', `KANPE  ${site}`,
+  ].join('\n');
+  const p = (inner, style = '') => `<p style="margin:0 0 14px;${style}">${inner}</p>`;
+  const html = `<!doctype html><html lang="${en ? 'en' : 'ja'}"><body style="margin:0;padding:24px;background:#f3f3f0;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif;color:#17181a;line-height:1.7;font-size:15px">
+<div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;padding:28px 26px">
+${p('KANPE', 'font-weight:800;letter-spacing:.14em;margin-bottom:18px')}
+${p(esc(T.thanks))}
+${p(`<b>${esc(T.codeLabel)}</b>`, 'margin-bottom:6px')}
+${p(esc(token), 'padding:12px 14px;background:#f4f4f1;border:1px solid #e6e6e1;border-radius:10px;font-family:Menlo,Consolas,monospace;font-size:12.5px;word-break:break-all')}
+${p(esc(T.keep))}
+${p(`<b>${esc(T.howTitle)}</b><br>1. ${esc(T.steps[0])}${sep}<a href="${esc(app)}">${esc(app)}</a><br>2. ${esc(T.steps[1])}<br>3. ${esc(T.steps[2])}`)}
+${p(`<b>${esc(T.billTitle)}</b><br>${esc(T.bill)}`)}
+${p(`${esc(T.ignore)}<br><a href="${esc(site)}" style="color:#8a8d94">${esc(site)}</a>`, 'margin:18px 0 0;font-size:12.5px;color:#8a8d94')}
+</div></body></html>`;
+  return { subject: T.subject, text, html };
+}
+
+// ライセンスコードをメールで送り、送った時刻を Stripe の顧客に残す（再送の間隔を守るため）
+export async function sendLicenseMail(env, { customer, email, lang, site, idempotencyKey, info }) {
+  const plan = info || await planForCustomer(env, customer);
+  const { token } = await signLicense(env, { customer, plan: plan.plan, periodEnd: plan.periodEnd });
+  await sendMail(env, { to: email, ...licenseMail({ lang, plan: plan.plan, token, site }), idempotencyKey });
+  try { await stripe(env, 'POST', `customers/${customer}`, { metadata: { kanpe_mail_at: String(Math.floor(Date.now() / 1000)) } }); }
+  catch { /* 書き込めない制限付きキーでも、メールは送れているので続ける */ }
+  return plan;
 }

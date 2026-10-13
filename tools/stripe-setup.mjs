@@ -5,6 +5,7 @@
 //   商品  KANPE お手軽プラン / KANPE おトクプラン（明細書の表記は KANPE）
 //   価格  kanpe_plus_monthly ¥480 / kanpe_plus_yearly ¥4,800 / kanpe_pro_monthly ¥2,980 / kanpe_pro_yearly ¥29,800（税込）
 //   顧客ポータルの設定（解約は期間の終わりに、支払い方法の変更、領収書、お手軽プランの月払い⇄年払い）
+//   Webhook（申し込み完了 → ライセンスコードをメールで送る。${SITE}/api/stripe-webhook）
 const KEY = process.env.STRIPE_SECRET_KEY;
 const SITE = (process.env.SITE_URL || 'https://kanpe.yoneken.xyz').replace(/\/+$/, '');
 const PLUS_ONLY = process.argv.includes('--plus-only');
@@ -93,6 +94,24 @@ async function ensurePortal(plusProduct, plusPrices) {
   return conf;
 }
 
+// 申し込み完了の通知を受けて、ライセンスコードをメールで送るための Webhook。署名シークレットは作ったときにしか表示されない
+async function ensureWebhook() {
+  const url = `${SITE}/api/stripe-webhook`;
+  const list = await api('GET', 'webhook_endpoints', { limit: 100 });
+  const cur = list.data.find((w) => w.url === url);
+  if (cur) {
+    if (!cur.enabled_events.includes('checkout.session.completed') && !cur.enabled_events.includes('*')) {
+      await api('POST', `webhook_endpoints/${cur.id}`, { enabled_events: [...cur.enabled_events, 'checkout.session.completed'] });
+    }
+    console.log(`  = Webhook あり ${cur.id}  ${url}（署名シークレットはダッシュボードの Webhook 画面で確認できます）`);
+    return null;
+  }
+  const hook = await api('POST', 'webhook_endpoints', { url, enabled_events: ['checkout.session.completed'], api_version: '2025-09-30.clover',
+    description: 'KANPE: ライセンスコードをメールで送る', metadata: { project: 'kanpe' } });
+  console.log(`  + Webhook を作成 ${hook.id}  ${url}`);
+  return hook.secret;
+}
+
 console.log(`Stripe（${LIVE ? '本番' : 'テスト'}モード）に KANPE の商品を用意します`);
 const out = {};
 for (const p of PLANS) {
@@ -102,11 +121,16 @@ for (const p of PLANS) {
   for (const pr of p.prices) out[p.plan].prices.push(await ensurePrice(prod, p, pr));
 }
 const portal = await ensurePortal(out.plus.product, out.plus.prices);
+const whsec = await ensureWebhook();
 console.log('\nCloudflare Pages の環境変数に設定してください：');
 console.log(`  STRIPE_SECRET_KEY     = （このキー。KANPE 用の制限付きキーを推奨）`);
 console.log(`  LICENSE_SECRET        = （32文字以上のランダムな文字列。例：openssl rand -base64 48）`);
 console.log(`  STRIPE_PORTAL_CONFIG  = ${portal.id}`);
 console.log('  PRO_ENABLED           = （おトクプランの機能が揃ったら 1）');
+console.log(`  STRIPE_WEBHOOK_SECRET = ${whsec || '（作成済みの Webhook の署名シークレット whsec_…）'}`);
+console.log('  RESEND_API_KEY        = （Resend の API キー re_…。ライセンスコードをメールで送るとき）');
+console.log('  MAIL_FROM             = （差出人。例 KANPE <noreply@yoneken.xyz>。Resend で認証したドメインのアドレス）');
+console.log('  MAIL_REPLY_TO         = （任意。返信先の問い合わせ用アドレス）');
 console.log('\nダッシュボードで確認してください：');
 console.log('  Billing → 収益回収：Smart Retries・支払い失敗メール・カード情報の自動更新をオン（すべて設定のみ）');
 console.log('  設定 → 税金：本社住所を登録し、しきい値のモニタリングを有効に（課税事業者なら日本の登録を追加）');

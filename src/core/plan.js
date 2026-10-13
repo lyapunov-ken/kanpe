@@ -29,7 +29,7 @@ export function licenseInfo() {
 }
 function saveLicense(data) {
   const l = { token: data.token, plan: PLANS[data.plan] ? data.plan : 'free', expires: data.expires || 0, status: data.status || '',
-    interval: data.interval || null, cancelAtPeriodEnd: !!data.cancelAtPeriodEnd, email: data.email || (licenseInfo() || {}).email || '', checkedAt: Date.now() };
+    interval: data.interval || null, cancelAtPeriodEnd: !!data.cancelAtPeriodEnd, email: data.email || (licenseInfo() || {}).email || '', mail: !!data.mail, checkedAt: Date.now() };
   try { localStorage.setItem(LICENSE_KEY, JSON.stringify(l)); } catch { /* noop */ }
   return l;
 }
@@ -53,6 +53,8 @@ async function post(path, body) {
 export async function activateFromSession(sessionId) { return saveLicense(await post('/api/license', { session_id: sessionId })); }
 // 別の端末で使う：ライセンスコードを入れて復元する
 export async function activateFromCode(code) { return saveLicense(await post('/api/license', { token: String(code || '').trim() })); }
+// コードをなくした：お申し込みのメールアドレスにコードを送り直してもらう（契約の有無は返ってこない）
+export async function requestLicenseEmail(email, lang) { return post('/api/license-email', { email: String(email || '').trim(), lang }); }
 // 契約の最新の状態に更新する（force でなければ半日に1回まで。通信できないときは手元の情報のまま）
 export async function refreshLicense(force = false) {
   const l = licenseInfo();

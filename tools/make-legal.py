@@ -5,7 +5,7 @@
 import html, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-UPDATED = ('2026年10月11日', 'October 11, 2026')
+UPDATED = ('2026年10月13日', 'October 13, 2026')
 
 SELLER = {
     'name': '',      # 販売業者（屋号・氏名）。空欄なら請求時に開示
@@ -105,14 +105,14 @@ def privacy(ja):
          'Our approach', 'KANPE is designed to collect as little as possible so you can use it with confidence. Transcripts, settings, background images and OBS connection details are stored only in your browser and are never sent to or stored on our servers. There are no accounts.'),
         ('音声認識について', '無料・お手軽プランの音声認識は、ブラウザに内蔵された機能を使います。音声はブラウザの提供元（Chrome は Google、Edge は Microsoft、Safari は Apple）のサービスで文字にされ、その取り扱いは各社のプライバシーポリシーに従います。音声が当方に届くことはありません。',
          'Speech recognition', 'On the Free and Plus plans, speech recognition uses your browser’s built-in feature. Audio is converted to text by your browser’s provider (Google for Chrome, Microsoft for Edge, Apple for Safari) under their privacy policies. Audio never reaches us.'),
-        ('有料プランで扱う情報', 'お支払いは決済代行サービス Stripe（Stripe, Inc.）の画面で行います。メールアドレス、お名前、カード情報などは Stripe が受け取って管理し、カード情報を当方が受け取ることはありません。当方は契約の確認のために、Stripe の顧客 ID、プラン、契約期間、お申し込み時のメールアドレスを Stripe から都度参照します。当方はこれらを独自のデータベースに保存せず、確認の結果は署名つきのライセンスコードとしてお使いのブラウザに保存します。',
-         'Information for paid plans', 'Payments are handled on the checkout page of Stripe, Inc. Stripe receives and manages your email address, name and card details; we never receive your card details. To verify your subscription, we look up your Stripe customer ID, plan, subscription period and sign-up email from Stripe when needed. We do not keep these in a database of our own; the result is stored in your browser as a signed license code.'),
+        ('有料プランで扱う情報', 'お支払いは決済代行サービス Stripe（Stripe, Inc.）の画面で行います。メールアドレス、お名前、カード情報などは Stripe が受け取って管理し、カード情報を当方が受け取ることはありません。当方は契約の確認のために、Stripe の顧客 ID、プラン、契約期間、お申し込み時のメールアドレスを Stripe から都度参照します。当方はこれらを独自のデータベースに保存せず、確認の結果は署名つきのライセンスコードとしてお使いのブラウザに保存します。また、ライセンスコードをお届けするため、お申し込み時のメールアドレス宛てに、メール配信サービス Resend（Resend, Inc.）を通じてメールを送ります。コードの再送を依頼された場合、入力されたメールアドレスは該当するご契約を探すためだけに使い、メールは Stripe に登録されたアドレスにのみ送ります。',
+         'Information for paid plans', 'Payments are handled on the checkout page of Stripe, Inc. Stripe receives and manages your email address, name and card details; we never receive your card details. To verify your subscription, we look up your Stripe customer ID, plan, subscription period and sign-up email from Stripe when needed. We do not keep these in a database of our own; the result is stored in your browser as a signed license code. To deliver your license code, we email it to your sign-up address through Resend, Inc., an email delivery service. If you ask us to resend the code, the address you enter is used only to look up a matching subscription, and the email is sent only to the address registered with Stripe.'),
         ('アクセスの記録', '本サービスは Cloudflare, Inc. のサービスで配信しています。安全な運用のため、Cloudflare が IP アドレスやブラウザの種類などの技術的な情報を一時的に処理することがあります。広告や解析のタグ、外部のトラッキング用スクリプトは使っていません。',
          'Access logs', 'The Service is delivered via Cloudflare, Inc. For security and reliability, Cloudflare may temporarily process technical information such as IP addresses and browser type. We use no advertising or analytics tags and no third-party tracking scripts.'),
         ('利用目的', '当方が参照する情報は、有料プランの提供と契約の確認、お問い合わせへの対応、不正利用の防止のためだけに使います。',
          'Purpose of use', 'We use the information we access only to provide paid plans and verify subscriptions, respond to enquiries and prevent misuse.'),
-        ('第三者への提供', '法令に基づく場合を除き、個人情報をご本人の同意なく第三者に提供しません。決済のための Stripe、配信のための Cloudflare は、それぞれの業務に必要な範囲で情報を取り扱います（いずれも国外の事業者を含みます）。',
-         'Sharing with third parties', 'Except as required by law, we do not share personal information with third parties without your consent. Stripe (payments) and Cloudflare (delivery) handle information only as needed for their services; both include providers outside Japan.'),
+        ('第三者への提供', '法令に基づく場合を除き、個人情報をご本人の同意なく第三者に提供しません。決済のための Stripe、配信のための Cloudflare、メール送信のための Resend は、それぞれの業務に必要な範囲で情報を取り扱います（いずれも国外の事業者を含みます）。',
+         'Sharing with third parties', 'Except as required by law, we do not share personal information with third parties without your consent. Stripe (payments), Cloudflare (delivery) and Resend (email) handle information only as needed for their services; all include providers outside Japan.'),
         ('ブラウザに保存される情報', 'このブラウザには、設定、文字起こし、ライセンスコードなどが保存されます。コンソールの「消去」ボタンや、ブラウザのサイトデータの削除でいつでも消せます。ライセンスコードを消した場合も、「ライセンスコードで復元」から戻せます。',
          'Data stored in your browser', 'Your browser stores settings, transcripts and your license code. You can delete them at any time with the console’s Clear button or by clearing site data in your browser. If you delete your license code, you can restore it with “Restore with a license code”.'),
         ('開示・訂正・削除のご請求', 'ご本人からの開示・訂正・利用停止・削除のご請求には、法令に従い対応します。Stripe に保存された情報は、契約管理ページからも確認・変更できます。',

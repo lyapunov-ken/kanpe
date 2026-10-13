@@ -70,11 +70,11 @@ h2 { margin: 0; font-size: 11px; letter-spacing: .16em; color: var(--sub); font-
 .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 
 /* 入力欄 */
-select, input:not([type]), input[type=password], textarea {
+select, input:not([type]), input[type=password], input[type=email], textarea {
   width: 100%; min-width: 0; background: var(--raise); border: 1px solid var(--line2); border-radius: 8px; padding: 8px 10px; outline: none;
   transition: border-color .15s;
 }
-select:hover, input:not([type]):hover, input[type=password]:hover, textarea:hover { border-color: var(--hover-line); }
+select:hover, input:not([type]):hover, input[type=password]:hover, input[type=email]:hover, textarea:hover { border-color: var(--hover-line); }
 select:focus, input:focus, textarea:focus { border-color: var(--accent); }
 select { appearance: none; padding-right: 30px; cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' fill='none' stroke='%239b9da4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -462,3 +462,6 @@ details.obs[open] { padding-bottom: 12px; }
 .lic-actions button { height: 42px; border-radius: 10px; font-weight: 700; font-size: 13.5px; }
 .lic-msg { color: var(--accent-text); }
 .lic-later { margin-top: 4px; }
+.plan-mail-hint { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); }
+.plan-mail { margin-top: 6px; }
+.plan-mail input { font-family: inherit; font-size: 13px; }

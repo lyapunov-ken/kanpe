@@ -1,14 +1,14 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610131811';
-import { EN, L, tr } from '../core/i18n.js?v=202610131811';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610131811';
-import { createBus } from '../core/bus.js?v=202610131811';
-import { connectObs } from '../core/obs.js?v=202610131811';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610131811';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610131811';
-import { simulateSpeech } from './demo.js?v=202610131811';
-import { initHelp } from './help.js?v=202610131811';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610131811';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610131824';
+import { EN, L, tr } from '../core/i18n.js?v=202610131824';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610131824';
+import { createBus } from '../core/bus.js?v=202610131824';
+import { connectObs } from '../core/obs.js?v=202610131824';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610131824';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610131824';
+import { simulateSpeech } from './demo.js?v=202610131824';
+import { initHelp } from './help.js?v=202610131824';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610131824';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -841,6 +841,34 @@ function renderPlanDialog() {
       catch (err) { msg.textContent = payError(err); busy(go, false); }
     });
     det.append(row);
+    // コードをなくした人：お申し込みのメールアドレスに送り直す
+    const mrow = h('form', 'plan-code plan-mail');
+    const mailIn = h('input'); mailIn.type = 'email'; mailIn.placeholder = L('お申し込みのメールアドレス', 'Email you subscribed with'); mailIn.autocomplete = 'email';
+    mailIn.setAttribute('aria-label', L('お申し込みのメールアドレス', 'Email you subscribed with'));
+    const send = h('button', 'btn', L('メールで送る', 'Email it')); send.type = 'submit';
+    mrow.append(mailIn, send);
+    const mmsg = h('p', 'hint lic-msg'); mmsg.setAttribute('aria-live', 'polite');
+    mrow.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const v = mailIn.value.trim();
+      if (!v) return;
+      busy(send, true); mmsg.textContent = '';
+      try {
+        await requestLicenseEmail(v, LANG2);
+        mmsg.textContent = L(`ご契約が見つかった場合は、お申し込みのメールアドレスにライセンスコードを送りました。数分たっても届かないときは、迷惑メールのフォルダと、入力したアドレスをご確認ください。`,
+          'If we found a subscription, we’ve emailed the license code to the address you subscribed with. If nothing arrives in a few minutes, check your spam folder and the address you entered.');
+      } catch (err) {
+        mmsg.textContent = err.code === 'bad_email' ? L('メールアドレスを確認してください', 'Please check the email address.')
+          : err.code === 'mail_not_configured' || err.code === 'not_configured' ? L('メールでの送り直しは準備中です。お手数ですが、特定商取引法に基づく表記の連絡先までお問い合わせください。', 'Email resend isn’t available yet. Please contact us via the address in the Legal notice.')
+          : payError(err);
+      }
+      busy(send, false);
+    });
+    const mhint = h('p', 'hint plan-mail-hint', L('コードをなくした場合は、お申し込みのメールアドレスに送り直せます。', 'Lost your code? We can email it to the address you subscribed with.'));
+    // メールで送れる設定になっているときだけ出す
+    for (const el of [mhint, mrow]) el.hidden = true;
+    fetch('/api/license-email', { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : {})).then((x) => { if (x.enabled) for (const el of [mhint, mrow]) el.hidden = false; }).catch(() => {});
+    det.append(mhint, mrow, mmsg);
   } else {
     const p = h('p', 'hint', L('この端末では無料プランに戻ります。ご契約は続くので、ライセンスコードでいつでも戻せます（解約は「支払い方法・解約・領収書」から）。', 'This browser goes back to Free. Your subscription continues — restore it any time with your license code (cancel from “Billing, cancel, receipts”).'));
     const rm = h('button', 'btn', L('外す', 'Remove')); rm.type = 'button';
@@ -877,9 +905,13 @@ function showLicenseDialog(afterPurchase) {
   if (afterPurchase) box.append(h('p', 'lic-thanks', L(`ありがとうございます！${planName}が有効になりました`, `Thank you! ${planName} is now active.`)));
   const title = h('h2', null, L('ライセンスコードを控えてください', 'Save your license code')); title.id = 'licDlgTitle';
   box.append(title);
-  box.append(h('p', 'lang-body', L(
+  const mailed = lic.mail && lic.email;
+  box.append(h('p', 'lang-body', mailed ? L(
+    `このコードがあれば、別の端末で使うときや、ブラウザのデータを消したあとでも、プランを復元できます。同じコードをお申し込みのメールアドレス（${lic.email}）にもお送りしました。念のため、コピーかファイルに保存しておくと安心です。`,
+    `With this code you can restore your plan on another device, or after clearing this browser’s data. We’ve also emailed it to ${lic.email}. To be safe, copy it or save it to a file too.`) : L(
     'このコードがあれば、別の端末で使うときや、ブラウザのデータを消したあとでも、プランを復元できます。コードはメールでは届かないので、いまコピーするかファイルに保存してください。',
     'With this code you can restore your plan on another device, or after clearing this browser’s data. It is not sent by email, so please copy it or save it to a file now.')));
+  if (mailed) box.append(h('p', 'hint', L('メールが見当たらないときは、迷惑メールのフォルダもご確認ください。', 'If you can’t find the email, check your spam folder.')));
   const code = h('textarea', 'lic-code');
   code.readOnly = true; code.rows = 4; code.value = lic.token; code.spellcheck = false;
   code.setAttribute('aria-label', L('ライセンスコード', 'License code'));
