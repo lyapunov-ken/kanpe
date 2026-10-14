@@ -1,12 +1,12 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610140215';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610140215';
-import { createBus } from '../core/bus.js?v=202610140215';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610140215';
-import { runs } from '../core/extract.js?v=202610140215';
-import { EN, L, tr } from '../core/i18n.js?v=202610140215';
-import { createVJ } from './vj.js?v=202610140215';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610150729';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610150729';
+import { createBus } from '../core/bus.js?v=202610150729';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610150729';
+import { runs } from '../core/extract.js?v=202610150729';
+import { EN, L, tr } from '../core/i18n.js?v=202610150729';
+import { createVJ } from './vj.js?v=202610150729';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -17,7 +17,7 @@ const LOCK = {};
 if (THEMES[P.get('theme')]) LOCK.theme = P.get('theme');
 if (/^[0-9a-f]{6}$/i.test(P.get('accent') || '')) LOCK.accent = '#' + P.get('accent');
 if (['compose', 'kanpe', 'ticker', 'vj'].includes(P.get('layout'))) LOCK.layout = P.get('layout');
-if (['led', 'neon', 'pixel', 'holo'].includes(P.get('vj'))) LOCK.vjStyle = P.get('vj');
+if (['micro', 'led', 'neon', 'pixel', 'holo'].includes(P.get('vj'))) LOCK.vjStyle = P.get('vj');
 if (VJ_FONTS[P.get('vjfont')]) LOCK.vjFont = P.get('vjfont');
 if (VJ_DETAILS[P.get('detail')]) LOCK.vjDetail = P.get('detail');
 if (VJ_FX[P.get('fx')]) LOCK.vjFx = P.get('fx');
@@ -49,7 +49,8 @@ const RATIOS = { compose: [1, 1.5, 2.25, 3.4], kanpe: [1, 1.2, 1.42, 1.7], ticke
 const TRACK = [0.02, 0, -0.025, -0.045]; // 大きい語ほど字間を詰める
 const MAXW = { compose: 40, kanpe: 14, ticker: 30 };
 
-const unit = () => Math.max(0.2, stage.clientHeight / 720);
+// 基準の大きさ：1280×720 を 1 として、窓の高さと幅の小さい方に合わせる（縦長・小さな窓でもはみ出しにくい）
+const unit = () => Math.max(0.2, Math.min(stage.clientHeight / 720, stage.clientWidth / 800));
 const basePx = () => S.baseSize * unit();
 const now = () => performance.now();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -116,7 +117,7 @@ function applyTheme() {
     root.style.setProperty('--bg-dim', String(S.bgDim == null ? 0.4 : S.bgDim));
     root.style.setProperty('--bg-dim-color', th.bg === 'transparent' ? '#000' : th.bg);
   }
-  document.body.className = `theme-${S.theme} layout-${S.layout}` + (S.reduceMotion ? ' calm' : '') +
+  document.body.className = `theme-${S.theme} layout-${S.layout}` + (S.layout === 'vj' ? ` vj-${S.vjStyle || 'micro'}` : '') + (S.reduceMotion ? ' calm' : '') +
     (S.caption ? ' has-cap' : '') + (EMBED ? ' embed' : '') + (S.credit === false ? '' : ' has-credit') + (S.bgImage || camStream ? ' has-bgimg' : '');
   if (!LOCAL_FONTS && th.gf && !fontLinks.has(th.gf)) {
     fontLinks.add(th.gf);
@@ -176,19 +177,19 @@ function configureVJ() {
   const font = VJ_FONTS[S.vjFont] ? S.vjFont : 'gothic';
   root.style.setProperty('--vj-font', VJ_FONTS[font].family); // 字幕も VJ の書体にそろえる
   root.style.setProperty('--vj-weight', String(VJ_FONTS[font].weight));
-  vj.configure({ style: S.vjStyle || 'led', accent: S.accent || th.accent, accent2: th.accent2,
+  vj.configure({ style: S.vjStyle || 'micro', accent: S.accent || th.accent, accent2: th.accent2,
     transparent: th.bg === 'transparent' || !!S.bgImage || !!camStream, calm: !!S.reduceMotion, caption: !!S.caption, ttl: S.ttl,
     font, detail: S.vjDetail || 'mid', fx: S.vjFx || 'mid' });
 }
 
 function level(kind, text, count) {
-  let l = (kind === 'new' || kind === 'registered') ? 2 : (kind === 'number' || [...text].length >= 4) ? 1 : 0;
+  let l = (kind === 'new' || kind === 'registered' || kind === 'fusion') ? 2 : (kind === 'number' || [...text].length >= 4) ? 1 : 0;
   l += Math.min((count || 1) - 1, 2); // 繰り返すと育つ
   return Math.min(l, 3);
 }
 
 // 1語を文字種ごとに組む。和字は1字ずつ、欧文・数字はランごと（カーニングを保つ）
-function build(text, kind, vertical) {
+function build(text, kind, vertical, from) {
   const w = el(`w k-${kind}` + (vertical ? ' v' : ''));
   const inner = el('wi', '');
   const parts = [];
@@ -203,6 +204,11 @@ function build(text, kind, vertical) {
   inner.append(...parts);
   w.appendChild(inner);
   if (kind === 'new') w.appendChild(el('bar'));
+  if (kind === 'fusion') { // 新語ミックス：「新語」のバッジと、元になった2語
+    w.appendChild(el('fz-badge', L('新語', 'NEW WORD')));
+    if (from && from.length === 2) w.appendChild(el('fz-from', `${from[0]} × ${from[1]}`));
+    parts.forEach((p, i) => p.style.setProperty('--i', i));
+  }
   return { node: w, inner, parts };
 }
 
@@ -248,11 +254,11 @@ function fit(node, px) {
   if (k < 1) node.style.fontSize = px * k + 'px';
 }
 
-function clearSpot(r, self) {
+function clearSpot(r, self, keep = []) {
   if (!r || r.ov <= 0) return;
   const gap = basePx() * 0.3;
   for (const it of liveItems()) {
-    if (it !== self && it.rect && overlap(r.x - gap, r.y - gap, r.w + 2 * gap, r.h + 2 * gap, it.rect) > 0) expire(it);
+    if (it !== self && !keep.includes(it) && it.rect && overlap(r.x - gap, r.y - gap, r.w + 2 * gap, r.h + 2 * gap, it.rect) > 0) expire(it);
   }
 }
 
@@ -272,11 +278,11 @@ async function addWord(m) {
   const lv = level(kind, text, m.count);
   const px = basePx() * RATIOS[S.layout][lv];
   const len = [...text].length;
-  const vertical = S.layout === 'compose' && S.vertical && !/[A-Za-z]/.test(text) && len >= 2 && len <= 7 &&
+  const vertical = S.layout === 'compose' && S.vertical && kind !== 'fusion' && !/[A-Za-z]/.test(text) && len >= 2 && len <= 7 &&
     Math.random() < (lv >= 1 ? 0.4 : 0.22);
   await fontReady(text, px);
 
-  const { node, inner, parts } = build(text, kind, vertical);
+  const { node, inner, parts } = build(text, kind, vertical, m.from);
   if (m.spc) { // 話者の色とラベル（話者が替わった最初の語にだけ名前を添える）
     node.classList.add('has-sp');
     node.style.setProperty('--spc', m.spc);
@@ -285,7 +291,7 @@ async function addWord(m) {
   }
   node.style.fontSize = px + 'px';
   node.style.letterSpacing = TRACK[lv] + 'em';
-  const ttl = S.ttl * 1000 * (kind === 'new' ? 1.25 : 1) * (lv >= 2 ? 1.15 : 1);
+  const ttl = S.ttl * 1000 * (kind === 'new' ? 1.25 : kind === 'fusion' ? 2 : 1) * (lv >= 2 ? 1.15 : 1);
   const it = { key, text, kind, count: m.count || 1, lv, el: node, inner, parts, vertical,
     born: now(), ttl, expires: now() + ttl, rect: null, leaving: false, aging: false };
 
@@ -339,7 +345,10 @@ function enter(it) {
       { duration: 560, delay: total + 140, easing: EASE, fill: 'backwards' });
   }
   if (it.kind === 'number' && !calm) countUp(it);
+  if (it.kind === 'fusion') fill(it, calm ? 0 : total + 300);
 }
+// 新語：輪郭だけで生まれて、少しあとに色が満ちる
+function fill(it, delay) { setTimeout(() => it.el.classList.add('filled'), delay); }
 
 function countUp(it) {
   const p = it.parts.find((x) => x.dataset.s === 'n');
@@ -414,6 +423,7 @@ function removeItem(it) {
 
 function clearAll() {
   if (vj) vj.clear();
+  if (fx) fx.replaceChildren();
   lastSp = null;
   for (const it of [...items.values()]) expire(it);
   cap.classList.remove('on');
@@ -441,6 +451,130 @@ function shiftTrack(animate) {
   trackX = W * 0.96 - host.scrollWidth;
   host.style.transition = animate && !S.reduceMotion ? 'transform .8s cubic-bezier(.2,.75,.15,1)' : 'none';
   host.style.transform = `translateX(${trackX}px)`;
+}
+
+// ---------------------------------------------------------------- 新語ミックス（新語誕生）
+// 画面の2語が引き寄せられてぶつかり、そこから新しい言葉が生まれる。組版では親の語から細い線が伸びる。
+const SVGNS = 'http://www.w3.org/2000/svg';
+let fx = null;
+function fxLayer() {
+  if (fx && fx.isConnected) return fx;
+  fx = document.createElementNS(SVGNS, 'svg');
+  fx.id = 'fx';
+  fx.setAttribute('aria-hidden', 'true');
+  document.body.insertBefore(fx, cap);
+  return fx;
+}
+function svg(tag, attrs) { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+const centerOf = (it) => ({ x: it.rect.x + it.el.offsetWidth / 2, y: it.rect.y + (it.dy || 0) + it.el.offsetHeight / 2 });
+
+// 親から子へ伸びる系統線（描かれて、しばらく残って、消える）
+function lineage(a, b, delay) {
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+  const bend = Math.min(80, len * 0.22) * (Math.random() < 0.5 ? 1 : -1);
+  const cx = (a.x + b.x) / 2 - (dy / len) * bend, cy = (a.y + b.y) / 2 + (dx / len) * bend;
+  const path = svg('path', { d: `M${a.x},${a.y} Q${cx},${cy} ${b.x},${b.y}`, pathLength: '1', class: 'fz-line' });
+  const head = svg('circle', { cx: a.x, cy: a.y, r: 2.6, class: 'fz-head' });
+  fxLayer().append(path, head);
+  path.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 640, delay, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'both' });
+  path.animate([{ opacity: 0.9 }, { opacity: 0.9, offset: 0.55 }, { opacity: 0 }], { duration: 4200, delay, fill: 'both' }).onfinish = () => path.remove();
+  // 線の先を小さな点が走る
+  const steps = 18, kf = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps, u = 1 - t;
+    kf.push({ transform: `translate(${u * u * a.x + 2 * u * t * cx + t * t * b.x - a.x}px, ${u * u * a.y + 2 * u * t * cy + t * t * b.y - a.y}px)`, opacity: i === steps ? 0 : 1 });
+  }
+  head.animate(kf, { duration: 640, delay, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'both' }).onfinish = () => head.remove();
+}
+// 衝突の閃光：細い放射線と、広がる輪
+function burst(c, size) {
+  const g = svg('g', { class: 'fz-burst' });
+  const n = 18, r0 = size * 0.18, r1 = size * 0.9;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + Math.random() * 0.2, k = 0.6 + Math.random() * 0.6;
+    const ln = svg('line', { x1: c.x + Math.cos(a) * r0, y1: c.y + Math.sin(a) * r0, x2: c.x + Math.cos(a) * r1 * k, y2: c.y + Math.sin(a) * r1 * k, pathLength: '1' });
+    g.appendChild(ln);
+    ln.animate([{ strokeDasharray: '0.35 1', strokeDashoffset: 0.35, opacity: 1 }, { strokeDasharray: '0.35 1', strokeDashoffset: -1, opacity: 0 }],
+      { duration: 620 + Math.random() * 260, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' });
+  }
+  const ring = svg('circle', { cx: c.x, cy: c.y, r: size * 0.5, class: 'fz-ring' });
+  g.appendChild(ring);
+  ring.animate([{ transform: 'scale(.1)', opacity: 1 }, { transform: 'scale(1.6)', opacity: 0 }], { duration: 760, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' });
+  fxLayer().appendChild(g);
+  setTimeout(() => g.remove(), 1100);
+}
+
+async function fuseWord(m) {
+  const text = (m.text || '').trim();
+  if (!text) return;
+  lastWordAt = now();
+  if (vj) { await vj.fuse({ text, from: [m.a, m.b] }); updateHint(); return; }
+  const prev = items.get(text.toLowerCase());
+  if (prev && !prev.leaving) { bump(prev, 0); return; }
+  if (S.layout !== 'compose') { await addWord({ text, kind: 'fusion', count: 1, from: [m.a, m.b] }); return; }
+
+  const parents = [m.a, m.b].map((t) => items.get(String(t || '').toLowerCase())).filter((it) => it && !it.leaving && it.rect && it.el.isConnected);
+  const lv = 2;
+  const px = basePx() * RATIOS.compose[lv];
+  await fontReady(text, px);
+  const { node, inner, parts } = build(text, 'fusion', false, [m.a, m.b]);
+  node.style.fontSize = px + 'px';
+  node.style.letterSpacing = TRACK[lv] + 'em';
+  const ttl = S.ttl * 1000 * 2.2;
+  const it = { key: text.toLowerCase(), text, kind: 'fusion', count: 1, lv, el: node, inner, parts, vertical: false,
+    born: now(), ttl, expires: now() + ttl, rect: null, leaving: false, aging: false };
+  let live = liveItems();
+  const max = Math.min(S.maxWords, MAXW.compose);
+  while (live.length >= max) { const old = live.find((x) => !parents.includes(x)) || live[0]; expire(old); live = liveItems(); }
+  node.style.visibility = 'hidden';
+  host.appendChild(node);
+  fit(node, px);
+  // 上の「新語」バッジと下の元の2語のぶんも空けて置く（新語はなるべく中央に）
+  const fs = parseFloat(node.style.fontSize) || px, tagH = Math.max(10, fs * 0.17) * 1.9;
+  const r = place(node.offsetWidth, node.offsetHeight + tagH * 2, 3, it);
+  clearSpot(r, it, parents);
+  it.rect = r;
+  const y = r.y + tagH;
+  it.dy = tagH;
+  node.style.transform = `translate(${r.x}px, ${y}px)`;
+  items.set(it.key, it);
+  updateHint();
+  const c = { x: r.x + node.offsetWidth / 2, y: y + node.offsetHeight / 2 };
+  const size = Math.max(node.offsetWidth, node.offsetHeight);
+
+  if (S.reduceMotion) { node.style.visibility = ''; enter(it); return; }
+
+  // 1) 親の語が光って、分身がまん中へ吸い寄せられる
+  for (const p of parents) {
+    p.el.classList.add('fz-parent');
+    setTimeout(() => p.el.classList.remove('fz-parent'), 1800);
+    p.inner.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 420, easing: EASE });
+    const ghost = p.el.cloneNode(true);
+    ghost.classList.remove('aging');
+    ghost.classList.add('fz-ghost');
+    host.appendChild(ghost);
+    const k = 0.42, pw = p.el.offsetWidth, ph = p.el.offsetHeight;
+    ghost.animate([
+      { transform: `translate(${p.rect.x}px, ${p.rect.y + (p.dy || 0)}px)`, opacity: 0.85 },
+      { transform: `translate(${c.x - (pw * k) / 2}px, ${c.y - (ph * k) / 2}px) scale(${k})`, opacity: 0.6 },
+    ], { duration: 680, delay: 120, easing: 'cubic-bezier(.6,0,.85,.25)', fill: 'both' }).onfinish = () => ghost.remove();
+    lineage(centerOf(p), c, 120);
+  }
+  await sleep(parents.length ? 800 : 0);
+
+  // 2) ぶつかった所に閃光、新しい言葉が輪郭から生まれて、色が満ちる
+  burst(c, size);
+  node.style.visibility = '';
+  inner.animate([
+    { transform: 'scale(.25)', opacity: 0, filter: 'blur(8px)' },
+    { transform: 'scale(1.1)', opacity: 1, filter: 'blur(0px)', offset: 0.6 },
+    { transform: 'scale(1)', opacity: 1, filter: 'blur(0px)' },
+  ], { duration: 720, easing: EASE });
+  for (const sel of ['.fz-badge', '.fz-from']) {
+    const e = node.querySelector(sel);
+    if (e) e.animate([{ opacity: 0, transform: 'translateY(.4em)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 420, easing: EASE, fill: 'backwards' });
+  }
+  fill(it, 520);
 }
 
 // ---------------------------------------------------------------- 時間経過（タイマーは1本だけ）
@@ -483,6 +617,9 @@ function onMessage(m) {
   if (m.t === 'word') {
     pending++;
     queue = queue.then(() => addWord(m)).then(() => sleep(pending > 6 ? 0 : 90)).catch(() => {}).finally(() => { pending--; });
+  } else if (m.t === 'fuse') {
+    pending++;
+    queue = queue.then(() => fuseWord(m)).catch(() => {}).finally(() => { pending--; });
   } else if (m.t === 'caption') caption(m.text, m.final, m);
   else if (m.t === 'clear') clearAll();
   else if (m.t === 'lvl') { if (vj) vj.level(m.v); }
@@ -685,7 +822,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610140215').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610150729').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 

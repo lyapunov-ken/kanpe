@@ -477,3 +477,73 @@ details.obs[open] { padding-bottom: 12px; }
 /* レベル表示を止めているときの「戻す」 */
 .meter-on { align-self: flex-start; margin-top: 4px; font-size: 11.5px; color: var(--accent-text); text-decoration: underline; text-underline-offset: 2px; }
 .is-mobile .meter-on { display: none; }
+
+/* ---- VJ のときは効かない設定を隠す（文字サイズ・同時に出す語・縦組み） ---- */
+.is-vj [data-novj] { display: none !important; }
+.vj-opts .segmented.four button { font-variant-numeric: tabular-nums; }
+
+/* ---- ブレスト：新語ミックス ---- */
+.coin-card { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px;
+  border: 1px solid var(--line2); background:
+  radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--demo) 10%, transparent), transparent 60%), var(--raise); overflow: hidden; }
+.coin-art { display: flex; align-items: baseline; gap: 8px; font-weight: 900; font-size: 15px; letter-spacing: .02em; color: var(--sub); }
+.coin-art .ca-x, .coin-art .ca-eq { font-weight: 500; color: var(--faint); font-size: 12px; }
+.coin-art .ca-c { color: transparent; -webkit-text-stroke: 1px var(--demo); font-size: 19px; animation: coin-fill 3.6s ease-in-out infinite; }
+.coin-art .ca-a { animation: coin-a 3.6s ease-in-out infinite; display: inline-block; }
+.coin-art .ca-b { animation: coin-b 3.6s ease-in-out infinite; display: inline-block; }
+@keyframes coin-a { 0%, 20% { transform: none; } 38% { transform: translateX(10px); } 50%, 100% { transform: none; } }
+@keyframes coin-b { 0%, 20% { transform: none; } 38% { transform: translateX(-10px); } 50%, 100% { transform: none; } }
+@keyframes coin-fill { 0%, 40% { color: transparent; transform: scale(.85); opacity: .4; } 52% { transform: scale(1.08); opacity: 1; } 62%, 92% { color: var(--demo); transform: none; opacity: 1; } 100% { color: transparent; opacity: .4; } }
+.coin-switch { padding: 0; }
+.coin-switch:hover { background: none; }
+.coin-switch > span { display: flex; flex-direction: column; gap: 2px; }
+.coin-switch b { font-size: 13.5px; }
+.coin-switch small { color: var(--faint); font-size: 11.5px; line-height: 1.55; }
+.coin-row { display: flex; align-items: center; gap: 10px; }
+.coin-row .btn { flex: none; }
+.coin-row .hint { line-height: 1.45; }
+.coin-memo { display: flex; align-items: center; gap: 10px; margin: 8px 0 2px; min-width: 0; }
+.coin-memo-lbl { flex: none; font-size: 11px; letter-spacing: .08em; color: var(--faint); font-weight: 700; }
+.coins { list-style: none; margin: 0; padding: 0 0 2px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.coins button { display: inline-flex; align-items: baseline; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; white-space: nowrap;
+  border: 1px solid color-mix(in srgb, var(--demo) 45%, var(--line2)); background: color-mix(in srgb, var(--demo) 8%, var(--raise)); line-height: 26px; }
+.coins button b { font-size: 13px; }
+.coins button small { font-size: 10.5px; color: var(--faint); }
+.coins button:hover { border-color: var(--demo); }
+
+/* ---- はじめての人向けの 3 ステップのガイド（ヘルプの「はじめかた」からも開ける） ---- */
+.hp-guide { align-self: flex-start; margin-top: 12px; }
+.guide { position: fixed; inset: 0; z-index: 100; --g-shade: rgba(8, 9, 11, .62); }
+.g-block { position: absolute; inset: 0; }
+.g-hole { position: absolute; left: 0; top: 0; border-radius: 14px; pointer-events: none;
+  outline: 2px solid var(--accent); outline-offset: 0;
+  box-shadow: 0 0 0 200vmax var(--g-shade);
+  transition: transform .42s cubic-bezier(.2,.75,.15,1), width .42s cubic-bezier(.2,.75,.15,1), height .42s cubic-bezier(.2,.75,.15,1), opacity .2s; }
+.g-hole::after { content: ""; position: absolute; inset: -7px; border-radius: 18px; border: 1px dashed color-mix(in srgb, var(--accent) 70%, transparent); animation: g-breathe 2.2s ease-in-out infinite; }
+@keyframes g-breathe { 50% { inset: -11px; opacity: .45; } }
+.g-c { position: absolute; width: 14px; height: 14px; border-color: var(--accent); border-style: solid; border-width: 0; }
+.g-c.tl { left: -9px; top: -9px; border-left-width: 3px; border-top-width: 3px; border-top-left-radius: 6px; }
+.g-c.tr { right: -9px; top: -9px; border-right-width: 3px; border-top-width: 3px; border-top-right-radius: 6px; }
+.g-c.bl { left: -9px; bottom: -9px; border-left-width: 3px; border-bottom-width: 3px; border-bottom-left-radius: 6px; }
+.g-c.br { right: -9px; bottom: -9px; border-right-width: 3px; border-bottom-width: 3px; border-bottom-right-radius: 6px; }
+.g-card { position: absolute; left: 0; top: 0; width: min(340px, calc(100vw - 24px)); display: flex; flex-direction: column; gap: 8px;
+  padding: 18px 18px 16px; border-radius: 14px; background: var(--panel); color: var(--ink);
+  border: 2px solid var(--accent); box-shadow: 0 24px 64px -16px rgba(0,0,0,.55);
+  transition: transform .42s cubic-bezier(.2,.75,.15,1); }
+.g-card.center { left: 50%; top: 50%; transform: translate(-50%, -50%) !important; }
+.g-card.dock { left: 12px; right: 12px; top: auto; bottom: 12px; width: auto; transform: none !important; }
+.g-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.g-step { font: 700 11px/1 ui-monospace, Menlo, monospace; letter-spacing: .14em; color: var(--accent-text); }
+.g-bar { display: flex; gap: 4px; }
+.g-bar i { width: 22px; height: 4px; border-radius: 2px; background: var(--line2); transition: background .3s; }
+.g-bar i.on { background: var(--accent); }
+.g-card h3 { margin: 4px 0 0; font-size: 17px; line-height: 1.4; letter-spacing: .02em; }
+.g-card p { margin: 0; font-size: 13px; line-height: 1.75; color: var(--sub); }
+.g-card .g-note { font-size: 12px; color: var(--faint); padding-left: 10px; border-left: 2px solid var(--line2); line-height: 1.6; }
+.g-actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.g-actions button { height: 36px; padding: 0 14px; border-radius: 8px; font-weight: 700; font-size: 13px; }
+.g-skip { color: var(--faint); padding: 0 6px !important; margin-right: auto; }
+.g-skip:hover { color: var(--ink); }
+.g-back { border: 1px solid var(--line2); background: var(--raise); }
+.g-next { background: var(--accent); color: var(--accent-ink); min-width: 96px; }
+@media (prefers-reduced-motion: reduce) { .g-hole::after { animation: none; } .coin-art * { animation: none !important; } .coin-art .ca-c { color: var(--demo); } }

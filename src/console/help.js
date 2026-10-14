@@ -1,13 +1,13 @@
 // 使い方ガイド（アプリ内ヘルプ）。右上の「ヘルプ」、? キー、または app.html#help（#help-scenes など）で開く。
 // 文言は L('日本語', 'English') で持つので、英語版のコンソールでもそのまま使える。
-import { L } from '../core/i18n.js?v=202610140215';
+import { L } from '../core/i18n.js?v=202610150729';
 
 // シーン別のおすすめ設定（無料プランの機能だけで組む。アクセントカラーや背景などは触らない）
 export const PRESETS = {
-  stream: { label: L('ひとり雑談', 'Solo chat stream'), s: { theme: 'yoru', layout: 'compose', baseSize: 40, ttl: 8, maxWords: 24, vertical: true, caption: true } },
-  game: { label: L('ゲーム実況', 'Gameplay commentary'), s: { theme: 'clear', layout: 'ticker', baseSize: 34, ttl: 6, maxWords: 12, vertical: false, caption: false } },
-  brainstorm: { label: L('ブレスト会議', 'Brainstorming meeting'), s: { theme: 'sumi', layout: 'compose', baseSize: 36, ttl: 30, maxWords: 40, vertical: false, caption: false } },
-  speech: { label: L('スピーチ・講演', 'Speech or talk'), s: { theme: 'yoru', layout: 'kanpe', baseSize: 56, ttl: 15, maxWords: 10, vertical: false, caption: true } },
+  stream: { label: L('ひとり雑談', 'Solo chat stream'), s: { theme: 'yoru', layout: 'compose', baseSize: 40, ttl: 8, maxWords: 24, vertical: true, caption: true, fusion: false } },
+  game: { label: L('ゲーム実況', 'Gameplay commentary'), s: { theme: 'clear', layout: 'ticker', baseSize: 34, ttl: 6, maxWords: 12, vertical: false, caption: false, fusion: false } },
+  brainstorm: { label: L('ブレスト会議', 'Brainstorming meeting'), s: { theme: 'sumi', layout: 'compose', baseSize: 36, ttl: 30, maxWords: 40, vertical: false, caption: false, fusion: true } },
+  speech: { label: L('スピーチ・講演', 'Speech or talk'), s: { theme: 'yoru', layout: 'kanpe', baseSize: 56, ttl: 15, maxWords: 10, vertical: false, caption: true, fusion: false } },
 };
 
 const TOC = [
@@ -64,6 +64,7 @@ function html() {
       <p class="hp-tip">${L(
         'マイクがなくても「デモを流す」か、テキスト欄に文章を入れて Enter で見た目を試せます。',
         'No mic? Press “Play demo”, or type a sentence and press Enter to try the look.')}</p>
+      <button class="btn hp-guide" type="button" data-guide-start>${L('画面の上で案内する（3ステップ）', 'Walk me through it on screen (3 steps)')}</button>
     </section>
 
     <section id="help-screen">
@@ -75,8 +76,8 @@ function html() {
           'Start / stop, the language to listen for, and the recognition engine. High-accuracy recognition is part of the Pro plan (coming soon).')}</dd>
         <dt>${L('表示', 'Display')}</dt>
         <dd>${L(
-          '<b>書体テーマ</b>は文字と背景の雰囲気、<b>レイアウト</b>は言葉の置き方です。組版＝画面いっぱいに組む／カンペ＝下から大きく積み上がる／テロップ＝下部を横に流れる／VJ＝ドット絵で光らせる。<b>表示時間</b>は言葉が消えるまでの秒数、<b>同時に出す語</b>は画面に残す最大の語数です。<br>プレミアム書体・アクセントカラー・背景（画像・カメラ）・VJ はお手軽プラン以上の機能で、無料プランでも1日お試しできます。<br>VJ では書体（5種）・ドットの細かさ・演出の強さも選べます。文字が読みにくいときは、書体を「ゴシック」か「明朝」に、細かさを「細かい」にしてください。',
-          '<b>Typeface theme</b> sets the look of the letters and background; <b>Layout</b> sets where words go: Compose fills the screen, Cue stacks big words from the bottom, Ticker scrolls along the bottom, VJ draws words in glowing dots. <b>Display time</b> is how long words stay, and <b>Words on screen</b> is the most shown at once.<br>Premium typefaces, accent colors, backgrounds (image / camera) and VJ are Plus features you can try free for one day.<br>In VJ mode you can also pick the typeface (5 kinds), the dot detail and how intense the effects are. If letters are hard to read, choose Gothic or Mincho and set the detail to Fine.')}</dd>
+          '<b>書体テーマ</b>は文字と背景の雰囲気、<b>レイアウト</b>は言葉の置き方です。組版＝画面いっぱいに組む／カンペ＝下から大きく積み上がる／テロップ＝下部を横に流れる／VJ＝ドット絵で光らせる。<b>表示時間</b>は言葉が消えるまでの秒数、<b>同時に出す語</b>は画面に残す最大の語数です。<br>プレミアム書体・アクセントカラー・背景（画像・カメラ）・VJ はお手軽プラン以上の機能で、無料プランでも1日お試しできます。<br>VJ ではスタイル（1px・LED・ネオン・ピクセル・ホロ）と書体（5種）を選べます。1px は白黒の点と線だけで組む繊細な表示です。文字が読みにくいときは、書体を「ゴシック」か「明朝」にしてください。動きは「動きを控えめに」で止められます。<br><b>新語ミックス</b>（ブレスト）をオンにすると、画面に出た言葉どうしが掛け合わさって新しい言葉が生まれます。「いま混ぜる」か <kbd>M</kbd> キーで好きなときにも混ぜられ、生まれた言葉は文字起こしの上に残ります。',
+          '<b>Typeface theme</b> sets the look of the letters and background; <b>Layout</b> sets where words go: Compose fills the screen, Cue stacks big words from the bottom, Ticker scrolls along the bottom, VJ draws words in glowing dots. <b>Display time</b> is how long words stay, and <b>Words on screen</b> is the most shown at once.<br>Premium typefaces, accent colors, backgrounds (image / camera) and VJ are Plus features you can try free for one day.<br>In VJ mode you pick a style (1px, LED, Neon, Pixel, Holo) and a typeface (5 kinds). 1px is a delicate monochrome look built only from dots and lines. If letters are hard to read, choose Gothic or Mincho. “Reduce motion” stops the movement.<br>Turn on <b>Word mix</b> (Brainstorm) and words on screen combine into brand-new words. Press “Mix now” or <kbd>M</kbd> any time; new words are kept above the transcript.')}</dd>
         <dt>${L('話者', 'Speakers')}</dt>
         <dd>${L(
           '話している人ごとに名前と色を付けます（最大4人）。切り替えはボタンかキーボードの <kbd>1</kbd>〜<kbd>4</kbd>。PC では声の高さで自動切り替えもできます。お手軽プラン以上の機能です。',
@@ -110,7 +111,7 @@ function html() {
           [L('透過 × テロップ', 'Clear × Ticker'), L('表示 6 秒・12 語', '6 s · 12 words'), L('字幕ライン なし', 'Caption line off')])}
         ${scene('brainstorm', L('ビジネス', 'BUSINESS'), true, L('ブレスト会議', 'Brainstorming meeting'),
           L('会議室のディスプレイに映して、出た言葉を全員で眺めます。何度も出た言葉ほど大きく残るので、議論の中心が見えてきます。', 'Put it on the meeting-room display so everyone sees the ideas. Words that keep coming up grow bigger, so the heart of the discussion stands out.'),
-          [L('墨 × 組版（明るい画面で見やすい）', 'Sumi × Compose (easy to read on a bright screen)'), L('表示 30 秒・40 語で長く残す', '30 s · 40 words, so ideas linger'), L('字幕ライン なし', 'Caption line off')])}
+          [L('墨 × 組版（明るい画面で見やすい）', 'Sumi × Compose (easy to read on a bright screen)'), L('表示 30 秒・40 語で長く残す', '30 s · 40 words, so ideas linger'), L('新語ミックス あり（出た言葉を掛け合わせて新しい言葉を生む）', 'Word mix on (combines words into new ones)'), L('字幕ライン なし', 'Caption line off')])}
         ${scene('speech', L('ビジネス', 'BUSINESS'), true, L('スピーチ・講演', 'Speech or talk'),
           L('演台や手元のモニターに、話し終えた要点を大きく積み上げます。いまどこまで話したかが一目で分かります。', 'Stack the points you’ve covered in big type on the lectern or confidence monitor, so you always know where you are.'),
           [L('夜 × カンペ・大きめの文字', 'Night × Cue, larger text'), L('表示 15 秒・10 語', '15 s · 10 words'), L('字幕ライン あり', 'Caption line on')])}
@@ -158,6 +159,7 @@ function html() {
         <tr><td><kbd>P</kbd></td><td>${L('表示の一時停止／再開（文字起こしは続きます）', 'Pause / resume the display (the transcript keeps going)')}</td></tr>
         <tr><td><kbd>Esc</kbd></td><td>${L('表示中の言葉をすべて消す（ヘルプが開いているときはヘルプを閉じる）', 'Clear all words on screen (closes this help when it’s open)')}</td></tr>
         <tr><td><kbd>1</kbd>〜<kbd>4</kbd></td><td>${L('話者の色分けがオンのとき、いま話している人を切り替える', 'Switch the current speaker when speaker colors are on')}</td></tr>
+        <tr><td><kbd>M</kbd></td><td>${L('新語ミックス：いま画面に出ている言葉を掛け合わせて、新しい言葉を生む', 'Word mix: combine the words on screen into a new word now')}</td></tr>
         <tr><td><kbd>?</kbd></td><td>${L('この使い方ガイドを開く', 'Open this guide')}</td></tr>
         <tr><td><kbd>F</kbd></td><td>${L('別窓の表示ビューで全画面にする', 'Full screen, in a display-view window')}</td></tr>
       </tbody></table>
@@ -213,7 +215,7 @@ function html() {
 </div>`;
 }
 
-export function initHelp({ onPreset } = {}) {
+export function initHelp({ onPreset, onGuide } = {}) {
   const btn = document.getElementById('btnHelp');
   let dlg = null, body = null, links = [], sections = [];
   let pinned = ''; // 目次から飛んだ先（末尾近くの章でも、その章を選んだ状態にする）
@@ -246,6 +248,8 @@ export function initHelp({ onPreset } = {}) {
     }
     body.addEventListener('scroll', markActive, { passive: true });
     for (const ev of ['wheel', 'touchmove', 'keydown']) body.addEventListener(ev, () => { pinned = ''; }, { passive: true });
+    const g = dlg.querySelector('[data-guide-start]');
+    if (g) g.addEventListener('click', () => { close(); onGuide && onGuide(); });
     for (const b of dlg.querySelectorAll('[data-preset]')) {
       b.addEventListener('click', () => {
         const p = PRESETS[b.dataset.preset];

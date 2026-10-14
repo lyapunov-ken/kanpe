@@ -72,6 +72,7 @@ export const LAYOUTS = {
 
 // VJ モードの見た目
 export const VJ_STYLES = {
+  micro: { label: '1px', labelEn: '1px', note: '1px の点と線だけで組む、モノクロのテクノ表示', noteEn: 'Monochrome techno visuals built only from 1px dots and lines' },
   led: { label: 'LED', labelEn: 'LED', note: '丸い電球のドット。アクセント色で光る', noteEn: 'Round bulb dots glowing in the accent color' },
   neon: { label: 'ネオン', labelEn: 'Neon', note: '色が移ろうネオン管のドット', noteEn: 'Neon-tube dots with drifting colors' },
   pixel: { label: 'ピクセル', labelEn: 'Pixel', note: '角ドットのレトロゲーム風。文字が1字ずつ跳ねる', noteEn: 'Square pixels, retro game style. Letters hop one by one' },
@@ -117,17 +118,18 @@ export const DEFAULT_SPEAKERS = [
 export const DEFAULTS = {
   theme: 'yoru',
   layout: 'compose',
-  baseSize: 40,      // 720p換算のpx。表示ビューの高さに比例して拡縮する
+  baseSize: 34,      // 1280×720 換算の px。表示ビューの大きさ（縦・横の小さい方の比率）に合わせて拡縮する
   ttl: 8,            // 秒
   maxWords: 24,
   vertical: true,    // 縦組みを混ぜる（組版レイアウト）
   caption: true,     // 最新の発話を字幕ラインで出す
   reduceMotion: false,
   accent: '',        // アクセントカラー（空＝書体テーマ標準）
-  vjStyle: 'led',    // VJ モードの見た目
+  vjStyle: 'micro',  // VJ モードの見た目（1px / LED / ネオン / ピクセル / ホロ）
   vjFont: 'gothic',  // VJ モードの書体
-  vjDetail: 'mid',   // ドットの細かさ
-  vjFx: 'mid',       // 演出の強さ
+  vjDetail: 'mid',   // ドットの細かさ（画面からは外した。いつも標準）
+  vjFx: 'mid',       // 演出の強さ（画面からは外した。「動きを控えめに」で止める）
+  fusion: false,     // 新語ミックス：画面の言葉を掛け合わせて新しい言葉を生む（ブレスト向け）
   speakerMode: 'off', // 話者の色分け：off / manual（手動で切り替え）/ auto（声の高さで推定）
   speakerCount: 2,
   speakers: DEFAULT_SPEAKERS,

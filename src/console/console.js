@@ -1,14 +1,16 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, VJ_DETAILS, VJ_FX, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610140215';
-import { EN, L, tr } from '../core/i18n.js?v=202610140215';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610140215';
-import { createBus } from '../core/bus.js?v=202610140215';
-import { connectObs } from '../core/obs.js?v=202610140215';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610140215';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610140215';
-import { simulateSpeech } from './demo.js?v=202610140215';
-import { initHelp } from './help.js?v=202610140215';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610140215';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610150729';
+import { EN, L, tr } from '../core/i18n.js?v=202610150729';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610150729';
+import { createBus } from '../core/bus.js?v=202610150729';
+import { connectObs } from '../core/obs.js?v=202610150729';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610150729';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610150729';
+import { simulateSpeech } from './demo.js?v=202610150729';
+import { initHelp } from './help.js?v=202610150729';
+import { createGuide, guideSeen } from './guide.js?v=202610150729';
+import { coinWord } from '../core/coin.js?v=202610150729';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610150729';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -41,7 +43,7 @@ function pushSettings(save = true) {
 function deliverWords(events) {
   if (paused) return;
   const sp = speakerInfo();
-  for (const e of events) send({ t: 'word', ...e, ...sp });
+  for (const e of events) { send({ t: 'word', ...e, ...sp }); remember(e); }
 }
 function deliverCaption(raw, final) {
   if (paused) return;
@@ -389,6 +391,7 @@ function segButtons(container, entries, key) {
   if (key === 'layout') {
     $('#layoutNote').textContent = entries[S[key]] ? tr(entries[S[key]], 'note') : '';
     $('#vjOpts').hidden = S.layout !== 'vj';
+    document.body.classList.toggle('is-vj', S.layout === 'vj'); // VJ では効かない設定（文字サイズ・同時に出す語・縦組み）を隠す
   }
 }
 function pick(container, entries, key, id, def) {
@@ -413,7 +416,6 @@ function pick(container, entries, key, id, def) {
   S[key] = id;
   if (key === 'theme') renderThemes(); else segButtons(container, entries, key);
   if (key === 'vjStyle') $('#vjStyleNote').textContent = tr(VJ_STYLES[id], 'note');
-  if (key === 'vjFont') syncVjFont();
   updateTrial();
   pushSettings();
 }
@@ -655,23 +657,16 @@ if (S.bgCamera && (camLocked() || !CAN_CAM)) S.bgCamera = false;
 if (S.layout === 'vj' && plusLocked('layout:vj')) S.layout = 'compose';
 if (!LAYOUTS[S.layout]) S.layout = 'compose';
 if (S.speakerMode !== 'off' && plusLocked('speaker:labels')) S.speakerMode = 'off';
-if (!VJ_STYLES[S.vjStyle]) S.vjStyle = 'led';
+if (!VJ_STYLES[S.vjStyle]) S.vjStyle = 'micro';
 if (!VJ_FONTS[S.vjFont]) S.vjFont = 'gothic';
-if (!VJ_DETAILS[S.vjDetail]) S.vjDetail = 'mid';
-if (!VJ_FX[S.vjFx]) S.vjFx = 'mid';
+// ドットの細かさ・演出の強さは画面から外したので、いつも標準にする（動きは「動きを控えめに」で止める）
+S.vjDetail = 'mid';
+S.vjFx = 'mid';
 renderThemes();
 segButtons('#layouts', LAYOUTS, 'layout');
 segButtons('#vjStyles', VJ_STYLES, 'vjStyle');
 $('#vjStyleNote').textContent = tr(VJ_STYLES[S.vjStyle], 'note');
 segButtons('#vjFonts', VJ_FONTS, 'vjFont');
-segButtons('#vjDetails', VJ_DETAILS, 'vjDetail');
-segButtons('#vjFxs', VJ_FX, 'vjFx');
-// ドット書体は16段で固定なので、細かさは選べない
-function syncVjFont() {
-  $('#vjFontNote').textContent = tr(VJ_FONTS[S.vjFont], 'note');
-  $('#vjDetailRow').hidden = !!VJ_FONTS[S.vjFont].fixed;
-}
-syncVjFont();
 bindRange('baseSize', 'vSize', (v) => `${v}`);
 bindRange('ttl', 'vTtl', (v) => L(`${v}秒`, `${v}s`));
 bindRange('maxWords', 'vMax', (v) => L(`${v}語`, `${v} words`));
@@ -682,6 +677,8 @@ if (S.bgCamera) listCameras();
 bindCheck('vertical');
 bindCheck('caption');
 bindCheck('reduceMotion');
+bindCheck('fusion');
+$('#fusion').addEventListener('change', () => { if (S.fusion) { fuseAt = performance.now() - FUSE_GAP + 2500; toast(L('新語ミックスをオンにしました。画面に言葉が2つ以上出ると、ときどき掛け合わさって新しい言葉が生まれます', 'Word mix is on. Once two or more words are on screen, they’ll now and then combine into a new word.')); } });
 bindText('registered', () => ex.setDict(S));
 bindText('ng', () => ex.setDict(S));
 
@@ -691,12 +688,12 @@ function applyPreset(p) {
   renderThemes();
   segButtons('#layouts', LAYOUTS, 'layout');
   for (const id of ['baseSize', 'ttl', 'maxWords']) { const r = $('#' + id); r.value = S[id]; r.dispatchEvent(new Event('input')); }
-  for (const id of ['vertical', 'caption']) $('#' + id).checked = !!S[id];
+  for (const id of ['vertical', 'caption', 'fusion']) $('#' + id).checked = !!S[id];
   updateTrial();
   pushSettings();
   toast(L(`「${p.label}」向けの設定にしました`, `Switched to settings for: ${p.label}`));
 }
-const help = initHelp({ onPreset: applyPreset });
+const help = initHelp({ onPreset: applyPreset, onGuide: () => guide.start() });
 
 
 // ------------------------------------------------------------ 話者のラベルと色分け（お手軽プラン以上。無料プランは1日お試し）
@@ -825,6 +822,62 @@ async function registerVoice(i, btn) {
   }
 }
 renderSpeakers();
+
+// ------------------------------------------------------------ 新語ミックス（ブレスト）
+// 最近画面に出た言葉を2つ選んで掛け合わせ、新しい言葉を表示ビューへ送る。生まれた言葉は「生まれた新語」に残す。
+const FUSE_GAP = 14000;            // 自動で混ぜる間隔の目安
+const seenWords = new Map();       // 言葉 → 最後に出た時刻
+const coined = [];                 // 生まれた新語 { text, a, b }
+let fuseAt = 0, wordsSinceFuse = 0, lastHeard = 0;
+function remember(e) {
+  if (!e || !e.text || e.kind === 'number') return;
+  if (!seenWords.has(e.text)) wordsSinceFuse++;
+  seenWords.delete(e.text);
+  seenWords.set(e.text, performance.now());
+  lastHeard = performance.now();
+  if (seenWords.size > 60) seenWords.delete(seenWords.keys().next().value);
+}
+function fusePool() {
+  const t = performance.now(), keep = S.ttl * 1000 * 1.4; // 画面に残っていそうな言葉だけ
+  return [...seenWords].filter(([, at]) => t - at < keep).reverse().map(([w]) => w);
+}
+function fuse(manual = false) {
+  if (paused) { if (manual) toast(L('表示を一時停止中です', 'The display is paused')); return; }
+  const r = coinWord(fusePool(), coined.map((c) => c.text));
+  if (!r) {
+    if (manual) toast(L('混ぜられる言葉がまだ足りません。画面に言葉が2つ以上出てから押してください', 'Not enough words yet. Press this once two or more words are on screen.'));
+    return;
+  }
+  fuseAt = performance.now();
+  wordsSinceFuse = 0;
+  send({ t: 'fuse', text: r.text, a: r.a, b: r.b, how: r.how });
+  coined.unshift({ text: r.text, a: r.a, b: r.b });
+  if (coined.length > 40) coined.pop();
+  renderCoins();
+}
+function renderCoins() {
+  $('#coinMemo').hidden = !coined.length;
+  const ul = $('#coins');
+  ul.replaceChildren(...coined.slice(0, 12).map((c) => {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.title = L(`${c.a} × ${c.b}（押すとコピー）`, `${c.a} × ${c.b} (click to copy)`);
+    b.innerHTML = '<b></b><small></small>';
+    b.firstChild.textContent = c.text;
+    b.lastChild.textContent = `${c.a}×${c.b}`;
+    b.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(c.text); toast(L(`「${c.text}」をコピーしました`, `Copied “${c.text}”`)); } catch { /* noop */ }
+    });
+    li.appendChild(b);
+    return li;
+  }));
+}
+$('#btnFuse').addEventListener('click', () => fuse(true));
+setInterval(() => { // 話している間だけ、ときどき自動で混ぜる
+  const t = performance.now();
+  if (S.fusion && !paused && t - fuseAt > FUSE_GAP && t - lastHeard < 6000 && wordsSinceFuse >= 2) fuse(false);
+}, 1000);
 
 // ------------------------------------------------------------ 認識エンジン（無料＝ブラウザ / おトクプラン＝高精度クラウド）
 const engineSel = $('#engine');
@@ -1121,6 +1174,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'p' || e.key === 'P') { e.preventDefault(); togglePause(); }
   if (e.key === 'Escape') { e.preventDefault(); clearAll(); }
   if (/^[1-4]$/.test(e.key) && speakersOn() && +e.key <= S.speakerCount) { e.preventDefault(); setSpeaker(+e.key - 1); }
+  if (e.key === 'm' || e.key === 'M') { e.preventDefault(); fuse(true); }
 });
 
 // ------------------------------------------------------------ 表示ビュー
@@ -1195,10 +1249,11 @@ function download(name, text) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 const stamp = () => new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
-$('#dlTxt').addEventListener('click', () => download(`kanpe-${stamp()}.txt`, transcript.map((t) => `[${fmt(t.start)}] ${who(t)}${t.clean}`).join('\n')));
+$('#dlTxt').addEventListener('click', () => download(`kanpe-${stamp()}.txt`, transcript.map((t) => `[${fmt(t.start)}] ${who(t)}${t.clean}`).join('\n') +
+  (coined.length ? `\n\n${L('■ 生まれた新語', '■ New words')}\n` + coined.slice().reverse().map((c) => `${c.text}（${c.a} × ${c.b}）`).join('\n') : '')));
 $('#dlSrt').addEventListener('click', () => download(`kanpe-${stamp()}.srt`,
   transcript.map((t, i) => `${i + 1}\n${srtTime(t.start)} --> ${srtTime(t.end)}\n${who(t)}${t.clean}\n`).join('\n')));
-$('#clrTx').addEventListener('click', () => { transcript.length = 0; $('#tx').replaceChildren(); saveTranscript(); ex.reset(); });
+$('#clrTx').addEventListener('click', () => { transcript.length = 0; $('#tx').replaceChildren(); saveTranscript(); ex.reset(); coined.length = 0; seenWords.clear(); renderCoins(); });
 
 // ------------------------------------------------------------ 表示まわりの小物
 function setStatus(kind, text) { $('#dot').className = 'dot ' + kind; $('#statusText').textContent = text; }
@@ -1223,6 +1278,44 @@ window.__kanpeBeforeLeave = () => {
   saveSettings(S);
   saveTranscript();
 };
+// ------------------------------------------------------------ はじめての人向けの 3 ステップのガイド
+// 「無料ではじめる」から初めて開いたとき（設定がまだ何も保存されていないか ?welcome=1）に一度だけ出す。ヘルプの「はじめかた」からも開ける
+let guideDemo = false;
+const guide = createGuide({
+  steps: [
+    {
+      target: () => $('.mic-row'),
+      title: L('ボタンを押して、話す', 'Press the button and talk'),
+      body: L('緑のマイクボタンを押して話すと、拾ったキーワードがその場で文字になります。最初にブラウザがマイクの使用を聞いてくるので「許可」を選んでください。', 'Press the green mic button and talk — keywords turn into type as you speak. Your browser will ask for the microphone the first time; choose “Allow”.'),
+      note: L('マイクがなくても「デモを流す」や文章の入力で試せます', 'No mic? Try “Play demo” or type a sentence.'),
+    },
+    {
+      target: () => $('.preview'),
+      title: L('言葉が、ここに組まれる', 'Your words are set here'),
+      body: L('話した言葉が、日本語の文字組みでプレビューに並びます。何度も出た言葉ほど大きく育ちます。いま、デモを流しています。', 'What you say is laid out as typography in the preview. Words you repeat grow bigger. A demo is playing now.'),
+      enter: () => { if (!demoRunning && !rec.wanted) { guideDemo = true; $('#btnDemo').click(); } },
+    },
+    {
+      target: () => $('#themes').closest('.field'),
+      title: L('見た目を選んで、映す', 'Pick a look, then put it on screen'),
+      body: L('書体テーマで雰囲気が変わります（その下のレイアウトでは、言葉の置き方を選べます）。決まったら下の「組版を別窓で」で大きな画面を開き、モニターや配信に映します。', 'Typeface themes change the mood (and the layout just below changes how words are placed). When you’re happy, open a big window with “Open compose view” below and show it on a monitor or your stream.'),
+    },
+  ],
+  onEnd: () => {
+    if (guideDemo && demoRunning) { stopDemo(); clearAll(); }
+    guideDemo = false;
+    $('#btnMic').focus({ preventScroll: true });
+    $('.mic-row').scrollIntoView({ block: 'nearest' });
+  },
+});
+{
+  const q = new URLSearchParams(location.search);
+  const welcome = q.get('welcome') === '1';
+  if (welcome) { q.delete('welcome'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }
+  const fresh = !Object.keys(saved0).length;
+  if (!guideSeen() && (welcome || fresh) && !q.get('checkout') && !location.hash.startsWith('#help')) setTimeout(() => { if (!help.isOpen()) guide.start(); }, 700);
+}
+
 applyPlanUI();
 handlePaymentReturn();
 window.__kanpeConsole = { onInterim, onFinal, get settings() { return S; } };

@@ -2,14 +2,32 @@
 // - 言葉は選んだ書体で 16〜38 段のドットに起こし、1 ドットずつ光らせる（段数が多いほど細かく読みやすい）
 // - 最新の言葉を中央に大きく、ひとつ前までの言葉は小さくなって周りを漂う
 // - スタイルごとに「動き」を持つ：LED＝声で脈打ち光が走る／ネオン＝波打つ／ピクセル＝1字ずつ跳ねる／ホロ＝立体的に回って色がずれる
+//   1px＝白黒の 1px の点と線だけで組む（方眼・目盛り・座標の読み出し・書き込みヘッド）
 // - 繰り返した言葉はコンボ（×2, ×3 …）、初めて出た目立つ言葉はインパクト（閃光・揺れ・グリッチ）
 // - 背景もスタイルごと：ステージの光線／シンセウェーブの床／星空／ホログラムの走査線。声の大きさで強まる
-import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610140215';
+import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610150729';
 
 const FALLBACK = '"Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif';
 const PIXEL_PALETTE = ['#ff004d', '#ffa300', '#ffec27', '#00e436', '#29adff', '#ff77a8', '#ffccaa', '#83f3ff'];
 const HOLO_A = '#ff2a6d', HOLO_B = '#16e0ff';
 const MAX_SAT = 6;
+
+// 3×5 ピクセルの英数字（1px モードの計器用）。5 行 × 3 列を 1 と 0 で
+const FONT3 = (() => {
+  const src = {
+    0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001',
+    5: '111100111001111', 6: '111100111101111', 7: '111001010010010', 8: '111101111101111', 9: '111101111001111',
+    A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111',
+    F: '111100110100100', G: '011100101101011', H: '101101111101101', I: '111010010010111', J: '001001001101010',
+    K: '101101110101101', L: '100100100100111', M: '101111111101101', N: '110101101101101', O: '010101101101010',
+    P: '110101110100100', Q: '010101101110011', R: '110101110101101', S: '011100010001110', T: '111010010010010',
+    U: '101101101101111', V: '101101101101010', W: '101101111111101', X: '101101010101101', Y: '101101010010010',
+    Z: '111001010100111', ':': '000010000010000', '.': '000000000000010', '/': '001001010100100', '-': '000000111000000',
+    '+': '000010111010000', '#': '101111101111101', '[': '110100100100110', ']': '011001001001011', '=': '000111000111000',
+    '_': '000000000000111', '>': '100010001010100', ' ': '000000000000000',
+  };
+  return src;
+})();
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const easeOut = (k) => 1 - Math.pow(1 - k, 3);
 const easeBack = (k) => { const c = 1.6; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); };
@@ -142,6 +160,9 @@ export function createVJ(stage, { localFonts = false } = {}) {
   let stars = [];
   let lvl = 0, lvlAt = 0, wordSeq = 0, raf = 0, last = performance.now(), lastSp = null, lastHeroAt = 0;
   let shake = { t0: -1e9, amp: 0 }, flash = { t0: -1e9, a: 0 }, glitchUntil = 0, glitchAmt = 0;
+  let frameNo = 0, glitchAt = 0;
+  const bornAt = performance.now();
+  const labelSpec = fontSpec({ font: 'dot', detail: 'mid' }); // 1px の小さなラベル（新語の元の語・話者名）
   let dtAvg = 16, lite = false; // 1コマの時間の平均。遅い端末では lite（中央の言葉も1枚の絵で描く）にする
 
   const fxk = () => (cfg.calm ? 0 : (VJ_FX[cfg.fx] || VJ_FX.mid).k);
@@ -155,18 +176,58 @@ export function createVJ(stage, { localFonts = false } = {}) {
     canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
     cell = Math.max(8, Math.round(H / 60));
     cols = Math.ceil(W / cell) + 1; rows = Math.ceil(H / cell) + 1;
+    drawGrid();
+    stars = Array.from({ length: Math.round(clamp(W * H / 9000, 40, 140)) }, (_, i) => ({ x: Math.random() * W, y: Math.random() * H, z: 0.3 + Math.random() * 1.2, c: PIXEL_PALETTE[i % PIXEL_PALETTE.length] }));
+    for (const w of words) w.slot = null;
+    layout(false);
+  }
+
+  // 背景の升目（リサイズ時と見た目を変えた時だけ描き直す）
+  let gridStyle = '';
+  function drawGrid() {
+    gridStyle = cfg.style;
     grid.width = canvas.width; grid.height = canvas.height;
     const g = grid.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, grid.width, grid.height);
+    if (cfg.style === 'micro') { drawMicroGrid(g); return; }
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.clearRect(0, 0, W, H);
     g.fillStyle = 'rgba(255,255,255,.07)';
     const rr = Math.max(0.8, cell * 0.11);
     for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
       g.beginPath(); g.arc(x * cell + cell / 2, y * cell + cell / 2, rr, 0, Math.PI * 2); g.fill();
     }
-    stars = Array.from({ length: Math.round(clamp(W * H / 9000, 40, 140)) }, (_, i) => ({ x: Math.random() * W, y: Math.random() * H, z: 0.3 + Math.random() * 1.2, c: PIXEL_PALETTE[i % PIXEL_PALETTE.length] }));
-    for (const w of words) w.slot = null;
-    layout(false);
+  }
+  // 1px：デバイスの 1 ピクセルの点と線だけで、方眼・目盛り・枠を描く
+  function drawMicroGrid(g) {
+    const CW = grid.width, CH = grid.height, D = dpr;
+    const gs = Math.max(12, Math.round(cell * 2.4)) * D; // 方眼の間隔（デバイス px）
+    const m = Math.round(14 * D);
+    g.fillStyle = '#fff';
+    for (let y = m, j = 0; y < CH - m; y += gs, j++) {
+      for (let x = m, i = 0; x < CW - m; x += gs, i++) {
+        const X = Math.round(x), Y = Math.round(y);
+        if (i % 4 === 0 && j % 4 === 0) { // 4 マスごとに小さな十字
+          g.globalAlpha = 0.34;
+          const a = Math.round(3 * D);
+          g.fillRect(X - a, Y, a * 2 + 1, 1); g.fillRect(X, Y - a, 1, a * 2 + 1);
+        } else { g.globalAlpha = 0.2; g.fillRect(X, Y, 1, 1); }
+      }
+    }
+    // 外枠と四隅
+    g.globalAlpha = 0.12;
+    g.fillRect(m, m, CW - 2 * m, 1); g.fillRect(m, CH - m, CW - 2 * m, 1);
+    g.fillRect(m, m, 1, CH - 2 * m); g.fillRect(CW - m, m, 1, CH - 2 * m + 1);
+    g.globalAlpha = 0.7;
+    const k = Math.round(10 * D);
+    for (const [x, y, sx, sy] of [[m, m, 1, 1], [CW - m, m, -1, 1], [m, CH - m, 1, -1], [CW - m, CH - m, -1, -1]]) {
+      g.fillRect(sx > 0 ? x : x - k + 1, y, k, 1); g.fillRect(x, sy > 0 ? y : y - k + 1, 1, k);
+    }
+    // 上と左の目盛り（定規）
+    g.globalAlpha = 0.32;
+    for (let x = m, i = 0; x < CW - m; x += gs / 2, i++) g.fillRect(Math.round(x), m - (i % 10 === 0 ? 7 : i % 2 === 0 ? 4 : 2) * D, 1, (i % 10 === 0 ? 7 : i % 2 === 0 ? 4 : 2) * D);
+    for (let y = m, i = 0; y < CH - m; y += gs / 2, i++) g.fillRect(m - (i % 10 === 0 ? 7 : i % 2 === 0 ? 4 : 2) * D, Math.round(y), (i % 10 === 0 ? 7 : i % 2 === 0 ? 4 : 2) * D, 1);
+    g.globalAlpha = 1;
   }
 
   // ---------------------------------------------------------------- 配置
@@ -226,6 +287,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
   }
 
   function colorFor(m) {
+    if (cfg.style === 'micro') return '#ffffff'; // 1px は白だけ
     if (m.spc) return m.spc;
     if (cfg.style === 'neon') return hsl((wordSeq * 67 + performance.now() / 50) % 360);
     if (cfg.style === 'pixel') return PIXEL_PALETTE[wordSeq % PIXEL_PALETTE.length];
@@ -243,7 +305,14 @@ export function createVJ(stage, { localFonts = false } = {}) {
     for (let i = 0; i < n; i++) {
       const px = bmp.pts[i * 2], py = bmp.pts[i * 2 + 1];
       const tx = t.x + px * t.pitch, ty = t.y + py * t.pitch;
-      if (cfg.style === 'pixel') { // 上から降ってくる
+      if (w.src && w.src.length) { // 新語ミックス：親の言葉のドットから飛んでくる
+        const k = Math.floor(Math.random() * (w.src.length / 2)) * 2;
+        w.starts[i * 2] = w.src[k]; w.starts[i * 2 + 1] = w.src[k + 1];
+        w.delays[i] = Math.random() * 260;
+      } else if (cfg.style === 'micro') { // 1px：左から書き込みヘッドが走る
+        w.starts[i * 2] = tx; w.starts[i * 2 + 1] = ty;
+        w.delays[i] = (px / bmp.w) * 560 + Math.random() * 70;
+      } else if (cfg.style === 'pixel') { // 上から降ってくる
         w.starts[i * 2] = tx; w.starts[i * 2 + 1] = ty - H * (0.35 + Math.random() * 0.4);
         w.delays[i] = (px / bmp.w) * 260 + Math.random() * 120;
       } else if (cfg.style === 'neon') { // 左から走査線のように点灯
@@ -260,6 +329,8 @@ export function createVJ(stage, { localFonts = false } = {}) {
     }
     w.ox = t.x; w.oy = t.y; w.pitch = t.pitch;
     w.t0 = performance.now(); w.state = 'in';
+    w.travel = !!(w.src && w.src.length);
+    w.src = null; // 飛んでくるのは最初の登場だけ（書体を替えて組み直すときは普通に出る）
   }
 
   // ---------------------------------------------------------------- 言葉が来たとき
@@ -283,14 +354,24 @@ export function createVJ(stage, { localFonts = false } = {}) {
       return;
     }
     wordSeq++;
-    const w = { text, kind: m.kind || 'normal', color: colorFor(m), fixed: !!m.spc, bmp: rasterize(text, spec), state: 'in', seed: wordSeq * 17 + text.length,
-      ox: 0, oy: 0, pitch: 1, tox: 0, toy: 0, tpitch: 1, expires: now + cfg.ttl * 1500, flash: m.kind === 'new' ? now : 0, combo: 1, comboAt: 0 };
+    const fusion = m.kind === 'fusion';
+    const w = { text, kind: m.kind || 'normal', color: fusion && cfg.style !== 'micro' ? (cfg.accent2 || cfg.accent) : colorFor(m), fixed: !!m.spc, bmp: rasterize(text, spec), state: 'in', seed: wordSeq * 17 + text.length,
+      ox: 0, oy: 0, pitch: 1, tox: 0, toy: 0, tpitch: 1, expires: now + cfg.ttl * (fusion ? 2600 : 1500), flash: m.kind === 'new' ? now : 0, combo: 1, comboAt: 0, no: wordSeq };
     if (m.spn && m.sp !== lastSp) w.tag = { text: m.spn };
     if (m.sp != null) lastSp = m.sp;
-    // 中央の言葉は 0.9 秒に1回まで入れ替える（立て続けに来た言葉は、最初から周りに小さく出す）
-    const important = w.kind === 'new' || w.kind === 'registered';
+    // 新語ミックス：親の言葉のいまのドットの位置から飛んできて、新しい言葉になる
+    if (fusion && Array.isArray(m.from)) {
+      const parents = words.filter((x) => x.state !== 'out' && m.from.includes(x.text));
+      w.tag = { text: m.from.join('×') };
+      w.from = parents.map((p) => ({ x: p.ox + (p.bmp.w * p.pitch) / 2, y: p.oy + (p.bmp.h * p.pitch) / 2 }));
+      const src = [];
+      for (const p of parents) for (let i = 0; i < p.bmp.pts.length; i += 2) src.push(p.ox + p.bmp.pts[i] * p.pitch, p.oy + p.bmp.pts[i + 1] * p.pitch);
+      w.src = src;
+    }
+    // 中央の言葉は 0.9 秒に1回まで入れ替える（立て続けに来た言葉は、最初から周りに小さく出す。新語はいつも中央）
+    const important = w.kind === 'new' || w.kind === 'registered' || fusion;
     const hero = [...words].reverse().find((x) => x.state !== 'out');
-    const asSat = hero && now - lastHeroAt < (important ? 400 : 900);
+    const asSat = !fusion && hero && now - lastHeroAt < (important ? 400 : 900);
     if (asSat) words.splice(words.indexOf(hero), 0, w);
     else { words.push(w); lastHeroAt = now; }
     // 多すぎる分は退場
@@ -301,11 +382,13 @@ export function createVJ(stage, { localFonts = false } = {}) {
     layout();
     entrance(w);
     const cx = w.tox + (w.bmp.w * w.tpitch) / 2, cy = w.toy + (w.bmp.h * w.tpitch) / 2;
-    if (!asSat) ripple(w, w.kind === 'new' ? 1.6 : 1);
-    if (important) burst(cx, cy, w.color, w.kind === 'new' ? 48 : 28);
-    if (w.kind === 'new' && !asSat) impact(0.85);
+    if (!asSat) { ripple(w, w.kind === 'new' || fusion ? 1.6 : 1); glitchAt = now; }
+    if (important) burst(cx, cy, w.color, w.kind === 'new' || fusion ? 48 : 28);
+    if ((w.kind === 'new' || fusion) && !asSat) impact(0.85);
     kick();
   }
+  // 新語ミックス（表示側から呼ぶ）：m = { text, from: [元の語, 元の語] }
+  function fuse(m) { return add({ ...m, kind: 'fusion' }); }
 
   function ripple(w, strength) {
     ripples.push({ x: w.tox + (w.bmp.w * w.tpitch) / 2, y: w.toy + (w.bmp.h * w.tpitch) / 2, t0: performance.now(), color: w.color, s: strength });
@@ -472,6 +555,8 @@ export function createVJ(stage, { localFonts = false } = {}) {
     const now = performance.now();
     const dt = Math.min(64, now - last);
     last = now;
+    frameNo++;
+    if (cfg.style === 'micro') { frameMicro(now, dt); raf = requestAnimationFrame(frame); return; }
     dtAvg += (dt - dtAvg) * 0.03;
     if (!lite && dtAvg > 27) lite = true;        // 約37fps を下回り続けたら軽くする
     else if (lite && dtAvg < 17.5) lite = false; // 余裕が戻ったら元に戻す
@@ -587,8 +672,8 @@ export function createVJ(stage, { localFonts = false } = {}) {
           const p = clamp((now - w.t0 - (cfg.calm ? 0 : w.delays[i])) / dur, 0, 1);
           if (p < 1) {
             if (cfg.calm) a *= p;
-            else if (cfg.style === 'neon') { a *= p > 0 ? Math.min(1, p * 3) * (p < 0.3 ? (Math.random() < 0.6 ? 1 : 0.2) : 1) : 0; }
-            else if (cfg.style === 'holo') { const e = easeOut(p); x = cxw + (x - cxw) * Math.max(0.03, e); y = cyw + (y - cyw) * (0.85 + 0.15 * e); a *= Math.min(1, p * 2.5); }
+            else if (cfg.style === 'neon' && !w.travel) { a *= p > 0 ? Math.min(1, p * 3) * (p < 0.3 ? (Math.random() < 0.6 ? 1 : 0.2) : 1) : 0; }
+            else if (cfg.style === 'holo' && !w.travel) { const e = easeOut(p); x = cxw + (x - cxw) * Math.max(0.03, e); y = cyw + (y - cyw) * (0.85 + 0.15 * e); a *= Math.min(1, p * 2.5); }
             else {
               const e = cfg.style === 'pixel' ? easeBack(p) : easeOut(p);
               x = w.starts[i * 2] + (x - w.starts[i * 2]) * e;
@@ -669,6 +754,187 @@ export function createVJ(stage, { localFonts = false } = {}) {
     ctx.globalAlpha = 1;
     raf = requestAnimationFrame(frame);
   }
+  // ---- 1px（モノクロ・テクノ）：デバイスの 1 ピクセルの点と線だけで組む。色は白だけ
+  function frameMicro(now, dt) {
+    const D = dpr, P = Math.max(1, Math.round(D)); // P＝CSS の 1px（Retina では 2 デバイス px）
+    const CW = canvas.width, CH = canvas.height;
+    const R = (v) => Math.round(v * D);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    if (cfg.transparent) ctx.clearRect(0, 0, CW, CH);
+    else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, CW, CH); ctx.drawImage(grid, 0, 0); }
+    ctx.fillStyle = '#fff';
+    const A = (a) => { ctx.globalAlpha = Math.max(0, Math.min(1, a)); };
+    if (now - lvlAt > 1200) lvl *= Math.pow(0.985, dt / 16);
+    const calm = cfg.calm;
+    sparks = []; // 1px では火花を使わない
+
+    // 走査線（縦にゆっくり横切る 1px の線）
+    if (!calm) {
+      A(0.28); ctx.fillRect(Math.round(((now / 3600) % 1) * CW), 0, 1, CH);
+      A(0.1); ctx.fillRect(0, Math.round(((now / 5300) % 1) * CH), CW, 1);
+    }
+
+    // 言葉の位置と寿命
+    const k = 1 - Math.pow(0.0025, dt / 1000);
+    words = words.filter((w) => !(w.state === 'out' && now - w.out0 > 900));
+    const live = words.filter((w) => w.state !== 'out');
+    const hero = live[live.length - 1];
+    for (const w of words) {
+      if (w.state !== 'out' && !w.hero && now > w.expires) leave(w, now);
+      if (w.state !== 'out' && w.hero && live.length === 1 && now > w.expires + cfg.ttl * 1500) leave(w, now);
+      w.ox += (w.tox - w.ox) * k; w.oy += (w.toy - w.oy) * k; w.pitch += (w.tpitch - w.pitch) * k;
+    }
+    const heroBox = hero ? { x: hero.ox, y: hero.oy, w: hero.bmp.w * hero.pitch, h: hero.bmp.h * hero.pitch } : null;
+
+    // 小さな言葉から中央の言葉へ、点線の引き出し線
+    if (heroBox) {
+      const hx = heroBox.x + heroBox.w / 2, hy = heroBox.y + heroBox.h / 2;
+      for (const w of live) {
+        if (w === hero) continue;
+        const bx = w.ox + (w.bmp.w * w.pitch) / 2, by = w.oy + (w.bmp.h * w.pitch) / 2;
+        dotted(bx, by, clampTo(heroBox, bx, by), 0.22, 4);
+      }
+    }
+    // 新語ミックス：親の言葉から生まれた言葉へ、細い系統線（だんだん薄れる）
+    for (const w of live) {
+      if (!w.from || !w.from.length) continue;
+      const age = (now - w.t0) / 2600;
+      if (age > 1) continue;
+      const cx = w.ox + (w.bmp.w * w.pitch) / 2, cy = w.oy + (w.bmp.h * w.pitch) / 2;
+      for (const f of w.from) dotted(f.x, f.y, { x: cx, y: cy }, 0.75 * (1 - age), 2);
+    }
+
+    // 言葉そのもの
+    for (const w of words) {
+      const n = w.bmp.pts.length / 2;
+      const big = w.hero && w.pitch >= 5;
+      const base = w.state === 'out' ? Math.max(0, 1 - (now - w.out0) / 900) : w.hero ? 1 : 0.62;
+      const flash = w.flash ? Math.max(0, 1 - (now - w.flash) / 500) : 0;
+      const dur = calm ? 300 : 620;
+      const gap = Math.max(1.5, w.pitch * 0.24);
+      const s = Math.max(P, R(w.pitch - gap));
+      let head = -1; // 書き込みヘッドの位置（登場中だけ）
+      for (let i = 0; i < n; i++) {
+        const px = w.bmp.pts[i * 2], py = w.bmp.pts[i * 2 + 1];
+        let x = w.ox + px * w.pitch, y = w.oy + py * w.pitch, a = base, writing = false;
+        if (w.state === 'in' && w.starts) {
+          const p = clamp((now - w.t0 - (calm ? 0 : w.delays[i])) / dur, 0, 1);
+          if (p <= 0) continue;
+          if (p < 1) {
+            writing = true;
+            if (w.travel) { const e = easeOut(p); x = w.starts[i * 2] + (x - w.starts[i * 2]) * e; y = w.starts[i * 2 + 1] + (y - w.starts[i * 2 + 1]) * e; }
+            else head = Math.max(head, x + w.pitch);
+            if (calm) a *= p;
+          }
+        } else if (w.state === 'out' && w.vel) {
+          const t = now - w.out0;
+          x += w.vel[i * 2] * t; y += w.vel[i * 2 + 1] * t;
+          A(a * 0.9); ctx.fillRect(R(x), R(y), P, P);
+          continue;
+        }
+        const X = R(x), Y = R(y);
+        if (!big || writing && w.travel) { A(a); ctx.fillRect(X, Y, w.hero ? Math.max(P, Math.round(s * 0.5)) : P, w.hero ? Math.max(P, Math.round(s * 0.5)) : P); continue; }
+        if (writing || flash > 0.2) { A(a); ctx.fillRect(X, Y, s, s); continue; } // 書き込み中・繰り返しは塗りつぶし
+        A(a * 0.95); // ふだんは 1px の中抜きの四角と、中心の点
+        ctx.fillRect(X, Y, s, 1); ctx.fillRect(X, Y + s - 1, s, 1); ctx.fillRect(X, Y, 1, s); ctx.fillRect(X + s - 1, Y, 1, s);
+        A(a * 0.8); ctx.fillRect(X + (s >> 1), Y + (s >> 1), 1, 1);
+      }
+      if (w.state === 'in' && now - w.t0 > dur + 700) w.state = 'hold';
+      if (head > 0 && !calm) { A(0.85); ctx.fillRect(R(head), R(w.oy - w.pitch * 2), 1, R(w.bmp.h * w.pitch + w.pitch * 4)); }
+      if (w.state === 'out') continue;
+      if (w === hero) heroFrame(w, now);
+      else { A(0.42 * base); text3(`#${String(w.no).padStart(3, '0')}`, R(w.ox), R(w.oy) - 8 * P, P); }
+    }
+
+    // 波紋：中央から 1px の四角が広がる
+    ripples = ripples.filter((r) => now - r.t0 < 1400);
+    if (!calm) for (const r of ripples) {
+      const age = (now - r.t0) / 1400, e = easeOut(age), half = e * Math.max(W, H) * 0.6;
+      A((1 - age) * 0.5); strokeBox(R(r.x - half), R(r.y - half * 0.56), R(half * 2), R(half * 1.12));
+    }
+
+    // グリッチ：新しい言葉が出た直後だけ、横の帯を少しずらす
+    if (!calm && (now - glitchAt < 260 || now < glitchUntil)) {
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < 4; i++) {
+        const y = Math.floor(Math.random() * CH), h = Math.max(1, Math.floor(Math.random() * 14 * D)), dx = Math.round((Math.random() - 0.5) * 36 * D);
+        ctx.drawImage(canvas, 0, y, CW, h, dx, y, CW, h);
+      }
+    }
+
+    // 計器：左上の読み出し、右上のフレーム番号、下のオシロスコープ、右端のレベル
+    const m = R(22), lh = 9 * P;
+    A(0.75); text3('KANPE.VJ / 1PX MONO', m, m, P);
+    A(0.5);
+    const tsec = (now - bornAt) / 1000;
+    const tc = `T+${String(Math.floor(tsec / 60)).padStart(2, '0')}:${String(Math.floor(tsec % 60)).padStart(2, '0')}.${String(Math.floor((tsec % 1) * 100)).padStart(2, '0')}`;
+    text3(tc, m, m + lh, P);
+    const dots = live.reduce((t, w) => t + w.bmp.pts.length / 2, 0);
+    text3(`WORDS ${String(live.length).padStart(2, '0')}  DOTS ${String(dots).padStart(5, '0')}`, m, m + lh * 2, P);
+    text3('LVL', m, m + lh * 3, P);
+    for (let i = 0; i < 24; i++) { A(i < lvl * 24 ? 0.8 : 0.16); ctx.fillRect(m + 16 * P + i * 3 * P, m + lh * 3, P, 5 * P); }
+    A(0.5); text3(`FR ${String(frameNo % 1e6).padStart(6, '0')}`, CW - m, m, P, 'right');
+    text3(cfg.calm ? 'MODE CALM' : 'MODE LIVE', CW - m, m + lh, P, 'right');
+    if (hero) { // 中央の言葉の文字コードを流す
+      A(0.32);
+      const codes = [...hero.text].map((c) => 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0'));
+      for (let i = 0; i < Math.min(6, codes.length); i++) text3(codes[i], CW - m, m + lh * (3 + i), P, 'right');
+    }
+    if (!calm) { // オシロスコープ
+      const y0 = CH - R(8), amp = R(6) * (0.15 + lvl);
+      A(0.55);
+      for (let x = m; x < CW - m; x += 2 * P) {
+        const v = Math.sin(x / (D * 7) + now / 90) * Math.sin(x / (D * 41) - now / 400) * (0.6 + 0.4 * Math.sin(now / 130 + x));
+        ctx.fillRect(x, Math.round(y0 + v * amp), P, P);
+      }
+    }
+    A(1);
+  }
+  // 1px の四角の枠
+  function strokeBox(x, y, w, h) { ctx.fillRect(x, y, w, 1); ctx.fillRect(x, y + h, w + 1, 1); ctx.fillRect(x, y, 1, h); ctx.fillRect(x + w, y, 1, h); }
+  // 点線（CSS px 座標）
+  function dotted(x0, y0, to, alpha, step) {
+    const dx = to.x - x0, dy = to.y - y0, len = Math.hypot(dx, dy);
+    if (len < 2) return;
+    ctx.globalAlpha = alpha;
+    for (let d = 0; d < len; d += step) ctx.fillRect(Math.round((x0 + (dx * d) / len) * dpr), Math.round((y0 + (dy * d) / len) * dpr), 1, 1);
+  }
+  function clampTo(b, x, y) { return { x: clamp(x, b.x, b.x + b.w), y: clamp(y, b.y, b.y + b.h) }; }
+  // 中央の言葉の枠：四隅のかぎ、座標、種類のラベル
+  function heroFrame(w, now) {
+    const D = dpr, P = Math.max(1, Math.round(D)), R = (v) => Math.round(v * D);
+    const mg = Math.max(6, w.pitch * 0.9);
+    const x = R(w.ox - mg), y = R(w.oy - mg), bw = R(w.bmp.w * w.pitch + mg * 2), bh = R(w.bmp.h * w.pitch + mg * 2);
+    const age = Math.min(1, (now - w.t0) / 500);
+    ctx.globalAlpha = 0.14 * age; strokeBox(x, y, bw, bh);
+    ctx.globalAlpha = 0.85 * age;
+    const k = Math.min(R(14), bw / 3);
+    for (const [cx, cy, sx, sy] of [[x, y, 1, 1], [x + bw, y, -1, 1], [x, y + bh, 1, -1], [x + bw, y + bh, -1, -1]]) {
+      ctx.fillRect(sx > 0 ? cx : cx - k + 1, cy, k, 1); ctx.fillRect(cx, sy > 0 ? cy : cy - k + 1, 1, k);
+    }
+    const label = (w.kind === 'fusion' ? '[MIX]' : w.kind === 'new' ? '[NEW]' : w.kind === 'registered' ? '[REG]' : `[${String(w.no).padStart(4, '0')}]`) + (w.combo > 1 ? ` X${w.combo}` : '');
+    ctx.globalAlpha = 0.8 * age; text3(label, x, y - 9 * P, P);
+    ctx.globalAlpha = 0.45 * age;
+    text3(`X${String(Math.round(w.ox)).padStart(4, '0')} Y${String(Math.round(w.oy)).padStart(4, '0')}`, x + bw, y - 9 * P, P, 'right');
+    // 新語ミックスの親の言葉・話者名は、ドット書体を 1px の点で
+    if (w.tag) {
+      ctx.globalAlpha = 0.75 * age;
+      const pts = rasterize(w.tag.text, labelSpec).pts, ty = y + bh + 4 * P;
+      for (let i = 0; i < pts.length; i += 2) ctx.fillRect(x + pts[i] * P, ty + pts[i + 1] * P, P, P);
+    }
+  }
+  // 3×5 ピクセルの英数字（計器の文字）
+  function text3(str, x, y, s, align) {
+    const chars = String(str).toUpperCase();
+    let cx = align === 'right' ? x - chars.length * 4 * s : x;
+    for (const ch of chars) {
+      const g = FONT3[ch];
+      if (g) for (let r = 0; r < 5; r++) for (let c = 0; c < 3; c++) if (g.charCodeAt(r * 3 + c) === 49) ctx.fillRect(cx + c * s, y + r * s, s, s);
+      cx += 4 * s;
+    }
+  }
   function kick() { if (!raf) raf = requestAnimationFrame(frame); }
 
   // 書体・細かさが変わったら、いま出ている言葉を新しい書体で組み直して、もう一度登場させる
@@ -683,6 +949,8 @@ export function createVJ(stage, { localFonts = false } = {}) {
   }
   function configure(next) {
     cfg = { ...cfg, ...next };
+    if (cfg.style !== gridStyle) drawGrid();
+    if (cfg.style === 'micro') ensureFont(labelSpec, localFonts);
     const s = fontSpec(cfg);
     const changed = s.id !== spec.id || s.rows !== spec.rows;
     spec = s;
@@ -698,7 +966,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
   kick();
 
   return {
-    add, clear, level, configure, resize,
+    add, fuse, clear, level, configure, resize,
     count: () => words.filter((w) => w.state !== 'out').length,
     // 検証用：いま出ている言葉の位置（重なりの確認に使う）
     boxes: () => words.filter((w) => w.state !== 'out').map((w) => ({ text: w.text, hero: !!w.hero, state: w.state, x: w.ox, y: w.oy, w: w.bmp.w * w.pitch, h: w.bmp.h * w.pitch, tx: w.tox, ty: w.toy, tw: w.bmp.w * w.tpitch, th: w.bmp.h * w.tpitch })),
