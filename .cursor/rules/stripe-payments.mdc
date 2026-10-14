@@ -1,0 +1,18 @@
+---
+description: 決済・ライセンス・メール・プラン（Stripe / Resend / Cloudflare Pages Functions）
+globs: functions/**,src/core/plan.js,tools/stripe-setup.mjs,tools/test-api.mjs
+alwaysApply: false
+---
+- サーバー側は Cloudflare Pages Functions（`functions/api/`）。データベースは持たず、契約状態は毎回 Stripe に問い合わせる
+- 端末には署名つきライセンス（`kanpe1.…`）だけを保存。約12時間ごとに更新、更新日から3日は猶予（`GRACE`）
+- ライセンスコードは申し込み直後に画面で表示し、Webhook（`checkout.session.completed` → `/api/stripe-webhook`）を受けて Resend でメールでも送る。送り直しは `/api/license-email`
+- 同じ Stripe アカウントの他プロジェクトと混ざらないよう、商品・価格・Checkout・契約に `metadata.project=kanpe`、価格は lookup_key（`kanpe_plus_monthly` など `kanpe_` 始まり）で探す。他プロジェクトのデータは無視する
+- 環境変数（Cloudflare Pages。本番とプレビューで別々に設定する）
+  - 必須：`STRIPE_SECRET_KEY`・`LICENSE_SECRET`
+  - メール：`STRIPE_WEBHOOK_SECRET`・`RESEND_API_KEY`・`MAIL_FROM`・`MAIL_REPLY_TO`（任意）
+  - 任意：`SITE_URL`（**本番だけ**。プレビューに入れると決済後に本番へ戻されたり、同一オリジンの確認で弾かれる）・`STRIPE_PORTAL_CONFIG`・`PRO_ENABLED`（"1" でおトクプランの申し込みを受け付ける）
+  - プレビューには Stripe のテスト用キー（`sk_test_…`）と、本番と別の `LICENSE_SECRET` を入れる
+- API はブラウザから同一オリジンだけ受け付ける（`sameOrigin`）
+- 変更したら `node tools/test-api.mjs` を通す（Stripe は偽物。通信不要）
+- Stripe MCP でライブモードの書き込み（商品作成・返金など）をするときは、必ずユーザーに確認してから
+- 料金：お手軽 ¥480/月・¥4,800/年、おトク ¥2,980/月・¥29,800/年（税込）。表示文言は `PLANS`（plan.js）と LP の両方を揃える

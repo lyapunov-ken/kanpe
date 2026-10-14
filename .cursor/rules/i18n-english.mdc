@@ -1,0 +1,12 @@
+---
+description: 日本語版と英語版（app.html / en/ / i18n）を触るとき
+globs: app.html,index.html,en/**,src/core/i18n.js,src/ui/lang.js,src/console/help.js,src/console/guide.js,tools/make-en-app.py
+alwaysApply: false
+---
+- `en/app.html` は `app.html` から `python3 tools/make-en-app.py` で生成する。英語の文言は同スクリプトの置換表 `T` に足す
+- `app.html` に日本語の文言を足したら、`T` に対応する英訳を追加して再生成する（生成時の `untranslated:` に `日本語` 以外が出ないこと。`日本語` は言語の選択肢なので残ってよい）
+- `app.html` から文言を消したら、`T` の対応する行も消す（残っていると `not found` で止まる）
+- `en/index.html`（英語 LP）は手で管理している。`index.html` を変えたら英語版にも反映する
+- JS の文言（ヘルプ・初回ガイド・トーストなど）は `src/core/i18n.js` の `L('日本語', 'English')`
+- 表示ビュー `display.html` は共通で、英語は `hl=en`
+- 言語切替は `src/ui/lang.js` が確認の窓を出し、聞き取りとデモを止めて設定と文字起こしを引き継ぐ

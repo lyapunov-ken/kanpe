@@ -18,13 +18,13 @@
 | 画面 | URL | 用途 |
 | --- | --- | --- |
 | ランディングページ | `index.html` | サービス紹介・料金・ライブデモ |
-| 操作コンソール | `app.html` | 認識の開始・停止、書体テーマ、レイアウト、辞書、文字起こし |
+| 操作コンソール | `app.html` | 認識の開始・停止、書体テーマ、レイアウト、新語ミックス、辞書、文字起こし。初めての人には3ステップのガイド（`?welcome=1` でも出る） |
 | 組版ビュー | `display.html` | 画面いっぱいに語を組む。全画面は `F` キー |
 | カンペ | `display.html?layout=kanpe` | 手元モニター用。大きな文字が下から積み上がる |
 | OBS オーバーレイ | `display.html?theme=clear&obs=…` | 透過背景。コンソールの「URLをコピー」で作る |
 | 単体デモ | `display.html?demo=1` | マイクなしで表示だけ確認 |
 
-URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / ticker / vj）、`vj`（led / neon / pixel / holo）、`vjfont`（gothic / maru / mincho / pop / dot）、`detail`（coarse / mid / fine）、`fx`（low / mid / high）、`size`、`fonts=local`（Web フォントを読まず OS の書体を使う）、`demo=1&sp=1`（話者の色分けの見本）。
+URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / ticker / vj）、`vj`（micro＝1px / led / neon / pixel / holo）、`vjfont`（gothic / maru / mincho / pop / dot）、`detail`（coarse / mid / fine）・`fx`（low / mid / high）（コンソールの画面からは外し、標準に固定）、`size`、`fonts=local`（Web フォントを読まず OS の書体を使う）、`demo=1&sp=1`（話者の色分けの見本）。
 
 ## データとセキュリティ
 
@@ -67,21 +67,29 @@ OBS のブラウザソースの中では音声認識が動かないため、認�
 - `P`：表示の一時停止／再開（文字起こしは続く）
 - `Esc`：表示中の語を全消去
 - `1`〜`4`：話者の色分けがオンのとき、いま話している人を切り替える
+- `M`：新語ミックス。いま画面に出ている言葉を掛け合わせて新しい言葉を生む（生まれた言葉は「生まれた新語」に残り、TXT にも入る）
 - 文字起こしは TXT / SRT で書き出せます（SRT はアーカイブ動画の字幕に使えます）
 
 ## 構成
 
 ```
-index.html（LP）/ app.html（コンソール）/ display.html（表示ビュー）
+index.html（LP）/ app.html（コンソール）/ display.html（表示ビュー）/ en/（英語版）/ legal/・en/legal/（規約）
 src/lp/lp.js            ランディングページのデモ切り替え
-src/core/plan.js        フリーミアムの設定（Pro の可否）
+src/core/plan.js        プランとライセンス、機能ごとに必要なプラン（REQUIRES）
 src/core/extract.js     キーワード抽出（Intl.Segmenter＋文字種ルール、フィラー除去、NG・登録語）
-src/core/settings.js    書体テーマ・既定値
+src/core/settings.js    書体テーマ・VJ のスタイルと書体・既定値
+src/core/coin.js        新語ミックスの造語（文字種ごとに混ぜ方を変える）
 src/core/bus.js         画面間の同期（BroadcastChannel）
 src/core/obs.js         obs-websocket クライアント（OBS へ送る）
-src/console/            操作コンソール、音声認識、デモ
-src/display/display.js  タイポグラフィ描画（依存ゼロ）
+src/console/            操作コンソール、音声認識、話者、デモ、ヘルプ（help.js）、初回ガイド（guide.js）
+src/display/display.js  タイポグラフィ描画・新語の誕生演出（依存ゼロ）
+src/display/vj.js       VJ モード（1px / LED / ネオン / ピクセル / ホロ）
+src/ui/                 言語切替、表示モード、スマホのメニュー
+functions/api/          決済・ライセンス・メール（Cloudflare Pages Functions）
+tools/                  生成スクリプト（英語版・規約・_headers・バージョン番号）、Stripe の準備、API のテスト
 styles/                 CSS
+docs/                   調査メモ
+AGENTS.md・.cursor/     Cursor などのエージェント向けの指示（ルールとよく使う手順）
 ```
 
 ## タイポグラフィの考え方
@@ -117,4 +125,4 @@ styles/                 CSS
 
 ## 更新を公開するとき
 
-JS / CSS を変えたら、公開前に `./tools/bump-version.sh` を実行してください。読み込みに新しいバージョン番号が付き、閲覧者のブラウザに古いファイルが残っていても新しいファイルが読まれます。
+`main` に入れると自動で本番に出ます。作業はブランチで行い、push して出るテスト URL（`https://<ブランチ名>.kanpe-ahr.pages.dev`）で確認してから `main` に取り込みます。JS / CSS を変えたら、取り込む前に `./tools/bump-version.sh` を実行してください（読み込みに新しいバージョン番号が付き、閲覧者のブラウザに古いファイルが残っていても新しいファイルが読まれます）。詳しくは `DEPLOY.md`。

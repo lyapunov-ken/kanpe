@@ -1,0 +1,14 @@
+---
+description: KANPE 全体の基本ルール（常に適用）
+alwaysApply: true
+---
+- このリポジトリはビルドなしの静的サイト（素の HTML / CSS / ES Modules）。npm 依存・バンドラ・CDN スクリプトを追加しない
+- 詳しい前提はルートの `AGENTS.md` と `README.md`、公開と環境変数は `DEPLOY.md` を読む
+- **ブランチで作業する**：`main` は自動で本番（kanpe.yoneken.xyz）に出る。`main` に直接 commit / push しない
+  - 作業ブランチを push すると `https://<ブランチ名>.kanpe-ahr.pages.dev` にテスト URL が出る（`/` は `-` に）。確認はそこで行う
+  - `main` への取り込み（本番公開）はユーザーの了承を得てから。手順は `/release`
+- 生成物（`en/app.html`、`legal/*`、`en/legal/*`、`_headers`）は直接編集せず、元ファイルか `tools/` のスクリプトを直して再生成する
+- 画面に出る文言は日英両方を用意する（JS は `L('日本語', 'English')`、HTML は `tools/make-en-app.py` の置換表 `T` にも追加）
+- 利用者のデータ（文字起こし・設定・画像・カメラ映像）は端末の外へ送らない。新しい通信先を増やすときは必ず相談する
+- 秘密情報（Stripe キー、LICENSE_SECRET、RESEND_API_KEY など）をコードやファイルに書かない
+- JS / CSS を変えたら、本番に出す前に `./tools/bump-version.sh` を実行する（作業ブランチの最後のコミットで）

@@ -1,0 +1,13 @@
+---
+description: CSP とセキュリティヘッダー（HTML の script や _headers を触るとき）
+globs: *.html,en/**/*.html,legal/**/*.html,_headers,tools/make-headers.py
+alwaysApply: false
+---
+- `_headers` は `tools/make-headers.py` が生成する。手で直さない
+- CSP：`script-src 'self'` ＋インライン `<script>` のハッシュのみ。外部スクリプト、`onclick=` などのインラインハンドラ、`eval` は使えない
+- インライン `<script>` の中身を1文字でも変えたら `python3 tools/make-headers.py`（`./tools/bump-version.sh` からも自動で呼ばれる）
+- 通信は `connect-src 'self' ws: wss:` のみ（OBS の手元 WebSocket 用）。Stripe・Resend への通信はサーバー側（Functions）からだけ行う
+- 外部 API をブラウザから呼ぶ場合は CSP の変更とプライバシーポリシーの更新が必要になるので先に相談する
+- フォントは Google Fonts（fonts.googleapis.com / fonts.gstatic.com）だけ許可
+- `Permissions-Policy` はマイクとカメラだけ self に許可している
+- リポジトリ直下はそのまま公開される（README・tools・.cursor なども URL で見える）。秘密情報は置かない

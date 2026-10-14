@@ -1,0 +1,20 @@
+---
+description: 組版ビュー・VJ モード・新語ミックス・キーワード抽出のルール
+globs: src/display/**,src/core/extract.js,src/core/settings.js,src/core/coin.js,styles/display.css,display.html
+alwaysApply: false
+---
+- 表示側はライブラリなしの素の JavaScript。形態素解析の辞書は読み込まない（抽出は Intl.Segmenter＋文字種ルール）
+- 文字種ごとに組む：漢字は基準サイズで太く、ひらがなは約80%で細く、カタカナは少し大きく字間を詰める
+- 重要度は4段階のジャンプ率（1.0 / 1.5 / 2.25 / 3.4）。繰り返した語は育つ。初出の目立つ語だけアクセント色＋下線（5秒に1語まで）
+- 基準の大きさは 1280×720 を 1 として、窓の高さ/720 と幅/800 の小さい方に合わせる（`unit()`）。文字サイズの既定は 34
+- 和文は `font-feature-settings: "palt"`、字幕は `word-break: auto-phrase`
+- アニメーションは transform / opacity 中心（漢字の滲みだけ短い blur）。タイマーは1本、同時表示数に上限、消えた要素はすぐ DOM から外す
+- 新語ミックス：コンソールが `src/core/coin.js` で造語し、表示ビューへ `{ t: 'fuse', text, a, b }` を送る
+  - 組版：親の語が光る → 分身が中央へ → 系統線（SVG `#fx`）→ 閃光 → 輪郭の文字が生まれて色が満ちる（`.k-fusion`・`.filled`）
+  - カンペ・テロップ：`kind: 'fusion'` の語として追加。VJ：`vj.fuse()` で親の語のドットが集まって新しい語になる
+  - 「動きを控えめに」では演出を省いてふつうに出す
+- VJ モード（`vj.js`、canvas 1枚）：スタイルは micro（1px・既定）/ led / neon / pixel / holo。書体は `VJ_FONTS`
+  - 画面で選べるのはスタイルと書体だけ。ドットの細かさ（`vjDetail`）と演出の強さ（`vjFx`）は標準に固定（URL の `detail=`・`fx=` では指定できる）
+  - 1px は白だけ・デバイスの 1px の点と線で描く（方眼・目盛り・座標の読み出し・書き込みヘッド）。色やにじみを足さない
+- URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / ticker / vj）、`vj`（micro / led / neon / pixel / holo）、`vjfont`、`detail`、`fx`、`size`、`ttl`、`max`、`vert=0`、`cap=0/1`、`calm=1`、`fonts=local`、`demo=1&sp=1`、`script=meeting|speech`
+- 講演・式典向けの演出を足すときは `docs/projection-research.md` の原則（本編中は背景を静かに、演出は節目だけ）に従う

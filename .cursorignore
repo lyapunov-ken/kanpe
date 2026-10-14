@@ -1,0 +1,7 @@
+# Cursor のインデックスから外すもの（画像・生成物の中間ファイル）
+.DS_Store
+*.log
+*.bak
+assets/**/*.png
+.wrangler/
+.dev.vars
