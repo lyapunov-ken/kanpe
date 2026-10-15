@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KANPE コンソール</title>
 <meta name="description" content="KANPE の操作画面。マイクで話すと、キーワードがその場で日本語タイポグラフィになります。">
-<link rel="canonical" href="https://kanpe.yoneken.xyz/app">
-<link rel="alternate" hreflang="ja" href="https://kanpe.yoneken.xyz/app">
-<link rel="alternate" hreflang="en" href="https://kanpe.yoneken.xyz/en/app">
+<meta name="robots" content="noindex, follow">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="KANPE">
 <meta property="og:locale" content="ja_JP">
@@ -30,7 +28,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97%20BGMPRcdefhilnotux%E3%82%AF%E3%82%B4%E3%82%B7%E3%83%83%E3%83%88%E3%83%89%E4%B8%B8%E5%A4%AA%E6%98%8E%E6%9C%9D%E6%A5%B5&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="styles/console.css?v=202610151124">
+<link rel="stylesheet" href="styles/console.css?v=202610151239">
 </head>
 <body>
 <header class="top">
@@ -100,7 +98,7 @@
         <div id="proThemes" class="themes" role="radiogroup" aria-label="プレミアム書体"></div>
       </div>
       <div class="field">
-        <span class="lbl">アクセントカラー <em class="pro-tag">¥480〜</em></span>
+        <span class="lbl">アクセントカラー</span>
         <div id="accents" class="accents" role="radiogroup" aria-label="アクセントカラー"></div>
         <p class="hint">初めて出た言葉の色と下線に使います</p>
       </div>
@@ -123,7 +121,7 @@
       </div>
       <div id="trialBox" class="trial">
         <div class="trial-bar"><i id="trialFill"></i></div>
-        <p id="trialNote" class="hint">プレミアム書体・アクセントカラー・背景画像・VJ モード・話者の色分けは、無料プランでも1日（24時間）お試しできます</p>
+        <p id="trialNote" class="hint">プレミアム書体・背景画像・VJ モード・話者の色分けは、無料プランでも1日（24時間）お試しできます</p>
       </div>
       <div class="field"><span class="lbl">レイアウト</span><div id="layouts" class="segmented four" role="radiogroup" aria-label="レイアウト"></div><p id="layoutNote" class="hint"></p></div>
       <div id="vjOpts" class="field vj-opts" hidden>
@@ -243,9 +241,9 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="src/ui/lang.js?v=202610151124" defer></script>
-<script src="src/ui/menu.js?v=202610151124" defer></script>
-<script src="src/ui/mode.js?v=202610151124" defer></script>
-<script type="module" src="src/console/console.js?v=202610151124"></script>
+<script src="src/ui/lang.js?v=202610151239" defer></script>
+<script src="src/ui/menu.js?v=202610151239" defer></script>
+<script src="src/ui/mode.js?v=202610151239" defer></script>
+<script type="module" src="src/console/console.js?v=202610151239"></script>
 </body>
 </html>

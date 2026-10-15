@@ -50,7 +50,7 @@ export const THEMES = {
 
 export const DEFAULT_THEME = 'sumi';
 
-// アクセントカラーの候補（空＝書体テーマ標準の色）。お手軽プラン以上の機能で、無料プランは1日お試し
+// アクセントカラーの候補（空＝書体テーマ標準の色）。無料プランでも選べる
 export const ACCENTS = [
   { c: '#ffd23f', label: '黄', labelEn: 'Yellow' },
   { c: '#ff8a3d', label: '橙', labelEn: 'Orange' },

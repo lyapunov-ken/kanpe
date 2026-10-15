@@ -1,4 +1,4 @@
-# 規約まわりのページ（利用規約・プライバシーポリシー・特定商取引法に基づく表記）を日本語版と英語版で作る。
+# 規約まわりのページ（利用規約・プライバシーポリシー・特定商取引法に基づく表記）と、見つからないページ（404.html・en/404.html）を日本語版と英語版で作る。
 #   python3 tools/make-legal.py
 # 運営者の情報は下の SELLER に入れる。空欄のままなら「請求があれば開示」「準備中」と表示する。
 # ※ メールアドレスは公開してよい窓口用のものを入れること（個人のアドレスは載せない）。
@@ -6,6 +6,7 @@ import html, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 UPDATED = ('2026年10月13日', 'October 13, 2026')
+UPDATED_BY = {'privacy': ('2026年10月15日', 'October 15, 2026')}  # ページごとの最終更新日（上と違うときだけ）
 
 SELLER = {
     'name': '',      # 販売業者（屋号・氏名）。空欄なら請求時に開示
@@ -107,12 +108,14 @@ def privacy(ja):
          'Speech recognition', 'On the Free and Plus plans, speech recognition uses your browser’s built-in feature. Audio is converted to text by your browser’s provider (Google for Chrome, Microsoft for Edge, Apple for Safari) under their privacy policies. Audio never reaches us.'),
         ('有料プランで扱う情報', 'お支払いは決済代行サービス Stripe（Stripe, Inc.）の画面で行います。メールアドレス、お名前、カード情報などは Stripe が受け取って管理し、カード情報を当方が受け取ることはありません。当方は契約の確認のために、Stripe の顧客 ID、プラン、契約期間、お申し込み時のメールアドレスを Stripe から都度参照します。当方はこれらを独自のデータベースに保存せず、確認の結果は署名つきのライセンスコードとしてお使いのブラウザに保存します。また、ライセンスコードをお届けするため、お申し込み時のメールアドレス宛てに、メール配信サービス Resend（Resend, Inc.）を通じてメールを送ります。コードの再送を依頼された場合、入力されたメールアドレスは該当するご契約を探すためだけに使い、メールは Stripe に登録されたアドレスにのみ送ります。',
          'Information for paid plans', 'Payments are handled on the checkout page of Stripe, Inc. Stripe receives and manages your email address, name and card details; we never receive your card details. To verify your subscription, we look up your Stripe customer ID, plan, subscription period and sign-up email from Stripe when needed. We do not keep these in a database of our own; the result is stored in your browser as a signed license code. To deliver your license code, we email it to your sign-up address through Resend, Inc., an email delivery service. If you ask us to resend the code, the address you enter is used only to look up a matching subscription, and the email is sent only to the address registered with Stripe.'),
-        ('アクセスの記録', '本サービスは Cloudflare, Inc. のサービスで配信しています。安全な運用のため、Cloudflare が IP アドレスやブラウザの種類などの技術的な情報を一時的に処理することがあります。広告や解析のタグ、外部のトラッキング用スクリプトは使っていません。',
-         'Access logs', 'The Service is delivered via Cloudflare, Inc. For security and reliability, Cloudflare may temporarily process technical information such as IP addresses and browser type. We use no advertising or analytics tags and no third-party tracking scripts.'),
-        ('利用目的', '当方が参照する情報は、有料プランの提供と契約の確認、お問い合わせへの対応、不正利用の防止のためだけに使います。',
-         'Purpose of use', 'We use the information we access only to provide paid plans and verify subscriptions, respond to enquiries and prevent misuse.'),
-        ('第三者への提供', '法令に基づく場合を除き、個人情報をご本人の同意なく第三者に提供しません。決済のための Stripe、配信のための Cloudflare、メール送信のための Resend は、それぞれの業務に必要な範囲で情報を取り扱います（いずれも国外の事業者を含みます）。',
-         'Sharing with third parties', 'Except as required by law, we do not share personal information with third parties without your consent. Stripe (payments), Cloudflare (delivery) and Resend (email) handle information only as needed for their services; all include providers outside Japan.'),
+        ('アクセスの記録', '本サービスは Cloudflare, Inc. のサービスで配信しています。安全な運用のため、Cloudflare が IP アドレスやブラウザの種類などの技術的な情報を一時的に処理することがあります。広告のタグは使っていません。外部のスクリプトは、次の「アクセス解析」で使う Google アナリティクスだけです。',
+         'Access logs', 'The Service is delivered via Cloudflare, Inc. For security and reliability, Cloudflare may temporarily process technical information such as IP addresses and browser type. We use no advertising tags; the only third-party script is Google Analytics, described under “Analytics” below.'),
+        ('アクセス解析', 'サービスの紹介ページ（トップページ・規約のページ・見つからないページの案内）では、どのように見つけられ読まれているかを知るため、Google LLC の「Google アナリティクス 4」を使っています。Google アナリティクスは Cookie などを使い、閲覧したページ、参照元、おおよその地域、端末やブラウザの種類、ボタンのクリックといった情報を Google に送ります。お名前やメールアドレスなど、あなたを直接特定する情報は送りません。広告のための機能（Google シグナル・広告のパーソナライズ）は使いません。<br>アプリの画面（コンソール・表示ビュー）では使っておらず、話した内容・文字起こし・設定が送られることはありません。ブラウザで「トラッキングしない」（Global Privacy Control / Do Not Track）を有効にしている場合は読み込みません。EU・英国・スイスからのアクセスでは Cookie を使いません。<br>計測を止めたいときは、<a href="https://tools.google.com/dlpage/gaoptout" rel="noopener">Google アナリティクス オプトアウト アドオン</a>をお使いください。Google による情報の取り扱いは、<a href="https://policies.google.com/privacy" rel="noopener">Google のプライバシーポリシー</a>をご覧ください。',
+         'Analytics', 'Our introduction pages (the home page, the legal pages and the page-not-found notice) use Google Analytics 4 from Google LLC to understand how they are found and read. Google Analytics uses cookies and similar technology to send Google information such as the pages viewed, the referring site, approximate location, device and browser type, and button clicks. We send nothing that directly identifies you, such as your name or email address, and we do not use advertising features (Google signals or ad personalization).<br>Google Analytics is not used in the app itself (the console and display view), so what you say, your transcripts and your settings are never sent. It is not loaded if your browser asks not to be tracked (Global Privacy Control / Do Not Track), and no cookies are used for visits from the EU, the UK or Switzerland.<br>To opt out, use the <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener">Google Analytics opt-out browser add-on</a>. For how Google handles this information, see <a href="https://policies.google.com/privacy" rel="noopener">Google’s privacy policy</a>.'),
+        ('利用目的', '当方が参照する情報は、有料プランの提供と契約の確認、お問い合わせへの対応、不正利用の防止、アクセス解析によるサービスの改善のためだけに使います。',
+         'Purpose of use', 'We use the information we access only to provide paid plans and verify subscriptions, respond to enquiries, prevent misuse, and improve the Service through analytics.'),
+        ('第三者への提供', '法令に基づく場合を除き、個人情報をご本人の同意なく第三者に提供しません。決済のための Stripe、配信のための Cloudflare、メール送信のための Resend、アクセス解析のための Google は、それぞれの業務に必要な範囲で情報を取り扱います（いずれも国外の事業者を含みます）。',
+         'Sharing with third parties', 'Except as required by law, we do not share personal information with third parties without your consent. Stripe (payments), Cloudflare (delivery), Resend (email) and Google (analytics) handle information only as needed for their services; all include providers outside Japan.'),
         ('ブラウザに保存される情報', 'このブラウザには、設定、文字起こし、ライセンスコードなどが保存されます。コンソールの「消去」ボタンや、ブラウザのサイトデータの削除でいつでも消せます。ライセンスコードを消した場合も、「ライセンスコードで復元」から戻せます。',
          'Data stored in your browser', 'Your browser stores settings, transcripts and your license code. You can delete them at any time with the console’s Clear button or by clearing site data in your browser. If you delete your license code, you can restore it with “Restore with a license code”.'),
         ('開示・訂正・削除のご請求', 'ご本人からの開示・訂正・利用停止・削除のご請求には、法令に従い対応します。Stripe に保存された情報は、契約管理ページからも確認・変更できます。',
@@ -138,9 +141,10 @@ def page(slug, ja):
     up = '../' if ja else '../../'           # サイトのルートへ
     home = '../index.html' if ja else '../index.html'  # 同じ言語のトップ
     other = f'../en/legal/{slug}.html' if ja else f'../../legal/{slug}.html'
-    url = f'https://kanpe.yoneken.xyz/{"" if ja else "en/"}legal/{slug}.html'
-    alt_ja = f'https://kanpe.yoneken.xyz/legal/{slug}.html'
-    alt_en = f'https://kanpe.yoneken.xyz/en/legal/{slug}.html'
+    # 検索エンジン向けの URL は .html なし（Cloudflare Pages は .html 付きを .html なしへ転送するため、転送先を正とする）
+    url = f'https://kanpe.yoneken.xyz/{"" if ja else "en/"}legal/{slug}'
+    alt_ja = f'https://kanpe.yoneken.xyz/legal/{slug}'
+    alt_en = f'https://kanpe.yoneken.xyz/en/legal/{slug}'
     cur = ' aria-current="page"'
     nav = ''.join(f'<a href="{s}.html"{cur if s == slug else ""}>{j if ja else e}</a>' for s, j, e in ORDER)
     fonts = ('family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500'
@@ -155,6 +159,15 @@ def page(slug, ja):
 <link rel="canonical" href="{url}">
 <link rel="alternate" hreflang="ja" href="{alt_ja}">
 <link rel="alternate" hreflang="en" href="{alt_en}">
+<link rel="alternate" hreflang="x-default" href="{alt_ja}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KANPE">
+<meta property="og:locale" content="{"ja_JP" if ja else "en_US"}">
+<meta property="og:url" content="{url}">
+<meta property="og:title" content="{html.escape(title)}｜KANPE">
+<meta property="og:description" content="{html.escape(lede)}">
+<meta property="og:image" content="https://kanpe.yoneken.xyz/assets/{"og.png?v=2" if ja else "og-en.png?v=1"}">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="{up}assets/icon.svg" type="image/svg+xml">
 <link rel="icon" href="{up}assets/favicon-32.png" sizes="32x32" type="image/png">
 <meta name="theme-color" content="#f5f3ee">
@@ -183,7 +196,7 @@ def page(slug, ja):
   <h1>{title}</h1>
   <p class="legal-lede">{lede}</p>
   {body(ja)}
-  <p class="fine legal-updated">{"最終更新" if ja else "Last updated"}：{UPDATED[0] if ja else UPDATED[1]}</p>
+  <p class="fine legal-updated">{"最終更新" if ja else "Last updated"}：{UPDATED_BY.get(slug, UPDATED)[0 if ja else 1]}</p>
 </main>
 <footer class="foot">
   <span class="logo small"><span class="tally" aria-hidden="true"></span>KANPE</span>
@@ -197,9 +210,64 @@ def page(slug, ja):
 <script src="{up}src/ui/lang.js" defer></script>
 <script src="{up}src/ui/menu.js" defer></script>
 <script src="{up}src/ui/mode.js" defer></script>
+<script type="module" src="{up}src/lp/analytics.js"></script>
 </body>
 </html>
 '''
+
+# ------------------------------------------------------------------ 見つからないページ（404）
+# Cloudflare Pages は、ない URL に近い階層の 404.html を「404」で返す（これが無いとトップページを 200 で返してしまう）。
+# どの深さの URL でも表示できるよう、読み込むファイルはサイトのルートから（/ 始まり）で指定する。
+def page404(ja):
+    fonts = ('family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500'
+             if ja else 'family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Shippori+Mincho+B1:wght@700&family=IBM+Plex+Mono:wght@400;500')
+    home = '/' if ja else '/en/'
+    app = '/app' if ja else '/en/app'
+    return f'''<!doctype html>
+<html lang="{"ja" if ja else "en"}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{"ページが見つかりません" if ja else "Page not found"}｜KANPE</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png">
+<meta name="theme-color" content="#f5f3ee">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?{fonts}&display=swap">
+<link rel="stylesheet" href="/styles/lp.css">
+<script>{THEME_JS}</script>
+</head>
+<body id="top" class="legal-page">
+<header class="nav scrolled">
+  <a class="logo" href="{home}" aria-label="{"KANPE トップ" if ja else "KANPE home"}"><span class="tally" aria-hidden="true"></span>KANPE<span class="beta mono">BETA</span></a>
+  <a class="btn btn-ink small" href="{app}">{"無料で使う" if ja else "Try free"}</a>
+</header>
+<main class="legal">
+  <p class="label mono">404 · NOT FOUND</p>
+  <h1>{"ページが見つかりません" if ja else "Page not found"}</h1>
+  <p class="legal-lede">{"お探しのページは、移動したか、なくなった可能性があります。" if ja else "The page you’re looking for may have moved or no longer exists."}</p>
+  <p><a class="btn btn-ink" href="{home}">{"トップページへ" if ja else "Go to the home page"}</a>　<a class="btn btn-line" href="{app}">{"コンソールを開く" if ja else "Open the console"}</a></p>
+</main>
+<footer class="foot">
+  <span class="logo small"><span class="tally" aria-hidden="true"></span>KANPE</span>
+  <nav class="foot-links" aria-label="{"フッター" if ja else "Footer"}">
+    <a href="{home}">{"トップ" if ja else "Home"}</a>
+    <a href="{"/legal/privacy" if ja else "/en/legal/privacy"}">{"プライバシー" if ja else "Privacy"}</a>
+    <a href="{"/en/" if ja else "/"}" hreflang="{"en" if ja else "ja"}" lang="{"en" if ja else "ja"}">{"English" if ja else "日本語"}</a>
+  </nav>
+  <span class="fine">© 2026 KANPE · {"ベータ版" if ja else "Beta"}</span>
+</footer>
+<script type="module" src="/src/lp/analytics.js"></script>
+</body>
+</html>
+'''
+
+for ja in (True, False):
+    out = ROOT / ('404.html' if ja else 'en/404.html')
+    out.write_text(page404(ja))
+    print('wrote', out.relative_to(ROOT))
 
 for slug in PAGES:
     for ja in (True, False):

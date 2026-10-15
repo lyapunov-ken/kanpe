@@ -32,9 +32,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700&family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../styles/lp.css?v=202610151124">
+<link rel="stylesheet" href="../styles/lp.css?v=202610151239">
 <script>document.documentElement.classList.add('js');</script>
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://kanpe.yoneken.xyz/#website","url":"https://kanpe.yoneken.xyz/","name":"KANPE","alternateName":"KANPE リアルタイムカンペ","inLanguage":["ja","en"]},{"@type":"WebApplication","@id":"https://kanpe.yoneken.xyz/en/#app","name":"KANPE","url":"https://kanpe.yoneken.xyz/en/","description":"Real-time cue cards that turn what you say on stream into live Japanese typography. Runs in the browser with just a mic — free, no sign-up.","applicationCategory":"MultimediaApplication","operatingSystem":"Web browser","browserRequirements":"A browser with a microphone and speech recognition (Web Speech API): Chrome, Edge or Safari","inLanguage":"en","isAccessibleForFree":true,"image":"https://kanpe.yoneken.xyz/assets/og-en.png?v=1","isPartOf":{"@id":"https://kanpe.yoneken.xyz/#website"},"offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"JPY","url":"https://kanpe.yoneken.xyz/en/#pricing"},{"@type":"Offer","name":"Plus (monthly)","price":"480","priceCurrency":"JPY","url":"https://kanpe.yoneken.xyz/en/#pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"480","priceCurrency":"JPY","billingDuration":"P1M","unitCode":"MON"}},{"@type":"Offer","name":"Plus (yearly)","price":"4800","priceCurrency":"JPY","url":"https://kanpe.yoneken.xyz/en/#pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"4800","priceCurrency":"JPY","billingDuration":"P1Y","unitCode":"ANN"}}]}]}</script>
 </head>
 <body id="top">
 <header class="nav">
@@ -58,7 +59,7 @@
 
 <main>
   <!-- ============ Hero ============ -->
-  <section class="hero" aria-labelledby="hero-title">
+  <section class="hero" id="hero" aria-labelledby="hero-title">
     <div class="hero-copy">
       <p class="label mono"><span class="rec" aria-hidden="true"></span>LIVE CUE SYSTEM</p>
       <h1 class="hero-title" id="hero-title">
@@ -347,6 +348,7 @@
           <li>Cue view and OBS overlay</li>
           <li>Keywords and blocked words</li>
           <li>Transcript export as TXT / SRT</li>
+          <li>Any accent color you like</li>
           <li>A one-day (24-hour) trial of the paid looks and effects — premium typefaces, background images, VJ mode, speaker colors and more</li>
         </ul>
         <p class="plan-note">A small “KANPE” mark appears in the corner of the display</p>
@@ -363,7 +365,7 @@
           <li><b>VJ mode</b>: words drawn in dot art (1px, LED, Neon, Pixel — 5 typefaces)</li>
           <li><b>Speaker labels and colors</b>: up to 4 people, switch with buttons or keys, or automatically by voice on desktop</li>
           <li>All premium typefaces (“Brush”, “Dot” and new ones every month)</li>
-          <li>Any accent color, your own background image, or your camera as the background</li>
+          <li>Your own background image, or your camera as the background</li>
           <li>Remove the “KANPE” mark from the display</li>
           <li>Unlimited browser speech recognition</li>
         </ul>
@@ -414,7 +416,7 @@
       <li class="reveal"><span class="mono">DIRECT</span><b>Screens talk directly</b><p>The console and display views talk to each other inside the same browser, and OBS connects straight to your own OBS. Your OBS password is never sent to a server.</p></li>
       <li class="reveal"><span class="mono">ERASE</span><b>Delete any time</b><p>Clear the transcript with the Clear button; clear your browser’s site data to remove everything else. On a shared computer, clear it when you’re done.</p></li>
     </ul>
-    <p class="fine privacy-note">All traffic is encrypted (https), and the pages carry no ads, analytics tags or third-party scripts. Pro’s cloud recognition (coming soon) will send audio only to be transcribed and is designed so nothing is stored on KANPE’s servers.</p>
+    <p class="fine privacy-note">All traffic is encrypted (https). The app itself (console and display view) carries no ads, analytics tags or third-party scripts; only this introduction page and the legal pages use Google Analytics to see how they are found and read (nothing you say is ever sent). Pro’s cloud recognition (coming soon) will send audio only to be transcribed and is designed so nothing is stored on KANPE’s servers.</p>
   </section>
 
   <!-- ============ FAQ ============ -->
@@ -496,9 +498,10 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html?welcome=1" tabindex="-1">Start free in your browser<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="../src/ui/lang.js?v=202610151124" defer></script>
-<script src="../src/ui/menu.js?v=202610151124" defer></script>
-<script src="../src/ui/mode.js?v=202610151124" defer></script>
-<script src="../src/lp/lp.js?v=202610151124" defer></script>
+<script src="../src/ui/lang.js?v=202610151239" defer></script>
+<script src="../src/ui/menu.js?v=202610151239" defer></script>
+<script src="../src/ui/mode.js?v=202610151239" defer></script>
+<script src="../src/lp/lp.js?v=202610151239" defer></script>
+<script type="module" src="../src/lp/analytics.js?v=202610151239"></script>
 </body>
 </html>

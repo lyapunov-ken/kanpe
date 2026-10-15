@@ -9,6 +9,7 @@ export const CHANGELOG = [
       { type: 'new', ja: 'はじめての人向けの3ステップのガイド。ヘルプの「はじめかた」からも見直せます', en: 'A 3-step guide for first-time users, also available from Help → Getting started' },
       { type: 'new', ja: 'VJ モードに、白黒の 1px の点と線で描く「1px」スタイル', en: 'New “1px” VJ style, drawn only in monochrome 1px dots and lines' },
       { type: 'new', ja: 'この「更新情報」で、新しいバージョンの内容が見られるように', en: 'This “What’s new” panel, so you can see what changed in each version' },
+      { type: 'improve', ja: 'アクセントカラーを、無料プランでも自由に変えられるように', en: 'Accent colors can now be changed on the Free plan too' },
       { type: 'improve', ja: 'VJ モードの設定を半分に整理（スタイルと書体だけ）。「ホロ」スタイルはなくしました', en: 'VJ settings trimmed to style and typeface; the Holo style has been removed' },
       { type: 'improve', ja: 'はじめは書体テーマ「墨」・少し小さめの文字で始まるように。縦長の窓でも文字がはみ出しにくく', en: 'New users start with the Sumi theme and slightly smaller text; text fits better in narrow windows' },
       { type: 'improve', ja: '別窓（カンペ・組版）のボタンをプレビューの右下へ', en: 'The cue and compose window buttons moved to the bottom right of the preview' },

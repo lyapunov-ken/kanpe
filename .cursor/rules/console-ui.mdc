@@ -4,7 +4,7 @@ globs: app.html,src/console/**,src/ui/**,styles/console.css
 alwaysApply: false
 ---
 - 設定は `S`（localStorage `kanpe.settings.v1`）。変えたら `pushSettings()` で表示ビューへ送る。新しい設定は `src/core/settings.js` の `DEFAULTS` に既定値を足す
-- プレミアム機能（お手軽プラン以上）は `plusLocked()` で鍵をかけ、無料プランは1日お試し（`plan.js`）。新しい機能をどのプランにするかは相談する
+- プレミアム機能（お手軽プラン以上）は `plusLocked()` で鍵をかけ、無料プランは1日お試し（`plan.js`）。新しい機能をどのプランにするかは相談する。アクセントカラーは無料（`REQUIRES` に載せない）
 - VJ を選んでいる間は `body.is-vj` が付き、`data-novj` の付いた設定（文字サイズ・同時に出す語・縦組み）を隠す。VJ で効かない設定を足すときは `data-novj` を付ける
 - 初回の3ステップガイド（`src/console/guide.js`）：設定が未保存、または `?welcome=1` で来た人に一度だけ出す（`kanpe.guide.v1`）。ヘルプの「はじめかた」から開き直せる。対象の要素の id やクラスを変えたら `console.js` のステップの `target` も直す
 - ヘルプ（`help.js`）のシーン別プリセット `PRESETS` は、無料プランの機能だけで組む。ブレスト会議は新語ミックスをオンにする

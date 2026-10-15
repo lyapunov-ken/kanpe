@@ -8,7 +8,6 @@ T = [
   ('<html lang="ja">', '<html lang="en">'),
   ('<title>KANPE コンソール</title>', '<title>KANPE Console</title>'),
   ('content="KANPE の操作画面。マイクで話すと、キーワードがその場で日本語タイポグラフィになります。"', 'content="The KANPE console. Talk into your mic and keywords turn into live typography on screen."'),
-  ('<link rel="canonical" href="https://kanpe.yoneken.xyz/app">', '<link rel="canonical" href="https://kanpe.yoneken.xyz/en/app">'),
   ('<meta property="og:url" content="https://kanpe.yoneken.xyz/app">', '<meta property="og:url" content="https://kanpe.yoneken.xyz/en/app">'),
   ('<meta property="og:locale" content="ja_JP">', '<meta property="og:locale" content="en_US">'),
   ('KANPE コンソール｜話すと、文字が組まれる。', 'KANPE Console | Speak, and your words take shape.'),
@@ -49,7 +48,7 @@ T = [
   ('aria-label="書体テーマ"', 'aria-label="Typeface theme"'),
   ('<span class="lbl">プレミアム書体 <em class="pro-tag">¥480〜</em></span>', '<span class="lbl">Premium typefaces <em class="pro-tag">¥480+</em></span>'),
   ('aria-label="プレミアム書体"', 'aria-label="Premium typefaces"'),
-  ('<span class="lbl">アクセントカラー <em class="pro-tag">¥480〜</em></span>', '<span class="lbl">Accent color <em class="pro-tag">¥480+</em></span>'),
+  ('<span class="lbl">アクセントカラー</span>', '<span class="lbl">Accent color</span>'),
   ('aria-label="アクセントカラー"', 'aria-label="Accent color"'),
   ('<p class="hint">初めて出た言葉の色と下線に使います</p>', '<p class="hint">Used for the color and underline of words heard for the first time</p>'),
   ('<span class="lbl">背景（画像・カメラ） <em class="pro-tag">¥480〜</em></span>', '<span class="lbl">Background (image / camera) <em class="pro-tag">¥480+</em></span>'),
@@ -60,7 +59,7 @@ T = [
   ('type="button" hidden>外す</button>', 'type="button" hidden>Remove</button>'),
   ('<span class="lbl">背景の暗さ</span>', '<span class="lbl">Background dimming</span>'),
   ('<p class="hint">画像は長い辺が1000px以下になるよう自動で縮小し、表示の窓に合わせてトリミングします。カメラの映像はこの端末の中だけで使い、どこにも送りません（OBS のブラウザソースでは映りません）</p>', '<p class="hint">Images are resized to 1000px on the long side and cropped to fit the window. Camera video stays on this device and is never sent anywhere (it doesn’t show in OBS browser sources).</p>'),
-  ('<p id="trialNote" class="hint">プレミアム書体・アクセントカラー・背景画像・VJ モード・話者の色分けは、無料プランでも1日（24時間）お試しできます</p>', '<p id="trialNote" class="hint">Premium typefaces, accent colors, background images, VJ mode and speaker colors can be tried free for one day (24 hours)</p>'),
+  ('<p id="trialNote" class="hint">プレミアム書体・背景画像・VJ モード・話者の色分けは、無料プランでも1日（24時間）お試しできます</p>', '<p id="trialNote" class="hint">Premium typefaces, background images, VJ mode and speaker colors can be tried free for one day (24 hours)</p>'),
   ('<span class="lbl">レイアウト</span>', '<span class="lbl">Layout</span>'),
   ('aria-label="レイアウト"', 'aria-label="Layout"'),
   ('<span class="lbl">VJ スタイル <em class="pro-tag">¥480〜</em></span>', '<span class="lbl">VJ style <em class="pro-tag">¥480+</em></span>'),
@@ -130,7 +129,6 @@ for a, b in T:
     s = s.replace(a, b)
 # 英語版は /en/ にあるので、共有のファイルは1つ上を指す
 s = re.sub(r'(href|src)="(assets|styles|src)/', r'\1="../\2/', s)
-s = s.replace('<link rel="alternate" hreflang="ja" href="https://kanpe.yoneken.xyz/app">', '<link rel="alternate" hreflang="ja" href="https://kanpe.yoneken.xyz/app">')
 left = re.findall(r'[぀-ヿ一-鿿]+', re.sub(r'<a class="lang-link jp"[^>]*>日本語</a>', '', s).replace('title="日本語版"', ''))
 left = [w for w in left if w not in ('字',)]
 if left:

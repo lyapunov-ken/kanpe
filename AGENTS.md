@@ -25,6 +25,7 @@ Cursor（および AGENTS.md を読むエージェント）向けのプロジェ
 - マイクなし確認：`display.html?demo=1`（`&layout=vj&vj=micro` など）、コンソールの「デモを流す」
 - 初回ガイドの確認：`app.html?welcome=1`（一度見ると localStorage の `kanpe.guide.v1` に記録される。消すと再表示）
 - 決済 API のテスト：`node tools/test-api.mjs`（Stripe は偽物。通信・キー不要。32 件すべて通ること）
+- SEO とアクセス解析：`robots.txt`・`sitemap.xml`（`tools/make-sitemap.py`、bump-version.sh から自動）・`404.html`（`tools/make-legal.py` で生成）。GA4 の測定 ID は `src/lp/analytics.js` の `GA_ID`（G-YK9R5RH3V8）。テスト URL では `?ga=debug` で計測。詳しくは `DEPLOY.md`
 
 ## 構成
 ```
@@ -34,15 +35,16 @@ src/core/    changelog.js（更新履歴・いまのバージョン）plan.js（
 src/console/ console.js（操作・設定・新語ミックスの発火）recognizer.js speakers.js demo.js
              help.js（ヘルプ・シーン別プリセット）guide.js（初回の3ステップガイド）news.js（更新情報）
 src/display/ display.js（組版描画・新語の誕生演出・依存ゼロ）vj.js（VJ モード：1px / LED / ネオン / ピクセル）
-src/lp/ src/ui/  LP のデモ、言語切替、表示モード、スマホのメニュー
+src/lp/ src/ui/  LP のデモ・アクセス解析（analytics.js）、言語切替、表示モード、スマホのメニュー
 functions/api/   checkout.js license.js license-email.js portal.js stripe-webhook.js _lib.js
-tools/           bump-version.sh make-headers.py make-en-app.py make-legal.py stripe-setup.mjs test-api.mjs og/
+tools/           bump-version.sh make-headers.py make-sitemap.py make-en-app.py make-legal.py stripe-setup.mjs test-api.mjs og/
 docs/            調査メモ
 ```
 
 ## 必ず守ること
 1. **ビルドなし・依存なし**：素の HTML / CSS / ES Modules。npm パッケージやバンドラ、CDN スクリプトを足さない
-2. **外部スクリプト禁止（CSP）**：`_headers` の CSP はスクリプトを自サイト＋ハッシュ付きインラインだけ許可。HTML の `<script>` を変えたら `python3 tools/make-headers.py`（bump-version.sh から自動）。`_headers` は手で直さない
+2. **外部スクリプト禁止（CSP）**：`_headers` の CSP はスクリプトを自サイト＋ハッシュ付きインライン＋Google アナリティクス（googletagmanager）だけ許可。HTML の `<script>` を変えたら `python3 tools/make-headers.py`（bump-version.sh から自動）。`_headers` は手で直さない
+   - GA4 は紹介ページ（LP・規約・404）だけで `src/lp/analytics.js` から読み込む。アプリの画面（app.html・display.html）には入れない。GA の標準タグ（インラインの gtag）は貼らない（二重計測になる）
 3. **生成物は元を直す**：`en/app.html` ← `app.html` を直して `python3 tools/make-en-app.py`。`legal/`・`en/legal/` ← `tools/make-legal.py` を直して再生成
 4. **本番に出す前に `./tools/bump-version.sh`**：JS/CSS の `?v=` を付け直し、`_headers` も作り直す（作業ブランチの最後のコミットで実行しておく）
 5. **文言は日英両方**：JS 内は `L('日本語', 'English')`（`src/core/i18n.js`）、`app.html` の文言は `tools/make-en-app.py` の置換表 `T` にも足す
@@ -59,16 +61,10 @@ docs/            調査メモ
 - コミットメッセージは英語で、何を・なぜを短く。1 つのブランチに関係のない変更を混ぜない
 
 ## いまの状態（2026-10-15 時点）
-- 本番：`main`（c665049「Android: stop the repeated beeps…」まで）
-- 確認待ちのブランチ：`feat/coin-guide-vj1px` → テスト URL https://feat-coin-guide-vj1px.kanpe-ahr.pages.dev/app.html?welcome=1
-  - 新語ミックス（ブレスト）／初回の3ステップガイド／初期の文字サイズ 40→34／VJ に「1px」スタイル追加・VJ の設定を半分に（ドットの細かさ・演出の強さを画面から外した）
-  - 2回目の修正：ガイドが終わったらページ先頭へ戻る／初期の書体テーマを墨に／別窓ボタンをプレビューの右下へ／新語の色（虹・ランダム含む）・出かた（衝突・デコード・シャッター・集束・スキャン・ランダム）・速さを選べるように
-  - 4回目の修正：新語の文字を細いほうの太さに（輪郭は生まれる間だけ）／出かたを 衝突・デコード・シャッター・集束・スキャン に入れ替え（以前の開花・グリッチ・タイプ・落下は近いものへ移す）
-  - 5回目の修正：新語をいつも手前に（下敷きの板で後ろの言葉が透けない・ほかの語に押し出されない）／表示時間を長めに（組版 3.2 倍）／色を背景に合わせてコントラスト 4.5 以上に自動調整（`src/core/color.js`）
-  - 6回目の修正：新語の下敷きの板（縁が見えていた）をやめ、配置で重ならないように（新語に重なる場所には置かない）。「新語」の札も塗りなしの活字ラベルに
-  - 7回目の追加：カンペの「同じ話の記憶」（オフ / 5分 / 10分。既定 5分）。その時間内にくり返した語ほど大きく長く残り、同じ話を続けると画面が言葉で埋まる（カンペのレイアウトだけ）
-  - 8回目の修正：新語は同時に5つまで。「いま混ぜる」を連打して5つになったら、一番古い新語をいつもより早め（約3秒）に消す
-  - 3回目の修正：スマホでプレビューを上に固定／VJ の「ホロ」を削除／更新情報（バージョン履歴・1時間 NEW 表示）を追加。このブランチを出すときのバージョンは v1.3.0
-  - このブランチで Cursor 用の設定ファイル（AGENTS.md・.cursor/・docs/）もリポジトリに入れた
+- 本番：`main` = v1.3.0（新語ミックス・初回ガイド・VJ 1px・カンペの同じ話の記憶・更新情報 ほか）＋ SEO / GA4 ＋ アクセントカラーの無料化
+  - v1.3.0 のブランチ `feat/coin-guide-vj1px` で重ねた修正の経緯：新語の色・出かた・速さ、細い字、手前に出す、背景に合わせた色、下敷きの板をやめて配置で重ならないように、新語は同時に5つまで、カンペの「同じ話の記憶」（5分・10分）
+  - `feat/seo-ga4`：robots.txt・sitemap.xml・404・規約の正規 URL・コンソールの noindex・JSON-LD・GA4（紹介ページだけ）・プライバシーポリシーの「アクセス解析」
+  - `feat/free-accent`：アクセントカラーを無料に（`plan.js` の `REQUIRES` から外した）
+- Search Console のドメイン確認とサイトマップ送信はユーザーが行う（手順は `DEPLOY.md`）
 - プレビュー用の環境変数は未設定（テスト URL では決済 API が「準備中」になる）。設定方法は `DEPLOY.md`
 - Mac の `~/kanpesystem2` フォルダは古い版の手元コピー。今後はこのリポジトリを使う
