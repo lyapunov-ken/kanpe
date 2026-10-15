@@ -30,7 +30,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97%20BGMPRcdefhilnotux%E3%82%AF%E3%82%B4%E3%82%B7%E3%83%83%E3%83%88%E3%83%89%E4%B8%B8%E5%A4%AA%E6%98%8E%E6%9C%9D%E6%A5%B5&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="../styles/console.css?v=202610150729">
+<link rel="stylesheet" href="../styles/console.css?v=202610150914">
 </head>
 <body>
 <header class="top">
@@ -152,6 +152,11 @@
           <button id="btnFuse" class="btn" type="button">Mix now <kbd>M</kbd></button>
           <span class="hint">When on, new words are born now and then while you talk</span>
         </div>
+        <div class="coin-opts">
+          <div class="coin-opt"><span class="lbl">New-word color</span><div id="fzColors" class="accents fz-colors" role="radiogroup" aria-label="New-word color"></div></div>
+          <div class="coin-opt"><span class="lbl">Entrance</span><div id="fzMotions" class="segmented" role="radiogroup" aria-label="New-word entrance"></div><p id="fzMotionNote" class="hint"></p></div>
+          <div class="coin-opt"><span class="lbl">Speed</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="New-word speed"></div></div>
+        </div>
       </div>
     </div>
 
@@ -178,10 +183,7 @@
 
     <div class="sec">
       <h2>DISPLAY VIEWS</h2>
-      <div class="grid2">
-        <button id="openKanpe" class="btn" type="button">Open cue view</button>
-        <button id="openStage" class="btn" type="button">Open compose view</button>
-      </div>
+      <p class="hint">Open the cue and compose windows from the bottom right of the preview</p>
       <details class="obs">
         <summary><span>Overlay on OBS (transparent)</span><small>Beta</small></summary>
         <ol class="steps-mini">
@@ -211,6 +213,11 @@
       </div>
     </div>
     <div class="preview"><iframe id="preview" src="../display.html?embed=1&amp;hl=en" title="Display preview" allow="camera"></iframe></div>
+    <div class="preview-foot">
+      <span class="hint">Show it big in a window</span>
+      <button id="openKanpe" class="btn pop-btn" type="button">Open cue view</button>
+      <button id="openStage" class="btn pop-btn" type="button">Open compose view</button>
+    </div>
 
     <div class="card transcript">
       <div class="preview-head">
@@ -229,9 +236,9 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="../src/ui/lang.js?v=202610150729" defer></script>
-<script src="../src/ui/menu.js?v=202610150729" defer></script>
-<script src="../src/ui/mode.js?v=202610150729" defer></script>
-<script type="module" src="../src/console/console.js?v=202610150729"></script>
+<script src="../src/ui/lang.js?v=202610150914" defer></script>
+<script src="../src/ui/menu.js?v=202610150914" defer></script>
+<script src="../src/ui/mode.js?v=202610150914" defer></script>
+<script type="module" src="../src/console/console.js?v=202610150914"></script>
 </body>
 </html>

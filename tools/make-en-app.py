@@ -113,6 +113,11 @@ T = [
   ('type="button">いま混ぜる <kbd>M</kbd></button>', 'type="button">Mix now <kbd>M</kbd></button>'),
   ('<span class="hint">オンにすると、話している間ときどき自動で生まれます</span>', '<span class="hint">When on, new words are born now and then while you talk</span>'),
   ('<span class="coin-memo-lbl">生まれた新語</span>', '<span class="coin-memo-lbl">New words</span>'),
+  ('<span class="lbl">新語の色</span><div id="fzColors" class="accents fz-colors" role="radiogroup" aria-label="新語の色">', '<span class="lbl">New-word color</span><div id="fzColors" class="accents fz-colors" role="radiogroup" aria-label="New-word color">'),
+  ('<span class="lbl">出かた</span><div id="fzMotions" class="segmented" role="radiogroup" aria-label="新語の出かた">', '<span class="lbl">Entrance</span><div id="fzMotions" class="segmented" role="radiogroup" aria-label="New-word entrance">'),
+  ('<span class="lbl">速さ</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="新語の出る速さ">', '<span class="lbl">Speed</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="New-word speed">'),
+  ('<p class="hint">別窓（カンペ・組版）は、プレビューの右下から開けます</p>', '<p class="hint">Open the cue and compose windows from the bottom right of the preview</p>'),
+  ('<span class="hint">別窓で大きく映す</span>', '<span class="hint">Show it big in a window</span>'),
   ('<p class="hint tx-note">この端末のブラウザにだけ保存されます（サーバーには送りません）</p>', '<p class="hint tx-note">Saved only in this browser on this device (never sent to a server)</p>'),
 ]
 for a, b in T:

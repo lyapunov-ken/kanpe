@@ -1,12 +1,12 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610150729';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610150729';
-import { createBus } from '../core/bus.js?v=202610150729';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610150729';
-import { runs } from '../core/extract.js?v=202610150729';
-import { EN, L, tr } from '../core/i18n.js?v=202610150729';
-import { createVJ } from './vj.js?v=202610150729';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610150914';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610150914';
+import { createBus } from '../core/bus.js?v=202610150914';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610150914';
+import { runs } from '../core/extract.js?v=202610150914';
+import { EN, L, tr } from '../core/i18n.js?v=202610150914';
+import { createVJ } from './vj.js?v=202610150914';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -283,6 +283,7 @@ async function addWord(m) {
   await fontReady(text, px);
 
   const { node, inner, parts } = build(text, kind, vertical, m.from);
+  if (kind === 'fusion' && m.fz) colorize(node, parts, m.fz.color);
   if (m.spc) { // 話者の色とラベル（話者が替わった最初の語にだけ名前を添える）
     node.classList.add('has-sp');
     node.style.setProperty('--spc', m.spc);
@@ -293,7 +294,7 @@ async function addWord(m) {
   node.style.letterSpacing = TRACK[lv] + 'em';
   const ttl = S.ttl * 1000 * (kind === 'new' ? 1.25 : kind === 'fusion' ? 2 : 1) * (lv >= 2 ? 1.15 : 1);
   const it = { key, text, kind, count: m.count || 1, lv, el: node, inner, parts, vertical,
-    born: now(), ttl, expires: now() + ttl, rect: null, leaving: false, aging: false };
+    born: now(), ttl, expires: now() + ttl, rect: null, leaving: false, aging: false, fz: m.fz };
 
   const max = Math.min(S.maxWords, MAXW[S.layout]);
   let live = liveItems();
@@ -321,6 +322,7 @@ async function addWord(m) {
 
 const EASE = 'cubic-bezier(.2,.75,.15,1)';
 function enter(it) {
+  if (it.kind === 'fusion') { fzEnter(it); return; }
   const calm = S.reduceMotion;
   const stagger = calm ? 0 : Math.min(34, 300 / Math.max(1, it.parts.length));
   it.parts.forEach((p, i) => {
@@ -345,7 +347,6 @@ function enter(it) {
       { duration: 560, delay: total + 140, easing: EASE, fill: 'backwards' });
   }
   if (it.kind === 'number' && !calm) countUp(it);
-  if (it.kind === 'fusion') fill(it, calm ? 0 : total + 300);
 }
 // 新語：輪郭だけで生まれて、少しあとに色が満ちる
 function fill(it, delay) { setTimeout(() => it.el.classList.add('filled'), delay); }
@@ -454,8 +455,13 @@ function shiftTrack(animate) {
 }
 
 // ---------------------------------------------------------------- 新語ミックス（新語誕生）
-// 画面の2語が引き寄せられてぶつかり、そこから新しい言葉が生まれる。組版では親の語から細い線が伸びる。
+// 画面の2語から新しい言葉が生まれる。出かた（motion）・速さ（k）・色（color）はコンソールが決めて送ってくる。
+//  collide 衝突：元の2語の分身が引き寄せられてぶつかり、閃光の中から生まれる
+//  bloom 開花：1字ずつ回りながら花ひらき、輪が広がる ／ glitch グリッチ：色ずれとノイズでチカチカと現れる
+//  type タイプ：カーソルが走って1字ずつ打ち込まれる ／ drop 落下：1字ずつ上から落ちて弾む
+// どの出かたも、輪郭だけで生まれて少しあとに色が満ちる。組版では元の2語から細い系統線が伸びる。
 const SVGNS = 'http://www.w3.org/2000/svg';
+const FZ_MOTIONS = ['collide', 'bloom', 'glitch', 'type', 'drop'];
 let fx = null;
 function fxLayer() {
   if (fx && fx.isConnected) return fx;
@@ -467,62 +473,193 @@ function fxLayer() {
 }
 function svg(tag, attrs) { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
 const centerOf = (it) => ({ x: it.rect.x + it.el.offsetWidth / 2, y: it.rect.y + (it.dy || 0) + it.el.offsetHeight / 2 });
+const fzLook = (m) => ({
+  motion: FZ_MOTIONS.includes(m.motion) ? m.motion : 'collide',
+  k: Math.min(2, Math.max(0.4, +m.k || 1)),
+  color: typeof m.color === 'string' && (m.color === 'rainbow' || /^#[0-9a-f]{6}$/i.test(m.color)) ? m.color : '',
+});
+const fzInk = (node) => getComputedStyle(node).getPropertyValue('--fz').trim() || getComputedStyle(root).getPropertyValue('--accent2').trim();
+
+// 色をつける：単色は --fz、虹は1字ずつ --fzc（バッジと線は最初の字の色）
+function colorize(node, parts, color) {
+  if (color === 'rainbow') {
+    const h0 = Math.random() * 360, n = Math.max(1, parts.length);
+    parts.forEach((p, i) => p.style.setProperty('--fzc', `hsl(${Math.round(h0 + (i * 300) / n) % 360} 85% 55%)`));
+    node.style.setProperty('--fz', `hsl(${Math.round(h0)} 85% 55%)`);
+  } else if (color) node.style.setProperty('--fz', color);
+}
 
 // 親から子へ伸びる系統線（描かれて、しばらく残って、消える）
-function lineage(a, b, delay) {
+function lineage(a, b, delay, k = 1, color = '') {
   const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
   const bend = Math.min(80, len * 0.22) * (Math.random() < 0.5 ? 1 : -1);
   const cx = (a.x + b.x) / 2 - (dy / len) * bend, cy = (a.y + b.y) / 2 + (dx / len) * bend;
   const path = svg('path', { d: `M${a.x},${a.y} Q${cx},${cy} ${b.x},${b.y}`, pathLength: '1', class: 'fz-line' });
   const head = svg('circle', { cx: a.x, cy: a.y, r: 2.6, class: 'fz-head' });
+  if (color) { path.style.stroke = color; head.style.fill = color; }
   fxLayer().append(path, head);
-  path.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 640, delay, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'both' });
-  path.animate([{ opacity: 0.9 }, { opacity: 0.9, offset: 0.55 }, { opacity: 0 }], { duration: 4200, delay, fill: 'both' }).onfinish = () => path.remove();
+  const d = 640 * k;
+  path.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: d, delay, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'both' });
+  path.animate([{ opacity: 0.9 }, { opacity: 0.9, offset: 0.55 }, { opacity: 0 }], { duration: 4200 * k, delay, fill: 'both' }).onfinish = () => path.remove();
   // 線の先を小さな点が走る
   const steps = 18, kf = [];
   for (let i = 0; i <= steps; i++) {
     const t = i / steps, u = 1 - t;
     kf.push({ transform: `translate(${u * u * a.x + 2 * u * t * cx + t * t * b.x - a.x}px, ${u * u * a.y + 2 * u * t * cy + t * t * b.y - a.y}px)`, opacity: i === steps ? 0 : 1 });
   }
-  head.animate(kf, { duration: 640, delay, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'both' }).onfinish = () => head.remove();
+  head.animate(kf, { duration: d, delay, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'both' }).onfinish = () => head.remove();
 }
 // 衝突の閃光：細い放射線と、広がる輪
-function burst(c, size) {
+function burst(c, size, k = 1, color = '') {
   const g = svg('g', { class: 'fz-burst' });
+  if (color) g.style.setProperty('--fzs', color);
   const n = 18, r0 = size * 0.18, r1 = size * 0.9;
   for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2 + Math.random() * 0.2, k = 0.6 + Math.random() * 0.6;
-    const ln = svg('line', { x1: c.x + Math.cos(a) * r0, y1: c.y + Math.sin(a) * r0, x2: c.x + Math.cos(a) * r1 * k, y2: c.y + Math.sin(a) * r1 * k, pathLength: '1' });
+    const a = (i / n) * Math.PI * 2 + Math.random() * 0.2, kk = 0.6 + Math.random() * 0.6;
+    const ln = svg('line', { x1: c.x + Math.cos(a) * r0, y1: c.y + Math.sin(a) * r0, x2: c.x + Math.cos(a) * r1 * kk, y2: c.y + Math.sin(a) * r1 * kk, pathLength: '1' });
     g.appendChild(ln);
     ln.animate([{ strokeDasharray: '0.35 1', strokeDashoffset: 0.35, opacity: 1 }, { strokeDasharray: '0.35 1', strokeDashoffset: -1, opacity: 0 }],
-      { duration: 620 + Math.random() * 260, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' });
+      { duration: (620 + Math.random() * 260) * k, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' });
   }
   const ring = svg('circle', { cx: c.x, cy: c.y, r: size * 0.5, class: 'fz-ring' });
   g.appendChild(ring);
-  ring.animate([{ transform: 'scale(.1)', opacity: 1 }, { transform: 'scale(1.6)', opacity: 0 }], { duration: 760, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' });
+  ring.animate([{ transform: 'scale(.1)', opacity: 1 }, { transform: 'scale(1.6)', opacity: 0 }], { duration: 760 * k, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' });
   fxLayer().appendChild(g);
-  setTimeout(() => g.remove(), 1100);
+  setTimeout(() => g.remove(), 1200 * k);
+}
+// 開花の輪：中心から3重の輪が時間差で広がる
+function rings(c, size, k, color) {
+  const g = svg('g', { class: 'fz-burst' });
+  if (color) g.style.setProperty('--fzs', color);
+  for (let i = 0; i < 3; i++) {
+    const ring = svg('circle', { cx: c.x, cy: c.y, r: size * (0.32 + i * 0.12), class: 'fz-ring' });
+    g.appendChild(ring);
+    ring.animate([{ transform: 'scale(.2)', opacity: 0.9 }, { transform: 'scale(1.5)', opacity: 0 }], { duration: 900 * k, delay: i * 160 * k, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' });
+  }
+  fxLayer().appendChild(g);
+  setTimeout(() => g.remove(), (900 + 480) * k + 100);
+}
+// グリッチの帯：言葉の上を横縞が数回走る
+function bands(box, k, color) {
+  const g = svg('g', { class: 'fz-burst' });
+  for (let i = 0; i < 5; i++) {
+    const h = Math.max(2, box.h * (0.04 + Math.random() * 0.12));
+    const rect = svg('rect', { x: box.x - box.w * 0.08, y: box.y + Math.random() * (box.h - h), width: box.w * 1.16, height: h, class: 'fz-band' });
+    if (color) rect.style.fill = color;
+    g.appendChild(rect);
+    rect.animate([{ opacity: 0, transform: 'translateX(-6%)' }, { opacity: 0.55, transform: 'translateX(4%)', offset: 0.3 }, { opacity: 0, transform: 'translateX(0)' }],
+      { duration: 260 * k, delay: (60 + Math.random() * 380) * k, easing: 'linear', fill: 'both' });
+  }
+  fxLayer().appendChild(g);
+  setTimeout(() => g.remove(), 900 * k);
+}
+// 落下の着地線：言葉の足元に線が左から引かれて消える
+function groundLine(box, k, color, delay) {
+  const ln = svg('line', { x1: box.x, y1: box.y + box.h, x2: box.x + box.w, y2: box.y + box.h, pathLength: '1', class: 'fz-line' });
+  if (color) ln.style.stroke = color;
+  fxLayer().appendChild(ln);
+  ln.animate([{ strokeDashoffset: 1, opacity: 1 }, { strokeDashoffset: 0, opacity: 1, offset: 0.5 }, { strokeDashoffset: 0, opacity: 0 }], { duration: 900 * k, delay, easing: 'ease-out', fill: 'both' }).onfinish = () => ln.remove();
+}
+
+// 1字ずつの登場。戻り値は登場が終わるまでの時間（ミリ秒）
+function fzAnimate(it, motion, k, d0 = 0) {
+  const parts = it.parts, n = parts.length;
+  const step = (ms) => ms * k;
+  if (motion === 'bloom') {
+    parts.forEach((p, i) => p.animate([
+      { opacity: 0, transform: 'scale(0) rotate(-120deg)' },
+      { opacity: 1, transform: 'scale(1.25) rotate(10deg)', offset: 0.6 },
+      { opacity: 1, transform: 'none' },
+    ], { duration: step(760), delay: d0 + step(110) * i, easing: EASE, fill: 'backwards' }));
+    return d0 + step(110) * (n - 1) + step(760);
+  }
+  if (motion === 'glitch') {
+    let end = 0;
+    parts.forEach((p) => {
+      const delay = d0 + Math.random() * step(220);
+      end = Math.max(end, delay + step(560));
+      p.animate([
+        { opacity: 0, transform: 'translateX(-.35em) skewX(-25deg)', textShadow: '.1em 0 #ff2a6d, -.1em 0 #16e0ff' },
+        { opacity: 1, transform: 'translateX(.12em)', offset: 0.25 },
+        { opacity: 0.2, transform: 'translateX(-.08em)', offset: 0.45 },
+        { opacity: 1, transform: 'translateX(.04em) skewX(8deg)', textShadow: '.05em 0 #ff2a6d, -.05em 0 #16e0ff', offset: 0.7 },
+        { opacity: 1, transform: 'none', textShadow: '0 0 transparent' },
+      ], { duration: step(560), delay, easing: 'linear', fill: 'backwards' });
+    });
+    return end;
+  }
+  if (motion === 'type') {
+    const per = step(120);
+    parts.forEach((p, i) => p.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1, delay: d0 + per * i, fill: 'backwards' }));
+    // カーソル：打った字の右へ1字ずつ跳ね、打ち終わったら3回点滅して消える
+    const caret = el('fz-caret');
+    it.el.appendChild(caret);
+    const xs = parts.map((p) => p.offsetLeft + p.offsetWidth);
+    const kf = [{ transform: 'translateX(0px)', opacity: 1, easing: 'steps(1, end)' }];
+    xs.forEach((x, i) => kf.push({ transform: `translateX(${x}px)`, opacity: 1, offset: (i + 1) / (n + 3), easing: 'steps(1, end)' }));
+    kf.push({ transform: `translateX(${xs[n - 1] || 0}px)`, opacity: 0, offset: (n + 1) / (n + 3), easing: 'steps(1, end)' });
+    kf.push({ transform: `translateX(${xs[n - 1] || 0}px)`, opacity: 1, offset: (n + 2) / (n + 3), easing: 'steps(1, end)' });
+    kf.push({ transform: `translateX(${xs[n - 1] || 0}px)`, opacity: 0 });
+    const total = per * (n + 3);
+    caret.animate(kf, { duration: total, delay: d0, fill: 'both' }).onfinish = () => caret.remove();
+    return d0 + per * n;
+  }
+  if (motion === 'drop') {
+    parts.forEach((p, i) => p.animate([
+      { opacity: 0, transform: 'translateY(-1.8em)', easing: 'cubic-bezier(.55,0,1,.45)' },
+      { opacity: 1, transform: 'translateY(0)', offset: 0.5, easing: 'cubic-bezier(0,.55,.45,1)' },
+      { transform: 'translateY(-.28em)', offset: 0.72, easing: 'cubic-bezier(.55,0,1,.45)' },
+      { transform: 'translateY(0)', offset: 0.86, easing: 'cubic-bezier(0,.55,.45,1)' },
+      { transform: 'translateY(-.06em)', offset: 0.93, easing: 'cubic-bezier(.55,0,1,.45)' },
+      { opacity: 1, transform: 'none' },
+    ], { duration: step(820), delay: d0 + step(90) * i, fill: 'backwards' }));
+    return d0 + step(90) * (n - 1) + step(820);
+  }
+  // collide：言葉全体が閃光の中から膨らんで生まれる
+  it.inner.animate([
+    { transform: 'scale(.25)', opacity: 0, filter: 'blur(8px)' },
+    { transform: 'scale(1.1)', opacity: 1, filter: 'blur(0px)', offset: 0.6 },
+    { transform: 'scale(1)', opacity: 1, filter: 'blur(0px)' },
+  ], { duration: step(720), delay: d0, easing: EASE, fill: 'backwards' });
+  return d0 + step(720);
+}
+// 新語の登場の仕上げ：バッジと元の2語を出し、色を満たす
+function fzFinish(it, end, k) {
+  for (const sel of ['.fz-badge', '.fz-from']) {
+    const e = it.el.querySelector(sel);
+    if (e) e.animate([{ opacity: 0, transform: 'translateY(.4em)' }, { opacity: 1, transform: 'none' }], { duration: 420 * k, delay: Math.max(0, end * 0.55), easing: EASE, fill: 'backwards' });
+  }
+  fill(it, end + 80);
+}
+// カンペ・テロップでの新語（enter から呼ぶ）
+function fzEnter(it) {
+  const { motion, k } = it.fz || { motion: 'collide', k: 1 };
+  if (S.reduceMotion) { fill(it, 0); return; }
+  fzFinish(it, fzAnimate(it, motion, k), k);
 }
 
 async function fuseWord(m) {
   const text = (m.text || '').trim();
   if (!text) return;
   lastWordAt = now();
-  if (vj) { await vj.fuse({ text, from: [m.a, m.b] }); updateHint(); return; }
+  const look = fzLook(m);
+  if (vj) { await vj.fuse({ text, from: [m.a, m.b], color: look.color, k: look.k }); updateHint(); return; }
   const prev = items.get(text.toLowerCase());
   if (prev && !prev.leaving) { bump(prev, 0); return; }
-  if (S.layout !== 'compose') { await addWord({ text, kind: 'fusion', count: 1, from: [m.a, m.b] }); return; }
+  if (S.layout !== 'compose') { await addWord({ text, kind: 'fusion', count: 1, from: [m.a, m.b], fz: look }); return; }
 
+  const { motion, k, color } = look;
   const parents = [m.a, m.b].map((t) => items.get(String(t || '').toLowerCase())).filter((it) => it && !it.leaving && it.rect && it.el.isConnected);
   const lv = 2;
   const px = basePx() * RATIOS.compose[lv];
   await fontReady(text, px);
   const { node, inner, parts } = build(text, 'fusion', false, [m.a, m.b]);
+  colorize(node, parts, color);
   node.style.fontSize = px + 'px';
   node.style.letterSpacing = TRACK[lv] + 'em';
   const ttl = S.ttl * 1000 * 2.2;
   const it = { key: text.toLowerCase(), text, kind: 'fusion', count: 1, lv, el: node, inner, parts, vertical: false,
-    born: now(), ttl, expires: now() + ttl, rect: null, leaving: false, aging: false };
+    born: now(), ttl, expires: now() + ttl, rect: null, leaving: false, aging: false, fz: look };
   let live = liveItems();
   const max = Math.min(S.maxWords, MAXW.compose);
   while (live.length >= max) { const old = live.find((x) => !parents.includes(x)) || live[0]; expire(old); live = liveItems(); }
@@ -541,40 +678,40 @@ async function fuseWord(m) {
   updateHint();
   const c = { x: r.x + node.offsetWidth / 2, y: y + node.offsetHeight / 2 };
   const size = Math.max(node.offsetWidth, node.offsetHeight);
+  const box = { x: r.x, y, w: node.offsetWidth, h: node.offsetHeight };
+  const ink = color && color !== 'rainbow' ? color : (color === 'rainbow' ? fzInk(node) : '');
 
-  if (S.reduceMotion) { node.style.visibility = ''; enter(it); return; }
+  if (S.reduceMotion) { node.style.visibility = ''; fill(it, 0); return; }
 
-  // 1) 親の語が光って、分身がまん中へ吸い寄せられる
+  // 1) 元の2語が光る。衝突では分身がまん中へ吸い寄せられる。どの出かたでも系統線が伸びる
   for (const p of parents) {
     p.el.classList.add('fz-parent');
-    setTimeout(() => p.el.classList.remove('fz-parent'), 1800);
-    p.inner.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 420, easing: EASE });
-    const ghost = p.el.cloneNode(true);
-    ghost.classList.remove('aging');
-    ghost.classList.add('fz-ghost');
-    host.appendChild(ghost);
-    const k = 0.42, pw = p.el.offsetWidth, ph = p.el.offsetHeight;
-    ghost.animate([
-      { transform: `translate(${p.rect.x}px, ${p.rect.y + (p.dy || 0)}px)`, opacity: 0.85 },
-      { transform: `translate(${c.x - (pw * k) / 2}px, ${c.y - (ph * k) / 2}px) scale(${k})`, opacity: 0.6 },
-    ], { duration: 680, delay: 120, easing: 'cubic-bezier(.6,0,.85,.25)', fill: 'both' }).onfinish = () => ghost.remove();
-    lineage(centerOf(p), c, 120);
+    if (ink) p.el.style.setProperty('--fzp', ink);
+    setTimeout(() => { p.el.classList.remove('fz-parent'); p.el.style.removeProperty('--fzp'); }, 1800 * k);
+    p.inner.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 420 * k, easing: EASE });
+    if (motion === 'collide') {
+      const ghost = p.el.cloneNode(true);
+      ghost.classList.remove('aging');
+      ghost.classList.add('fz-ghost');
+      host.appendChild(ghost);
+      const kk = 0.42, pw = p.el.offsetWidth, ph = p.el.offsetHeight;
+      ghost.animate([
+        { transform: `translate(${p.rect.x}px, ${p.rect.y + (p.dy || 0)}px)`, opacity: 0.85 },
+        { transform: `translate(${c.x - (pw * kk) / 2}px, ${c.y - (ph * kk) / 2}px) scale(${kk})`, opacity: 0.6 },
+      ], { duration: 680 * k, delay: 120 * k, easing: 'cubic-bezier(.6,0,.85,.25)', fill: 'both' }).onfinish = () => ghost.remove();
+    }
+    lineage(centerOf(p), c, 120 * k, k, ink);
   }
-  await sleep(parents.length ? 800 : 0);
+  await sleep(parents.length ? (motion === 'collide' ? 800 : 520) * k : 0);
 
-  // 2) ぶつかった所に閃光、新しい言葉が輪郭から生まれて、色が満ちる
-  burst(c, size);
+  // 2) 出かたごとの登場
   node.style.visibility = '';
-  inner.animate([
-    { transform: 'scale(.25)', opacity: 0, filter: 'blur(8px)' },
-    { transform: 'scale(1.1)', opacity: 1, filter: 'blur(0px)', offset: 0.6 },
-    { transform: 'scale(1)', opacity: 1, filter: 'blur(0px)' },
-  ], { duration: 720, easing: EASE });
-  for (const sel of ['.fz-badge', '.fz-from']) {
-    const e = node.querySelector(sel);
-    if (e) e.animate([{ opacity: 0, transform: 'translateY(.4em)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 420, easing: EASE, fill: 'backwards' });
-  }
-  fill(it, 520);
+  if (motion === 'collide') burst(c, size, k, ink);
+  else if (motion === 'bloom') rings(c, size, k, ink);
+  else if (motion === 'glitch') bands(box, k, ink);
+  const end = fzAnimate(it, motion, k);
+  if (motion === 'drop') groundLine(box, k, ink, 820 * k * 0.5);
+  fzFinish(it, end, k);
 }
 
 // ---------------------------------------------------------------- 時間経過（タイマーは1本だけ）
@@ -822,7 +959,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610150729').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610150914').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 

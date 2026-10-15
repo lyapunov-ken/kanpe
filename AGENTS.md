@@ -61,6 +61,7 @@ docs/            調査メモ
 - 本番：`main`（c665049「Android: stop the repeated beeps…」まで）
 - 確認待ちのブランチ：`feat/coin-guide-vj1px` → テスト URL https://feat-coin-guide-vj1px.kanpe-ahr.pages.dev/app.html?welcome=1
   - 新語ミックス（ブレスト）／初回の3ステップガイド／初期の文字サイズ 40→34／VJ に「1px」スタイル追加・VJ の設定を半分に（ドットの細かさ・演出の強さを画面から外した）
+  - 2回目の修正：ガイドが終わったらページ先頭へ戻る／初期の書体テーマを墨に／別窓ボタンをプレビューの右下へ／新語の色（虹・ランダム含む）・出かた（衝突・開花・グリッチ・タイプ・落下・ランダム）・速さを選べるように
   - このブランチで Cursor 用の設定ファイル（AGENTS.md・.cursor/・docs/）もリポジトリに入れた
 - プレビュー用の環境変数は未設定（テスト URL では決済 API が「準備中」になる）。設定方法は `DEPLOY.md`
 - Mac の `~/kanpesystem2` フォルダは古い版の手元コピー。今後はこのリポジトリを使う

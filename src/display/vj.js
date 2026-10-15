@@ -5,7 +5,7 @@
 //   1px＝白黒の 1px の点と線だけで組む（方眼・目盛り・座標の読み出し・書き込みヘッド）
 // - 繰り返した言葉はコンボ（×2, ×3 …）、初めて出た目立つ言葉はインパクト（閃光・揺れ・グリッチ）
 // - 背景もスタイルごと：ステージの光線／シンセウェーブの床／星空／ホログラムの走査線。声の大きさで強まる
-import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610150729';
+import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610150914';
 
 const FALLBACK = '"Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif';
 const PIXEL_PALETTE = ['#ff004d', '#ffa300', '#ffec27', '#00e436', '#29adff', '#ff77a8', '#ffccaa', '#83f3ff'];
@@ -286,6 +286,12 @@ export function createVJ(stage, { localFonts = false } = {}) {
     if (!animate) for (const w of words) { w.ox = w.tox; w.oy = w.toy; w.pitch = w.tpitch; }
   }
 
+  // 新語の色（1px は白だけ）。虹は鮮やかな色をひとつ選ぶ
+  function fusionColor(c) {
+    if (c === 'rainbow') return hsl(Math.random() * 360);
+    if (/^#[0-9a-f]{6}$/i.test(c || '')) return c;
+    return cfg.accent2 || cfg.accent;
+  }
   function colorFor(m) {
     if (cfg.style === 'micro') return '#ffffff'; // 1px は白だけ
     if (m.spc) return m.spc;
@@ -329,6 +335,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
     }
     w.ox = t.x; w.oy = t.y; w.pitch = t.pitch;
     w.t0 = performance.now(); w.state = 'in';
+    if (w.spd && w.spd !== 1) for (let i = 0; i < n; i++) w.delays[i] *= w.spd; // 新語の速さ
     w.travel = !!(w.src && w.src.length);
     w.src = null; // 飛んでくるのは最初の登場だけ（書体を替えて組み直すときは普通に出る）
   }
@@ -355,7 +362,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
     }
     wordSeq++;
     const fusion = m.kind === 'fusion';
-    const w = { text, kind: m.kind || 'normal', color: fusion && cfg.style !== 'micro' ? (cfg.accent2 || cfg.accent) : colorFor(m), fixed: !!m.spc, bmp: rasterize(text, spec), state: 'in', seed: wordSeq * 17 + text.length,
+    const w = { text, kind: m.kind || 'normal', color: fusion && cfg.style !== 'micro' ? fusionColor(m.color) : colorFor(m), spd: fusion ? clamp(+m.k || 1, 0.4, 2) : 1, fixed: !!m.spc || (fusion && !!m.color), bmp: rasterize(text, spec), state: 'in', seed: wordSeq * 17 + text.length,
       ox: 0, oy: 0, pitch: 1, tox: 0, toy: 0, tpitch: 1, expires: now + cfg.ttl * (fusion ? 2600 : 1500), flash: m.kind === 'new' ? now : 0, combo: 1, comboAt: 0, no: wordSeq };
     if (m.spn && m.sp !== lastSp) w.tag = { text: m.spn };
     if (m.sp != null) lastSp = m.sp;
@@ -641,7 +648,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
       const flashK = w.flash ? Math.max(0, 1 - (now - w.flash) / 500) : 0;
       const color = flashK > 0.5 ? '#ffffff' : w.color;
       const c = cfg.style === 'neon' && !flashK && !w.fixed ? hsl((w.seed * 37 + now / 40) % 360) : color; // ネオンはゆっくり色が移ろう
-      const dur = cfg.calm ? 300 : cfg.style === 'pixel' ? 620 : cfg.style === 'holo' ? 680 : 760;
+      const dur = (cfg.calm ? 300 : cfg.style === 'pixel' ? 620 : cfg.style === 'holo' ? 680 : 760) * (w.spd || 1);
       // コンボの「パンチ」：一瞬大きく膨らむ
       const punch = w.comboAt ? Math.exp(-(now - w.comboAt) / 200) : 0;
       const P = w.pitch * (1 + 0.16 * punch * Math.max(f, 0.3));
@@ -812,7 +819,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
       const big = w.hero && w.pitch >= 5;
       const base = w.state === 'out' ? Math.max(0, 1 - (now - w.out0) / 900) : w.hero ? 1 : 0.62;
       const flash = w.flash ? Math.max(0, 1 - (now - w.flash) / 500) : 0;
-      const dur = calm ? 300 : 620;
+      const dur = (calm ? 300 : 620) * (w.spd || 1);
       const gap = Math.max(1.5, w.pitch * 0.24);
       const s = Math.max(P, R(w.pitch - gap));
       let head = -1; // 書き込みヘッドの位置（登場中だけ）

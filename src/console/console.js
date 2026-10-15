@@ -1,16 +1,16 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610150729';
-import { EN, L, tr } from '../core/i18n.js?v=202610150729';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610150729';
-import { createBus } from '../core/bus.js?v=202610150729';
-import { connectObs } from '../core/obs.js?v=202610150729';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610150729';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610150729';
-import { simulateSpeech } from './demo.js?v=202610150729';
-import { initHelp } from './help.js?v=202610150729';
-import { createGuide, guideSeen } from './guide.js?v=202610150729';
-import { coinWord } from '../core/coin.js?v=202610150729';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610150729';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610150914';
+import { EN, L, tr } from '../core/i18n.js?v=202610150914';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610150914';
+import { createBus } from '../core/bus.js?v=202610150914';
+import { connectObs } from '../core/obs.js?v=202610150914';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610150914';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610150914';
+import { simulateSpeech } from './demo.js?v=202610150914';
+import { initHelp } from './help.js?v=202610150914';
+import { createGuide, guideSeen } from './guide.js?v=202610150914';
+import { coinWord } from '../core/coin.js?v=202610150914';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610150914';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -416,6 +416,8 @@ function pick(container, entries, key, id, def) {
   S[key] = id;
   if (key === 'theme') renderThemes(); else segButtons(container, entries, key);
   if (key === 'vjStyle') $('#vjStyleNote').textContent = tr(VJ_STYLES[id], 'note');
+  if (key === 'fusionMotion') $('#fzMotionNote').textContent = tr(FUSION_MOTIONS[id], 'note');
+  if (key === 'fusionMotion' || key === 'fusionSpeed') setTimeout(() => fuse(false), 150); // 選んだ見た目をすぐ見せる（言葉が出ていれば）
   updateTrial();
   pushSettings();
 }
@@ -425,6 +427,7 @@ const FREE_THEMES = Object.fromEntries(Object.entries(THEMES).filter(([, d]) => 
 const PRO_THEMES = Object.fromEntries(Object.entries(THEMES).filter(([, d]) => d.pro));
 function renderThemes() {
   segButtons('#themes', FREE_THEMES, 'theme');
+  if (document.getElementById('fzColors').childElementCount) renderFzColors(); // 「標準」の色は書体テーマに合わせる
   segButtons('#proThemes', PRO_THEMES, 'theme');
   renderAccents();
   updateTrial();
@@ -841,6 +844,16 @@ function fusePool() {
   const t = performance.now(), keep = S.ttl * 1000 * 1.4; // 画面に残っていそうな言葉だけ
   return [...seenWords].filter(([, at]) => t - at < keep).reverse().map(([w]) => w);
 }
+// 新語の見た目を1回ぶん決める（「ランダム」はここで1つ選ぶので、プレビューと別窓で同じ見た目になる）
+const pickOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
+function fusionLook() {
+  const motions = Object.keys(FUSION_MOTIONS).filter((k) => k !== 'random');
+  const motion = S.fusionMotion === 'random' ? pickOne(motions) : (FUSION_MOTIONS[S.fusionMotion] ? S.fusionMotion : 'collide');
+  let color = S.fusionColor || '';
+  if (color === 'random') color = pickOne(FUSION_COLORS.map((x) => x.c).filter((c) => c && c !== 'random'));
+  const k = (FUSION_SPEEDS[S.fusionSpeed] || FUSION_SPEEDS.mid).k;
+  return { motion, color, k };
+}
 function fuse(manual = false) {
   if (paused) { if (manual) toast(L('表示を一時停止中です', 'The display is paused')); return; }
   const r = coinWord(fusePool(), coined.map((c) => c.text));
@@ -850,7 +863,7 @@ function fuse(manual = false) {
   }
   fuseAt = performance.now();
   wordsSinceFuse = 0;
-  send({ t: 'fuse', text: r.text, a: r.a, b: r.b, how: r.how });
+  send({ t: 'fuse', text: r.text, a: r.a, b: r.b, how: r.how, ...fusionLook() });
   coined.unshift({ text: r.text, a: r.a, b: r.b });
   if (coined.length > 40) coined.pop();
   renderCoins();
@@ -874,6 +887,33 @@ function renderCoins() {
   }));
 }
 $('#btnFuse').addEventListener('click', () => fuse(true));
+// 新語の色：標準・各色・虹・ランダム
+function renderFzColors() {
+  const box = $('#fzColors');
+  box.replaceChildren();
+  for (const x of FUSION_COLORS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    const on = (S.fusionColor || '') === x.c;
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', String(on));
+    b.setAttribute('aria-label', tr(x));
+    b.title = tr(x);
+    if (!x.c) { b.className = 'acc-auto'; b.innerHTML = `<i></i>${L('標準', 'Default')}`; b.style.setProperty('--c', (THEMES[S.theme] || THEMES[DEFAULT_THEME]).accent2); }
+    else if (x.c === 'rainbow') { b.className = 'acc fz-rainbow'; }
+    else if (x.c === 'random') { b.className = 'acc-auto fz-random'; b.textContent = L('ランダム', 'Random'); }
+    else { b.className = 'acc'; b.style.setProperty('--c', x.c); }
+    b.addEventListener('click', () => { S.fusionColor = x.c; renderFzColors(); pushSettings(); setTimeout(() => fuse(false), 150); });
+    box.appendChild(b);
+  }
+}
+if (!FUSION_COLORS.some((x) => x.c === (S.fusionColor || ''))) S.fusionColor = '';
+if (!FUSION_MOTIONS[S.fusionMotion]) S.fusionMotion = 'collide';
+if (!FUSION_SPEEDS[S.fusionSpeed]) S.fusionSpeed = 'mid';
+renderFzColors();
+segButtons('#fzMotions', FUSION_MOTIONS, 'fusionMotion');
+segButtons('#fzSpeeds', FUSION_SPEEDS, 'fusionSpeed');
+$('#fzMotionNote').textContent = tr(FUSION_MOTIONS[S.fusionMotion], 'note');
 setInterval(() => { // 話している間だけ、ときどき自動で混ぜる
   const t = performance.now();
   if (S.fusion && !paused && t - fuseAt > FUSE_GAP && t - lastHeard < 6000 && wordsSinceFuse >= 2) fuse(false);
@@ -1290,7 +1330,7 @@ const guide = createGuide({
       note: L('マイクがなくても「デモを流す」や文章の入力で試せます', 'No mic? Try “Play demo” or type a sentence.'),
     },
     {
-      target: () => $('.preview'),
+      target: () => [$('.preview'), $('.preview-foot')],
       title: L('言葉が、ここに組まれる', 'Your words are set here'),
       body: L('話した言葉が、日本語の文字組みでプレビューに並びます。何度も出た言葉ほど大きく育ちます。いま、デモを流しています。', 'What you say is laid out as typography in the preview. Words you repeat grow bigger. A demo is playing now.'),
       enter: () => { if (!demoRunning && !rec.wanted) { guideDemo = true; $('#btnDemo').click(); } },
@@ -1298,14 +1338,16 @@ const guide = createGuide({
     {
       target: () => $('#themes').closest('.field'),
       title: L('見た目を選んで、映す', 'Pick a look, then put it on screen'),
-      body: L('書体テーマで雰囲気が変わります（その下のレイアウトでは、言葉の置き方を選べます）。決まったら下の「組版を別窓で」で大きな画面を開き、モニターや配信に映します。', 'Typeface themes change the mood (and the layout just below changes how words are placed). When you’re happy, open a big window with “Open compose view” below and show it on a monitor or your stream.'),
+      body: L('書体テーマで雰囲気が変わります（その下のレイアウトでは、言葉の置き方を選べます）。決まったら、プレビュー右下の「組版を別窓で」で大きな画面を開き、モニターや配信に映します。', 'Typeface themes change the mood (and the layout just below changes how words are placed). When you’re happy, open a big window with “Open compose view” at the bottom right of the preview and show it on a monitor or your stream.'),
     },
   ],
   onEnd: () => {
     if (guideDemo && demoRunning) { stopDemo(); clearAll(); }
     guideDemo = false;
+    // 終わったらページの先頭（マイクのボタン）に戻る。PC は左の設定欄も中でスクロールするので両方戻す
+    const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    for (const el of [document.scrollingElement, $('.controls'), $('.right')]) if (el) el.scrollTo({ top: 0, behavior });
     $('#btnMic').focus({ preventScroll: true });
-    $('.mic-row').scrollIntoView({ block: 'nearest' });
   },
 });
 {

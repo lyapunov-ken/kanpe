@@ -48,7 +48,7 @@ export const THEMES = {
   },
 };
 
-export const DEFAULT_THEME = 'yoru';
+export const DEFAULT_THEME = 'sumi';
 
 // アクセントカラーの候補（空＝書体テーマ標準の色）。お手軽プラン以上の機能で、無料プランは1日お試し
 export const ACCENTS = [
@@ -105,6 +105,32 @@ export const VJ_FX = {
   high: { label: '派手', labelEn: 'Intense', k: 1 },
 };
 
+// 新語ミックスの見た目：色・出かた・速さ（コンソールで「ランダム」を毎回1つに決めてから表示ビューへ送る）
+export const FUSION_COLORS = [
+  { c: '', label: '標準', labelEn: 'Default' },          // 書体テーマの第2アクセント色
+  { c: '#ffc83d', label: '金', labelEn: 'Gold' },
+  { c: '#e0352b', label: '朱', labelEn: 'Vermilion' },
+  { c: '#ff4f8b', label: '桃', labelEn: 'Pink' },
+  { c: '#a78bfa', label: '紫', labelEn: 'Purple' },
+  { c: '#2f6bff', label: '青', labelEn: 'Blue' },
+  { c: '#14b8a6', label: '翠', labelEn: 'Teal' },
+  { c: 'rainbow', label: '虹', labelEn: 'Rainbow' },     // 1字ずつ色を変える
+  { c: 'random', label: 'ランダム', labelEn: 'Random' }, // 生まれるたびに上の色から選ぶ
+];
+export const FUSION_MOTIONS = {
+  collide: { label: '衝突', labelEn: 'Collide', note: '元の2語が引き寄せられてぶつかり、閃光の中から生まれる', noteEn: 'The two words are pulled together and the new one bursts out of the flash' },
+  bloom: { label: '開花', labelEn: 'Bloom', note: '1字ずつ回りながら花ひらき、輪が広がる', noteEn: 'Letters spin open one by one as rings spread out' },
+  glitch: { label: 'グリッチ', labelEn: 'Glitch', note: '色ずれとノイズでチカチカと現れる', noteEn: 'Flickers in with color fringing and noise' },
+  type: { label: 'タイプ', labelEn: 'Type', note: 'カーソルが走り、1字ずつ打ち込まれる', noteEn: 'A cursor types it out letter by letter' },
+  drop: { label: '落下', labelEn: 'Drop', note: '1字ずつ上から落ちて弾む', noteEn: 'Letters drop in from above and bounce' },
+  random: { label: 'ランダム', labelEn: 'Random', note: '生まれるたびに出かたを選び直す', noteEn: 'Picks a different motion every time' },
+};
+export const FUSION_SPEEDS = {
+  slow: { label: 'ゆっくり', labelEn: 'Slow', k: 1.6 },
+  mid: { label: 'ふつう', labelEn: 'Normal', k: 1 },
+  fast: { label: '速い', labelEn: 'Fast', k: 0.6 },
+};
+
 // 話者の色（ラベルと文字色に使う）
 export const SPEAKER_COLORS = ['#ffb020', '#3fb6ff', '#ff5c8a', '#4cd97b', '#b18cff', '#ffffff'];
 export const MAX_SPEAKERS = 4;
@@ -116,7 +142,7 @@ export const DEFAULT_SPEAKERS = [
 ];
 
 export const DEFAULTS = {
-  theme: 'yoru',
+  theme: 'sumi',     // 初めての人は墨（明るい紙と朱）から
   layout: 'compose',
   baseSize: 34,      // 1280×720 換算の px。表示ビューの大きさ（縦・横の小さい方の比率）に合わせて拡縮する
   ttl: 8,            // 秒
@@ -130,6 +156,9 @@ export const DEFAULTS = {
   vjDetail: 'mid',   // ドットの細かさ（画面からは外した。いつも標準）
   vjFx: 'mid',       // 演出の強さ（画面からは外した。「動きを控えめに」で止める）
   fusion: false,     // 新語ミックス：画面の言葉を掛け合わせて新しい言葉を生む（ブレスト向け）
+  fusionColor: '',   // 新語の色（空＝標準。rainbow / random も選べる）
+  fusionMotion: 'collide', // 新語の出かた（collide / bloom / glitch / type / drop / random）
+  fusionSpeed: 'mid',      // 新語の出る速さ（slow / mid / fast）
   speakerMode: 'off', // 話者の色分け：off / manual（手動で切り替え）/ auto（声の高さで推定）
   speakerCount: 2,
   speakers: DEFAULT_SPEAKERS,

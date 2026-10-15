@@ -12,6 +12,7 @@ alwaysApply: false
 - 新語ミックス：コンソールが `src/core/coin.js` で造語し、表示ビューへ `{ t: 'fuse', text, a, b }` を送る
   - 組版：親の語が光る → 分身が中央へ → 系統線（SVG `#fx`）→ 閃光 → 輪郭の文字が生まれて色が満ちる（`.k-fusion`・`.filled`）
   - カンペ・テロップ：`kind: 'fusion'` の語として追加。VJ：`vj.fuse()` で親の語のドットが集まって新しい語になる
+  - 見た目はコンソールが決めて送る：`motion`（collide / bloom / glitch / type / drop。ランダムはコンソール側で1つに決める）・`k`（速さの倍率 0.6 / 1 / 1.6）・`color`（`#rrggbb` / `rainbow` / 空＝第2アクセント色）
   - 「動きを控えめに」では演出を省いてふつうに出す
 - VJ モード（`vj.js`、canvas 1枚）：スタイルは micro（1px・既定）/ led / neon / pixel / holo。書体は `VJ_FONTS`
   - 画面で選べるのはスタイルと書体だけ。ドットの細かさ（`vjDetail`）と演出の強さ（`vjFx`）は標準に固定（URL の `detail=`・`fx=` では指定できる）

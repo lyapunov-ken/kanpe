@@ -547,3 +547,24 @@ details.obs[open] { padding-bottom: 12px; }
 .g-back { border: 1px solid var(--line2); background: var(--raise); }
 .g-next { background: var(--accent); color: var(--accent-ink); min-width: 96px; }
 @media (prefers-reduced-motion: reduce) { .g-hole::after { animation: none; } .coin-art * { animation: none !important; } .coin-art .ca-c { color: var(--demo); } }
+
+/* ---- 別窓のボタン：プレビューの右下 ---- */
+.preview-foot { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: -4px; flex-wrap: wrap; }
+.preview-foot .hint { margin-right: 2px; }
+.pop-btn { height: 32px; padding: 0 12px; font-size: 12.5px; gap: 6px; }
+.pop-btn::after { content: "↗"; font-size: 13px; line-height: 1; color: var(--faint); transition: transform .15s, color .15s; }
+.pop-btn:hover::after { color: var(--ink); transform: translate(1px, -1px); }
+@media (max-width: 900px) {
+  .right > .preview-foot { order: 3; margin-top: -2px; }
+}
+@media (max-width: 520px) { .preview-foot .hint { display: none; } .preview-foot .pop-btn { flex: 1; } }
+
+/* ---- 新語の色・出かた・速さ ---- */
+.coin-opts { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px dashed var(--line2); }
+.coin-opt { display: flex; flex-direction: column; gap: 6px; }
+.coin-opt .lbl { font-size: 11.5px; }
+.fz-colors { gap: 7px; }
+.fz-colors .acc { width: 24px; height: 24px; }
+.fz-colors .acc-auto { height: 24px; }
+.fz-rainbow { background: conic-gradient(#ff4f8b, #ffc83d, #3ddc84, #2f6bff, #a78bfa, #ff4f8b) !important; }
+.fz-random { font-weight: 700; }
