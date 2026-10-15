@@ -4,7 +4,7 @@ export const CHANGELOG = [
   {
     v: '1.3.0', date: '2026-10-15',
     items: [
-      { type: 'new', ja: '新語ミックス：画面に出た言葉どうしを掛け合わせて、新しい言葉を生み出します（ブレスト向け）。色・出かた（衝突・デコード・シャッター・集束・スキャン）・速さも選べます。新語はいつも手前に出て余韻を残し、色は背景に合わせて読みやすく整えます', en: 'Word mix: combines words on screen into brand-new words (for brainstorming), with your choice of color, entrance (Collide, Decode, Shutter, Converge, Scan) and speed. New words always stay in front, linger longer, and their colors adjust to the background for readability' },
+      { type: 'new', ja: '新語ミックス：画面に出た言葉どうしを掛け合わせて、新しい言葉を生み出します（ブレスト向け）。色・出かた（衝突・デコード・シャッター・集束・スキャン）・速さも選べます。新語はほかの言葉と重ならない場所に、いつも手前に出て余韻を残し、色は背景に合わせて読みやすく整えます', en: 'Word mix: combines words on screen into brand-new words (for brainstorming), with your choice of color, entrance (Collide, Decode, Shutter, Converge, Scan) and speed. New words never overlap other words, stay in front, linger longer, and their colors adjust to the background for readability' },
       { type: 'new', ja: 'はじめての人向けの3ステップのガイド。ヘルプの「はじめかた」からも見直せます', en: 'A 3-step guide for first-time users, also available from Help → Getting started' },
       { type: 'new', ja: 'VJ モードに、白黒の 1px の点と線で描く「1px」スタイル', en: 'New “1px” VJ style, drawn only in monochrome 1px dots and lines' },
       { type: 'new', ja: 'この「更新情報」で、新しいバージョンの内容が見られるように', en: 'This “What’s new” panel, so you can see what changed in each version' },

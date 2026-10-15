@@ -1,13 +1,13 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610151026';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610151026';
-import { createBus } from '../core/bus.js?v=202610151026';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610151026';
-import { runs } from '../core/extract.js?v=202610151026';
-import { EN, L, tr } from '../core/i18n.js?v=202610151026';
-import { createVJ } from './vj.js?v=202610151026';
-import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610151026';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610151047';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610151047';
+import { createBus } from '../core/bus.js?v=202610151047';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610151047';
+import { runs } from '../core/extract.js?v=202610151047';
+import { EN, L, tr } from '../core/i18n.js?v=202610151047';
+import { createVJ } from './vj.js?v=202610151047';
+import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610151047';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -233,15 +233,15 @@ function place(w, h, lv, self) {
   for (let i = 0; i < 120; i++) {
     const x = Math.min(maxX, pad + Math.round((Math.random() * (maxX - pad)) / col) * col);
     const y = Math.min(maxY, pad + Math.round((Math.random() * (maxY - pad)) / row) * row);
-    let ov = 0, fade = 0;
+    let ov = 0, fade = 0, fz = 0;
     for (const it of items.values()) {
       if (it === self || !it.rect) continue;
       const o = overlap(x - gap, y - gap, w + 2 * gap, h + 2 * gap, it.rect);
-      if (it.leaving) fade += o; else ov += o;
+      if (it.leaving) fade += o; else if (it.kind === 'fusion') fz += o; else ov += o;
     }
     const dc = Math.hypot((x + w / 2 - cx) / W, (y + h / 2 - cy) / H);
-    // 重ならないことが最優先。次に退場中の語を避け、最後に中央寄せ
-    const score = (ov > 0 ? 1e9 + ov : 0) + (fade > 0 ? 1e6 + fade : 0) + dc * centerWeight;
+    // 新語には絶対に重ねない（ほかの語を退かせてでも空ける）。次にほかの語と重ならないこと、退場中の語を避け、最後に中央寄せ
+    const score = (fz > 0 ? 1e12 + fz : 0) + (ov > 0 ? 1e9 + ov : 0) + (fade > 0 ? 1e6 + fade : 0) + dc * centerWeight;
     if (!best || score < best.score) best = { x, y, w, h, ov, score };
   }
   return best;
@@ -799,6 +799,11 @@ async function fuseWord(m) {
   else if (motion === 'scan') bands(box, k, ink);
   else if (motion === 'shutter') slits(box, k, ink);
   const end = fzAnimate(it, motion, k);
+  // 元の2語が新語に重なっていたら、誕生を見届けたあとで静かに退場してもらう
+  setTimeout(() => {
+    const g = basePx() * 0.3;
+    for (const p of parents) if (!p.leaving && p.rect && overlap(r.x - g, r.y - g, r.w + 2 * g, r.h + 2 * g, p.rect) > 0) expire(p);
+  }, end + 400);
   if (motion === 'decode') brackets(box, k, ink, end + 200);
   fzFinish(it, end, k);
 }
@@ -1048,7 +1053,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610151026').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610151047').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 
