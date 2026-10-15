@@ -5,13 +5,14 @@
 //   1px＝白黒の 1px の点と線だけで組む（方眼・目盛り・座標の読み出し・書き込みヘッド）
 // - 繰り返した言葉はコンボ（×2, ×3 …）、初めて出た目立つ言葉はインパクト（閃光・揺れ・グリッチ）
 // - 背景もスタイルごと：ステージの光線／シンセウェーブの床／星空。声の大きさで強まる
-import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610151119';
-import { tuneColor, rainbowColor } from '../core/color.js?v=202610151119';
+import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610151124';
+import { tuneColor, rainbowColor } from '../core/color.js?v=202610151124';
 
 const FALLBACK = '"Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif';
 const PIXEL_PALETTE = ['#ff004d', '#ffa300', '#ffec27', '#00e436', '#29adff', '#ff77a8', '#ffccaa', '#83f3ff'];
 const STYLES = ['micro', 'led', 'neon', 'pixel']; // 知らない見た目（以前のホロなど）は 1px にする
 const MAX_SAT = 6;
+const FZ_MAX = 5, FZ_HURRY = 3000; // 新語の同時表示の上限と、上限に来たときの古い新語の残り時間
 
 // 3×5 ピクセルの英数字（1px モードの計器用）。5 行 × 3 列を 1 と 0 で
 const FONT3 = (() => {
@@ -384,6 +385,11 @@ export function createVJ(stage, { localFonts = false } = {}) {
     const maxSat = H < 420 ? 3 : MAX_SAT; // 小さな画面では漂う言葉を減らす
     let extra = live.length - (maxSat + 1);
     for (const x of live) { if (extra <= 0) break; if (x === w) continue; leave(x, now); extra--; } // 古い順に退場
+    if (fusion) { // 新語は同時に5つまで。5つになったら、いちばん古い新語をいつもより早めに消す
+      const fz = words.filter((x) => x.kind === 'fusion' && x.state !== 'out' && x !== w);
+      while (fz.length + 1 > FZ_MAX) leave(fz.shift(), now);
+      if (fz.length + 1 >= FZ_MAX && fz.length) fz[0].expires = Math.min(fz[0].expires, now + FZ_HURRY);
+    }
     layout();
     entrance(w);
     const cx = w.tox + (w.bmp.w * w.tpitch) / 2, cy = w.toy + (w.bmp.h * w.tpitch) / 2;

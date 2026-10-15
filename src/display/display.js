@@ -1,13 +1,13 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610151119';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610151119';
-import { createBus } from '../core/bus.js?v=202610151119';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610151119';
-import { runs } from '../core/extract.js?v=202610151119';
-import { EN, L, tr } from '../core/i18n.js?v=202610151119';
-import { createVJ } from './vj.js?v=202610151119';
-import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610151119';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610151124';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610151124';
+import { createBus } from '../core/bus.js?v=202610151124';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610151124';
+import { runs } from '../core/extract.js?v=202610151124';
+import { EN, L, tr } from '../core/i18n.js?v=202610151124';
+import { createVJ } from './vj.js?v=202610151124';
+import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610151124';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -309,6 +309,18 @@ function clearSpot(r, self, keep = []) {
 }
 
 function liveItems() { return [...items.values()].filter((it) => !it.leaving); }
+// 新語は同時に5つまで。5つになったら、いちばん古い新語をいつもより早めに（3秒ほどで）消していく。
+// 「いま混ぜる」を続けて押して6つ目が来たら、いちばん古いものはその場で薄れはじめる
+const FZ_MAX = 5, FZ_HURRY = 3000;
+function capFusion(fresh) {
+  const old = liveItems().filter((x) => x.kind === 'fusion' && x !== fresh).sort((a, b) => a.born - b.born);
+  while (old.length + 1 > FZ_MAX) expire(old.shift());
+  if (old.length + 1 >= FZ_MAX && old.length) {
+    const o = old[0];
+    o.hurry = true;
+    o.expires = Math.min(o.expires, now() + FZ_HURRY);
+  }
+}
 // 先に退いてもらう語：新語は残す。カンペで記憶がオンなら、くり返しの少ない・古い語から
 function evictee(live) {
   const pool = live.filter((x) => x.kind !== 'fusion');
@@ -373,6 +385,7 @@ async function addWord(m) {
     shiftTrack(true);
   }
   items.set(key, it);
+  if (kind === 'fusion') capFusion(it);
   updateHint();
   enter(it);
 }
@@ -428,6 +441,7 @@ function countUp(it) {
 function bump(it, count) {
   it.count = Math.max(it.count + 1, count || 0);
   it.born = now();
+  it.hurry = false;
   it.expires = now() + it.ttl;
   if (it.aging) { it.aging = false; it.el.classList.remove('aging'); }
   const nl = level(it.kind, it.text, it.count);
@@ -878,6 +892,7 @@ async function fuseWord(m) {
   it.dy = tagH;
   node.style.transform = `translate(${r.x}px, ${y}px)`;
   items.set(it.key, it);
+  capFusion(it);
   updateHint();
   const c = { x: r.x + node.offsetWidth / 2, y: y + node.offsetHeight / 2 };
   const size = Math.max(node.offsetWidth, node.offsetHeight);
@@ -930,7 +945,7 @@ setInterval(() => {
   const silent = t - lastWordAt > 3000; // 間があいたら、言葉を余韻として長めに残す
   for (const it of items.values()) {
     if (it.leaving) continue;
-    if (silent) it.expires = Math.min(it.expires + 200, it.born + it.ttl * 2.5);
+    if (silent && !it.hurry) it.expires = Math.min(it.expires + 200, it.born + it.ttl * 2.5);
     const left = it.expires - t;
     if (left <= 0) expire(it);
     else if (!it.aging && left < it.ttl * 0.35) { it.aging = true; it.el.classList.add('aging'); }
@@ -1170,7 +1185,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610151119').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610151124').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 
