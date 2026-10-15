@@ -118,10 +118,10 @@ export const FUSION_COLORS = [
 ];
 export const FUSION_MOTIONS = {
   collide: { label: '衝突', labelEn: 'Collide', note: '元の2語が引き寄せられてぶつかり、閃光の中から生まれる', noteEn: 'The two words are pulled together and the new one bursts out of the flash' },
-  bloom: { label: '開花', labelEn: 'Bloom', note: '1字ずつ回りながら花ひらき、輪が広がる', noteEn: 'Letters spin open one by one as rings spread out' },
-  glitch: { label: 'グリッチ', labelEn: 'Glitch', note: '色ずれとノイズでチカチカと現れる', noteEn: 'Flickers in with color fringing and noise' },
-  type: { label: 'タイプ', labelEn: 'Type', note: 'カーソルが走り、1字ずつ打ち込まれる', noteEn: 'A cursor types it out letter by letter' },
-  drop: { label: '落下', labelEn: 'Drop', note: '1字ずつ上から落ちて弾む', noteEn: 'Letters drop in from above and bounce' },
+  decode: { label: 'デコード', labelEn: 'Decode', note: '別の字がめまぐるしく入れ替わり、左から順に正しい字に確定する', noteEn: 'Random glyphs flicker and lock into place letter by letter' },
+  shutter: { label: 'シャッター', labelEn: 'Shutter', note: '横に裂けた字の帯が左右から滑り込み、1字ずつ組み上がる', noteEn: 'Each letter slides in as horizontal strips from both sides' },
+  converge: { label: '集束', labelEn: 'Converge', note: '散らばった字が回りながら一点へ吸い込まれるように集まる', noteEn: 'Scattered letters spin and get pulled together into place' },
+  scan: { label: 'スキャン', labelEn: 'Scan', note: '光の線が走り、通ったところから字が実体化する', noteEn: 'A beam of light sweeps across and the letters materialize behind it' },
   random: { label: 'ランダム', labelEn: 'Random', note: '生まれるたびに出かたを選び直す', noteEn: 'Picks a different motion every time' },
 };
 export const FUSION_SPEEDS = {
@@ -156,7 +156,7 @@ export const DEFAULTS = {
   vjFx: 'mid',       // 演出の強さ（画面からは外した。「動きを控えめに」で止める）
   fusion: false,     // 新語ミックス：画面の言葉を掛け合わせて新しい言葉を生む（ブレスト向け）
   fusionColor: '',   // 新語の色（空＝標準。rainbow / random も選べる）
-  fusionMotion: 'collide', // 新語の出かた（collide / bloom / glitch / type / drop / random）
+  fusionMotion: 'collide', // 新語の出かた（collide / decode / shutter / converge / scan / random）
   fusionSpeed: 'mid',      // 新語の出る速さ（slow / mid / fast）
   speakerMode: 'off', // 話者の色分け：off / manual（手動で切り替え）/ auto（声の高さで推定）
   speakerCount: 2,

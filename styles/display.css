@@ -190,12 +190,18 @@ body {
 
 /* ---- 新語ミックス（新語誕生）：輪郭で生まれて、色が満ちる ----
    色は --fz（単色）か、1字ずつの --fzc（虹）。どちらもなければ書体テーマの第2アクセント色 */
-.k-fusion { color: var(--fz, var(--accent2)); }
+/* 太さは書体の細いほう（--w-light）。生まれる間だけ細い輪郭で、色が満ちたら輪郭は消す（字がつぶれて太く見えないように） */
+.k-fusion { color: var(--fz, var(--accent2)); font-weight: var(--w-light); }
 .k-fusion .c {
-  color: transparent; -webkit-text-stroke: max(1px, .022em) var(--fzc, var(--fz, var(--accent2)));
-  transition: color .55s ease; transition-delay: calc(var(--i, 0) * 70ms);
+  color: transparent; -webkit-text-stroke: max(.75px, .014em) var(--fzc, var(--fz, var(--accent2)));
+  transition: color .55s ease, -webkit-text-stroke-color .55s ease; transition-delay: calc(var(--i, 0) * 70ms);
 }
-.k-fusion.filled .c { color: var(--fzc, var(--fz, var(--accent2))); }
+.k-fusion.filled .c { color: var(--fzc, var(--fz, var(--accent2))); -webkit-text-stroke-color: transparent; }
+.k-fusion .s-h { font-weight: var(--w-light); }
+.fz-scr { opacity: .55; color: var(--fzc, var(--fz, var(--accent2))) !important; -webkit-text-stroke-color: transparent !important; }
+.fz-strip { position: absolute; left: 0; top: 0; visibility: visible; pointer-events: none; }
+.fz-scan { position: absolute; left: 0; top: -.08em; width: max(2px, .035em); height: 1.3em; pointer-events: none;
+  background: var(--fz, var(--accent2)); box-shadow: 0 0 .25em .05em var(--fz, var(--accent2)), 0 0 .8em .1em color-mix(in srgb, var(--fz, var(--accent2)) 45%, transparent); }
 .fz-badge {
   position: absolute; left: 0; bottom: 100%; margin-bottom: .1em;
   font-size: max(10px, .17em); font-weight: 900; line-height: 1; letter-spacing: .14em; white-space: nowrap;
@@ -220,6 +226,7 @@ body {
 #fx .fz-burst line { stroke: var(--fzs, var(--accent2)); stroke-width: 1.4; stroke-linecap: round; }
 #fx .fz-ring { fill: none; stroke: var(--fzs, var(--accent2)); stroke-width: 1.2; transform-box: fill-box; transform-origin: center; }
 #fx .fz-band { fill: var(--accent2); transform-box: fill-box; }
+#fx .fz-bracket { fill: none; stroke: var(--accent2); stroke-width: 1.5; stroke-linecap: square; }
 
 /* ---- VJ 1px：モノクロ。走査線の重ね絵は使わず、字幕も細く ---- */
 .vj-micro #stage::after { display: none; }
