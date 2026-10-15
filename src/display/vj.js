@@ -4,7 +4,7 @@
 // - スタイルごとに「動き」を持つ：LED＝声で脈打ち光が走る／ネオン＝波打つ／ピクセル＝1字ずつ跳ねる／ホロ＝立体的に回って色がずれる
 // - 繰り返した言葉はコンボ（×2, ×3 …）、初めて出た目立つ言葉はインパクト（閃光・揺れ・グリッチ）
 // - 背景もスタイルごと：ステージの光線／シンセウェーブの床／星空／ホログラムの走査線。声の大きさで強まる
-import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610151202';
+import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610151210';
 
 const FALLBACK = '"Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif';
 const PIXEL_PALETTE = ['#ff004d', '#ffa300', '#ffec27', '#00e436', '#29adff', '#ff77a8', '#ffccaa', '#83f3ff'];

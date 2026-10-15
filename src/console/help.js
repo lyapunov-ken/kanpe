@@ -1,8 +1,8 @@
 // 使い方ガイド（アプリ内ヘルプ）。右上の「ヘルプ」、? キー、または app.html#help（#help-scenes など）で開く。
 // 文言は L('日本語', 'English') で持つので、英語版のコンソールでもそのまま使える。
-import { L } from '../core/i18n.js?v=202610151202';
+import { L } from '../core/i18n.js?v=202610151210';
 
-// シーン別のおすすめ設定（無料プランの機能だけで組む。アクセントカラーや背景などは触らない）
+// シーン別のおすすめ設定（無料プランの機能だけで組む。アクセントカラーや背景などの好みは触らない）
 export const PRESETS = {
   stream: { label: L('ひとり雑談', 'Solo chat stream'), s: { theme: 'yoru', layout: 'compose', baseSize: 40, ttl: 8, maxWords: 24, vertical: true, caption: true } },
   game: { label: L('ゲーム実況', 'Gameplay commentary'), s: { theme: 'clear', layout: 'ticker', baseSize: 34, ttl: 6, maxWords: 12, vertical: false, caption: false } },
@@ -75,8 +75,8 @@ function html() {
           'Start / stop, the language to listen for, and the recognition engine. High-accuracy recognition is part of the Pro plan (coming soon).')}</dd>
         <dt>${L('表示', 'Display')}</dt>
         <dd>${L(
-          '<b>書体テーマ</b>は文字と背景の雰囲気、<b>レイアウト</b>は言葉の置き方です。組版＝画面いっぱいに組む／カンペ＝下から大きく積み上がる／テロップ＝下部を横に流れる／VJ＝ドット絵で光らせる。<b>表示時間</b>は言葉が消えるまでの秒数、<b>同時に出す語</b>は画面に残す最大の語数です。<br>プレミアム書体・アクセントカラー・背景（画像・カメラ）・VJ はお手軽プラン以上の機能で、無料プランでも1日お試しできます。<br>VJ では書体（5種）・ドットの細かさ・演出の強さも選べます。文字が読みにくいときは、書体を「ゴシック」か「明朝」に、細かさを「細かい」にしてください。',
-          '<b>Typeface theme</b> sets the look of the letters and background; <b>Layout</b> sets where words go: Compose fills the screen, Cue stacks big words from the bottom, Ticker scrolls along the bottom, VJ draws words in glowing dots. <b>Display time</b> is how long words stay, and <b>Words on screen</b> is the most shown at once.<br>Premium typefaces, accent colors, backgrounds (image / camera) and VJ are Plus features you can try free for one day.<br>In VJ mode you can also pick the typeface (5 kinds), the dot detail and how intense the effects are. If letters are hard to read, choose Gothic or Mincho and set the detail to Fine.')}</dd>
+          '<b>書体テーマ</b>は文字と背景の雰囲気、<b>レイアウト</b>は言葉の置き方です。組版＝画面いっぱいに組む／カンペ＝下から大きく積み上がる／テロップ＝下部を横に流れる／VJ＝ドット絵で光らせる。<b>表示時間</b>は言葉が消えるまでの秒数、<b>同時に出す語</b>は画面に残す最大の語数です。<br>アクセントカラーは無料プランでも自由に変えられます。プレミアム書体・背景（画像・カメラ）・VJ はお手軽プラン以上の機能で、無料プランでも1日お試しできます。<br>VJ では書体（5種）・ドットの細かさ・演出の強さも選べます。文字が読みにくいときは、書体を「ゴシック」か「明朝」に、細かさを「細かい」にしてください。',
+          '<b>Typeface theme</b> sets the look of the letters and background; <b>Layout</b> sets where words go: Compose fills the screen, Cue stacks big words from the bottom, Ticker scrolls along the bottom, VJ draws words in glowing dots. <b>Display time</b> is how long words stay, and <b>Words on screen</b> is the most shown at once.<br>Accent colors are free to change on any plan. Premium typefaces, backgrounds (image / camera) and VJ are Plus features you can try free for one day.<br>In VJ mode you can also pick the typeface (5 kinds), the dot detail and how intense the effects are. If letters are hard to read, choose Gothic or Mincho and set the detail to Fine.')}</dd>
         <dt>${L('話者', 'Speakers')}</dt>
         <dd>${L(
           '話している人ごとに名前と色を付けます（最大4人）。切り替えはボタンかキーボードの <kbd>1</kbd>〜<kbd>4</kbd>。PC では声の高さで自動切り替えもできます。お手軽プラン以上の機能です。',

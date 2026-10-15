@@ -1,12 +1,12 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610151202';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610151202';
-import { createBus } from '../core/bus.js?v=202610151202';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610151202';
-import { runs } from '../core/extract.js?v=202610151202';
-import { EN, L, tr } from '../core/i18n.js?v=202610151202';
-import { createVJ } from './vj.js?v=202610151202';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610151210';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610151210';
+import { createBus } from '../core/bus.js?v=202610151210';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610151210';
+import { runs } from '../core/extract.js?v=202610151210';
+import { EN, L, tr } from '../core/i18n.js?v=202610151210';
+import { createVJ } from './vj.js?v=202610151210';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -595,7 +595,7 @@ function renderPicker() {
     b.type = 'button';
     b.className = 'pk-acc' + (accLocked ? ' locked' : '');
     b.style.background = a.c;
-    b.title = L(`${a.label}（お手軽プラン以上）`, `${tr(a)} (Plus and up)`);
+    b.title = tr(a);
     b.setAttribute('aria-pressed', String(LOCK.accent === a.c));
     b.addEventListener('click', () => setWindowAccent(a.c));
     arow.appendChild(b);
@@ -651,11 +651,10 @@ if (SHOW_UI) {
     const dt = t - last;
     last = t;
     const plusTheme = LOCK.theme && THEMES[LOCK.theme] && THEMES[LOCK.theme].pro;
-    if ((plusTheme || LOCK.accent) && !canUse('theme:premium')) {
+    if (plusTheme && !canUse('theme:premium')) { // アクセントカラーは無料なので数えない
       addTrialUsage(dt);
       if (trialRemainingMs() <= 0) {
-        if (plusTheme) setWindowTheme(null);
-        if (LOCK.accent) setWindowAccent(null);
+        setWindowTheme(null);
         notify(L('プレミアム機能のお試し期間（1日）が終わったので、コンソールの設定に戻しました', 'The 1-day trial has ended, so this window follows the console again'));
       }
     }
@@ -685,7 +684,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610151202').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610151210').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 

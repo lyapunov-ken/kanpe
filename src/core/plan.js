@@ -81,7 +81,7 @@ const atLeast = (plan) => PLANS[currentPlan()].rank >= PLANS[plan].rank;
 export const REQUIRES = {
   'theme:premium': 'plus',   // プレミアム書体（筆・ドット…）
   'credit:hide': 'plus',     // 配信画面の「KANPE」表示を消す
-  'accent:custom': 'plus',   // アクセントカラーの変更
+  // アクセントカラーは 2026-10-15 から無料プランでも変えられる（ここに載せない機能は誰でも使える）
   'bg:image': 'plus',        // 背景画像のアップロード
   'bg:camera': 'plus',       // 背景にカメラの映像を映す
   'layout:vj': 'plus',       // ドットアートの VJ モード

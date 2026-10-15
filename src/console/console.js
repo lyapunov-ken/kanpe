@@ -1,14 +1,14 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, VJ_DETAILS, VJ_FX, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610151202';
-import { EN, L, tr } from '../core/i18n.js?v=202610151202';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610151202';
-import { createBus } from '../core/bus.js?v=202610151202';
-import { connectObs } from '../core/obs.js?v=202610151202';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610151202';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610151202';
-import { simulateSpeech } from './demo.js?v=202610151202';
-import { initHelp } from './help.js?v=202610151202';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610151202';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, VJ_DETAILS, VJ_FX, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610151210';
+import { EN, L, tr } from '../core/i18n.js?v=202610151210';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610151210';
+import { createBus } from '../core/bus.js?v=202610151210';
+import { connectObs } from '../core/obs.js?v=202610151210';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610151210';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610151210';
+import { simulateSpeech } from './demo.js?v=202610151210';
+import { initHelp } from './help.js?v=202610151210';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610151210';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -428,7 +428,7 @@ function renderThemes() {
   updateTrial();
 }
 
-// ---- アクセントカラー（お手軽プラン以上。無料プランは書体と同じ1日のお試し） ----
+// ---- アクセントカラー（無料プランでも選べる。canUse('accent:custom') はいつも true） ----
 const plusLocked = (feature) => !canUse(feature) && trialRemainingMs() <= 0;
 const accentLocked = () => plusLocked('accent:custom');
 function pickAccent(c) {
@@ -473,7 +473,7 @@ function renderAccents() {
   custom.appendChild(input);
   box.appendChild(custom);
 }
-const usingPlusTrial = () => !canUse('theme:premium') && ((THEMES[S.theme] && THEMES[S.theme].pro) || !!S.accent || !!S.bgImage || !!S.bgCamera ||
+const usingPlusTrial = () => !canUse('theme:premium') && ((THEMES[S.theme] && THEMES[S.theme].pro) || !!S.bgImage || !!S.bgCamera ||
   S.layout === 'vj' || S.speakerMode !== 'off');
 function updateTrial() {
   const box = $('#trialBox');
@@ -486,7 +486,7 @@ function updateTrial() {
   box.classList.toggle('active', trialStarted() && rem > 0);
   $('#trialNote').textContent = rem <= 0 ? L(`お試し期間（1日）は終わりました。${PLUS_LABEL}で続けて使えます`, `Your 1-day trial has ended. Keep using these with ${PLUS_LABEL}.`)
     : trialStarted() ? L(`お試し中　残り ${left}（終わると標準の見た目に戻ります）`, `Trial: ${left} left (then everything returns to the standard look)`)
-    : L('プレミアム書体・アクセントカラー・背景画像・VJ モード・話者の色分けは、無料プランでも1日（24時間）お試しできます。使い始めた時から数えます', 'Premium typefaces, accent colors, background images, VJ mode and speaker colors can be tried free for one day (24 hours), counted from first use.');
+    : L('プレミアム書体・背景画像・VJ モード・話者の色分けは、無料プランでも1日（24時間）お試しできます。使い始めた時から数えます', 'Premium typefaces, background images, VJ mode and speaker colors can be tried free for one day (24 hours), counted from first use.');
 }
 let trialLast = performance.now();
 setInterval(() => {
@@ -497,7 +497,6 @@ setInterval(() => {
     addTrialUsage(dt);
     if (trialRemainingMs() <= 0) {
       if (THEMES[S.theme] && THEMES[S.theme].pro) S.theme = DEFAULT_THEME;
-      S.accent = '';
       S.bgImage = '';
       S.bgCamera = false;
       if (S.layout === 'vj') S.layout = 'compose';
