@@ -4,7 +4,7 @@
 // ・本番のドメインだけで計測する。テスト URL で確かめるときは ?ga=debug を付ける（GA の DebugView に出る）
 // ・ブラウザで「トラッキングしない（GPC / Do Not Track）」が有効なら読み込まない
 // ・広告の機能（Google シグナル・広告のパーソナライズ）は使わない。EU・英国・スイスからの訪問は Cookie なしの計測にする
-const GA_ID = ''; // 例：'G-XXXXXXXXXX'
+const GA_ID = 'G-YK9R5RH3V8'; // GA4 の測定 ID（KANPE のプロパティ）
 const HOST = 'kanpe.yoneken.xyz';
 
 // EEA（EU＋アイスランド・リヒテンシュタイン・ノルウェー）、英国、スイス

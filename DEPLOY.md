@@ -48,7 +48,7 @@ KANPE の無料版は静的ファイルだけで動きます。下のどれか�
 
 ### Google アナリティクス 4
 - 読み込むのは `src/lp/analytics.js`。紹介ページ（トップ・規約・404）だけで、アプリの画面では読み込まない
-- 測定 ID（`G-` で始まる）を `GA_ID` に入れて `./tools/bump-version.sh` → 公開。空のあいだは何も送らない
+- 測定 ID は `GA_ID`（いまは G-YK9R5RH3V8）。変えたら `./tools/bump-version.sh` → 公開。空にすると何も送らない
 - 計測するのは本番のドメイン（kanpe.yoneken.xyz）だけ。テスト URL や手元で確かめるときは `?ga=debug` を付けて開き、GA の「DebugView」で見る
 - 送るイベント：ページ表示（GA の自動計測）、`cta_click`（アプリへのボタン。`link_location`＝押した場所）、`begin_checkout`（お手軽プランの申し込みボタン。金額つき）
 - 送る URL は `utm_` 以外のパラメータと `#` 以降を外す。広告の機能（Google シグナル・広告のパーソナライズ）は使わない。EU・英国・スイスは Cookie なし、ブラウザの「トラッキングしない」（GPC / DNT）では読み込まない
