@@ -14,8 +14,8 @@ alwaysApply: false
   - カンペ・テロップ：`kind: 'fusion'` の語として追加。VJ：`vj.fuse()` で親の語のドットが集まって新しい語になる
   - 見た目はコンソールが決めて送る：`motion`（collide / bloom / glitch / type / drop。ランダムはコンソール側で1つに決める）・`k`（速さの倍率 0.6 / 1 / 1.6）・`color`（`#rrggbb` / `rainbow` / 空＝第2アクセント色）
   - 「動きを控えめに」では演出を省いてふつうに出す
-- VJ モード（`vj.js`、canvas 1枚）：スタイルは micro（1px・既定）/ led / neon / pixel / holo。書体は `VJ_FONTS`
+- VJ モード（`vj.js`、canvas 1枚）：スタイルは micro（1px・既定）/ led / neon / pixel（ホロは 2026-10-15 に削除。保存済みのホロは 1px になる）。書体は `VJ_FONTS`
   - 画面で選べるのはスタイルと書体だけ。ドットの細かさ（`vjDetail`）と演出の強さ（`vjFx`）は標準に固定（URL の `detail=`・`fx=` では指定できる）
   - 1px は白だけ・デバイスの 1px の点と線で描く（方眼・目盛り・座標の読み出し・書き込みヘッド）。色やにじみを足さない
-- URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / ticker / vj）、`vj`（micro / led / neon / pixel / holo）、`vjfont`、`detail`、`fx`、`size`、`ttl`、`max`、`vert=0`、`cap=0/1`、`calm=1`、`fonts=local`、`demo=1&sp=1`、`script=meeting|speech`
+- URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / ticker / vj）、`vj`（micro / led / neon / pixel）、`vjfont`、`detail`、`fx`、`size`、`ttl`、`max`、`vert=0`、`cap=0/1`、`calm=1`、`fonts=local`、`demo=1&sp=1`、`script=meeting|speech`
 - 講演・式典向けの演出を足すときは `docs/projection-research.md` の原則（本編中は背景を静かに、演出は節目だけ）に従う

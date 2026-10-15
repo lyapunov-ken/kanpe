@@ -1,12 +1,12 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610150914';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610150914';
-import { createBus } from '../core/bus.js?v=202610150914';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610150914';
-import { runs } from '../core/extract.js?v=202610150914';
-import { EN, L, tr } from '../core/i18n.js?v=202610150914';
-import { createVJ } from './vj.js?v=202610150914';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610150959';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610150959';
+import { createBus } from '../core/bus.js?v=202610150959';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610150959';
+import { runs } from '../core/extract.js?v=202610150959';
+import { EN, L, tr } from '../core/i18n.js?v=202610150959';
+import { createVJ } from './vj.js?v=202610150959';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -17,7 +17,7 @@ const LOCK = {};
 if (THEMES[P.get('theme')]) LOCK.theme = P.get('theme');
 if (/^[0-9a-f]{6}$/i.test(P.get('accent') || '')) LOCK.accent = '#' + P.get('accent');
 if (['compose', 'kanpe', 'ticker', 'vj'].includes(P.get('layout'))) LOCK.layout = P.get('layout');
-if (['micro', 'led', 'neon', 'pixel', 'holo'].includes(P.get('vj'))) LOCK.vjStyle = P.get('vj');
+if (['micro', 'led', 'neon', 'pixel'].includes(P.get('vj'))) LOCK.vjStyle = P.get('vj');
 if (VJ_FONTS[P.get('vjfont')]) LOCK.vjFont = P.get('vjfont');
 if (VJ_DETAILS[P.get('detail')]) LOCK.vjDetail = P.get('detail');
 if (VJ_FX[P.get('fx')]) LOCK.vjFx = P.get('fx');
@@ -959,7 +959,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610150914').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610150959').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 

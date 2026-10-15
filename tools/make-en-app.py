@@ -118,6 +118,8 @@ T = [
   ('<span class="lbl">速さ</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="新語の出る速さ">', '<span class="lbl">Speed</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="New-word speed">'),
   ('<p class="hint">別窓（カンペ・組版）は、プレビューの右下から開けます</p>', '<p class="hint">Open the cue and compose windows from the bottom right of the preview</p>'),
   ('<span class="hint">別窓で大きく映す</span>', '<span class="hint">Show it big in a window</span>'),
+  ('title="更新情報（バージョンの更新履歴）"><b>更新情報</b>', 'title="What’s new (version history)"><b>What’s new</b>'),
+  ('<span class="mi" aria-hidden="true">✦</span>更新情報<em', '<span class="mi" aria-hidden="true">✦</span>What’s new<em'),
   ('<p class="hint tx-note">この端末のブラウザにだけ保存されます（サーバーには送りません）</p>', '<p class="hint tx-note">Saved only in this browser on this device (never sent to a server)</p>'),
 ]
 for a, b in T:

@@ -12,3 +12,5 @@ alwaysApply: false
 - スマホ幅（900px 以下）では1列に並び替わり、ヘッダーの項目は ☰ メニュー（`src/ui/menu.js`）に入る。画面を足したらスマホ幅でも確認する
 - 別窓（カンペ・組版）のボタンはプレビューの右下（`.preview-foot`）。初期の書体テーマは墨（`DEFAULTS.theme` と `DEFAULT_THEME`）
 - 新語ミックスの色・出かた・速さは `FUSION_COLORS` / `FUSION_MOTIONS` / `FUSION_SPEEDS`（settings.js）。変えるとその場で1回混ぜて見せる
+- 更新情報（`src/console/news.js`）：内容は `src/core/changelog.js`。ヘッダーの「更新情報」（スマホは ☰ メニュー）で開く。新しい版を初めて見てから1時間は NEW と点滅で目立たせ、開いたら消す（`kanpe.version.v1`）。初めて使う人には出さない
+- スマホ縦（900px 以下・高さ 560px 以上）ではプレビューが上に固定（sticky）される。プレビューの上に重なる要素を足すときは z-index に注意

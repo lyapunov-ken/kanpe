@@ -1,16 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610150914';
-import { EN, L, tr } from '../core/i18n.js?v=202610150914';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610150914';
-import { createBus } from '../core/bus.js?v=202610150914';
-import { connectObs } from '../core/obs.js?v=202610150914';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610150914';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610150914';
-import { simulateSpeech } from './demo.js?v=202610150914';
-import { initHelp } from './help.js?v=202610150914';
-import { createGuide, guideSeen } from './guide.js?v=202610150914';
-import { coinWord } from '../core/coin.js?v=202610150914';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610150914';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610150959';
+import { EN, L, tr } from '../core/i18n.js?v=202610150959';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610150959';
+import { createBus } from '../core/bus.js?v=202610150959';
+import { connectObs } from '../core/obs.js?v=202610150959';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610150959';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610150959';
+import { simulateSpeech } from './demo.js?v=202610150959';
+import { initHelp } from './help.js?v=202610150959';
+import { initNews } from './news.js?v=202610150959';
+import { createGuide, guideSeen } from './guide.js?v=202610150959';
+import { coinWord } from '../core/coin.js?v=202610150959';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610150959';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -1357,6 +1358,13 @@ const guide = createGuide({
   const fresh = !Object.keys(saved0).length;
   if (!guideSeen() && (welcome || fresh) && !q.get('checkout') && !location.hash.startsWith('#help')) setTimeout(() => { if (!help.isOpen()) guide.start(); }, 700);
 }
+
+// ------------------------------------------------------------ 更新情報（バージョンの更新履歴）
+// 新しいバージョンを初めて見たときは1時間「NEW」を出し、1回だけお知らせする
+initNews({
+  fresh: !Object.keys(saved0).length,
+  onUpdated: (v) => setTimeout(() => toast(L(`KANPE が v${v} になりました。右上の「更新情報」で新しい機能を見られます`, `KANPE has been updated to v${v}. See “What’s new” at the top right.`), 6500), 1200),
+});
 
 applyPlanUI();
 handlePaymentReturn();

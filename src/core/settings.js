@@ -76,7 +76,6 @@ export const VJ_STYLES = {
   led: { label: 'LED', labelEn: 'LED', note: '丸い電球のドット。アクセント色で光る', noteEn: 'Round bulb dots glowing in the accent color' },
   neon: { label: 'ネオン', labelEn: 'Neon', note: '色が移ろうネオン管のドット', noteEn: 'Neon-tube dots with drifting colors' },
   pixel: { label: 'ピクセル', labelEn: 'Pixel', note: '角ドットのレトロゲーム風。文字が1字ずつ跳ねる', noteEn: 'Square pixels, retro game style. Letters hop one by one' },
-  holo: { label: 'ホロ', labelEn: 'Holo', note: 'ホログラム。立体的に回って現れ、色ずれと走査線がゆらぐ', noteEn: 'Hologram: flips in in 3D, with color fringing and scanlines' },
 };
 
 // VJ モードの書体。rows はドットの段数（多いほど細かく、読みやすい）。ドット書体は16段で設計されているので固定
@@ -151,7 +150,7 @@ export const DEFAULTS = {
   caption: true,     // 最新の発話を字幕ラインで出す
   reduceMotion: false,
   accent: '',        // アクセントカラー（空＝書体テーマ標準）
-  vjStyle: 'micro',  // VJ モードの見た目（1px / LED / ネオン / ピクセル / ホロ）
+  vjStyle: 'micro',  // VJ モードの見た目（1px / LED / ネオン / ピクセル）
   vjFont: 'gothic',  // VJ モードの書体
   vjDetail: 'mid',   // ドットの細かさ（画面からは外した。いつも標準）
   vjFx: 'mid',       // 演出の強さ（画面からは外した。「動きを控えめに」で止める）

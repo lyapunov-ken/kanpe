@@ -24,7 +24,7 @@
 | OBS オーバーレイ | `display.html?theme=clear&obs=…` | 透過背景。コンソールの「URLをコピー」で作る |
 | 単体デモ | `display.html?demo=1` | マイクなしで表示だけ確認 |
 
-URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / ticker / vj）、`vj`（micro＝1px / led / neon / pixel / holo）、`vjfont`（gothic / maru / mincho / pop / dot）、`detail`（coarse / mid / fine）・`fx`（low / mid / high）（コンソールの画面からは外し、標準に固定）、`size`、`fonts=local`（Web フォントを読まず OS の書体を使う）、`demo=1&sp=1`（話者の色分けの見本）。
+URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / ticker / vj）、`vj`（micro＝1px / led / neon / pixel）、`vjfont`（gothic / maru / mincho / pop / dot）、`detail`（coarse / mid / fine）・`fx`（low / mid / high）（コンソールの画面からは外し、標準に固定）、`size`、`fonts=local`（Web フォントを読まず OS の書体を使う）、`demo=1&sp=1`（話者の色分けの見本）。
 
 ## データとセキュリティ
 
@@ -48,7 +48,7 @@ URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / do
 | プラン | 価格（税込） | 内容 |
 | --- | --- | --- |
 | 無料プラン | ¥0 | ブラウザの音声認識が時間無制限。標準書体・レイアウト3種・OBS・文字起こし。有料プランの見た目と演出は1日（24時間）お試し。配信画面の隅に「KANPE」表示 |
-| お手軽プラン（ベータ版で受付） | ¥480/月・¥4,800/年 | VJ モード（ドットアート。1px / LED / ネオン / ピクセル / ホロ、書体5種）、話者のラベルと色分け（最大4人。手動切り替え・PC は声の高さで自動）、プレミアム書体すべて、アクセントカラー、背景画像（長辺1000px以下に自動縮小・窓に合わせて自動トリミング）、背景にカメラの映像（端末内だけ・左右反転・カメラ選択。OBS のブラウザソースでは映らない）、「KANPE」表示を消す。音声認識はブラウザのものを時間無制限 |
+| お手軽プラン（ベータ版で受付） | ¥480/月・¥4,800/年 | VJ モード（ドットアート。1px / LED / ネオン / ピクセル、書体5種）、話者のラベルと色分け（最大4人。手動切り替え・PC は声の高さで自動）、プレミアム書体すべて、アクセントカラー、背景画像（長辺1000px以下に自動縮小・窓に合わせて自動トリミング）、背景にカメラの映像（端末内だけ・左右反転・カメラ選択。OBS のブラウザソースでは映らない）、「KANPE」表示を消す。音声認識はブラウザのものを時間無制限 |
 | おトクプラン（近日公開） | ¥2,980/月・¥29,800/年 | お手軽プランの全部＋高精度クラウド認識 月20時間（追加1時間 ¥200）、クラウドの話者分離で自動色分け、用語集を認識に反映、AI の要点・アイデア抽出、配信後サマリー |
 
 月10万円の粗利の目安：お手軽8割・おトク2割なら有料会員 約180人（無料から有料への転換率3%として無料利用者 約6,000人）。
@@ -79,11 +79,12 @@ src/core/plan.js        プランとライセンス、機能ごとに必要な�
 src/core/extract.js     キーワード抽出（Intl.Segmenter＋文字種ルール、フィラー除去、NG・登録語）
 src/core/settings.js    書体テーマ・VJ のスタイルと書体・既定値
 src/core/coin.js        新語ミックスの造語（文字種ごとに混ぜ方を変える）
+src/core/changelog.js   更新履歴（いまのバージョン。アプリの「更新情報」に出る）
 src/core/bus.js         画面間の同期（BroadcastChannel）
 src/core/obs.js         obs-websocket クライアント（OBS へ送る）
 src/console/            操作コンソール、音声認識、話者、デモ、ヘルプ（help.js）、初回ガイド（guide.js）
 src/display/display.js  タイポグラフィ描画・新語の誕生演出（依存ゼロ）
-src/display/vj.js       VJ モード（1px / LED / ネオン / ピクセル / ホロ）
+src/display/vj.js       VJ モード（1px / LED / ネオン / ピクセル）
 src/ui/                 言語切替、表示モード、スマホのメニュー
 functions/api/          決済・ライセンス・メール（Cloudflare Pages Functions）
 tools/                  生成スクリプト（英語版・規約・_headers・バージョン番号）、Stripe の準備、API のテスト
@@ -125,4 +126,4 @@ AGENTS.md・.cursor/     Cursor などのエージェント向けの指示（ル
 
 ## 更新を公開するとき
 
-`main` に入れると自動で本番に出ます。作業はブランチで行い、push して出るテスト URL（`https://<ブランチ名>.kanpe-ahr.pages.dev`）で確認してから `main` に取り込みます。JS / CSS を変えたら、取り込む前に `./tools/bump-version.sh` を実行してください（読み込みに新しいバージョン番号が付き、閲覧者のブラウザに古いファイルが残っていても新しいファイルが読まれます）。詳しくは `DEPLOY.md`。
+`main` に入れると自動で本番に出ます。出す前に `src/core/changelog.js` の先頭へ新しいバージョンと内容を足してください（アプリの「更新情報」に出ます）。作業はブランチで行い、push して出るテスト URL（`https://<ブランチ名>.kanpe-ahr.pages.dev`）で確認してから `main` に取り込みます。JS / CSS を変えたら、取り込む前に `./tools/bump-version.sh` を実行してください（読み込みに新しいバージョン番号が付き、閲覧者のブラウザに古いファイルが残っていても新しいファイルが読まれます）。詳しくは `DEPLOY.md`。

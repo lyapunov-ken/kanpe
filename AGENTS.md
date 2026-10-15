@@ -29,11 +29,11 @@ Cursor（および AGENTS.md を読むエージェント）向けのプロジェ
 ## 構成
 ```
 index.html（LP）/ app.html（コンソール）/ display.html（表示ビュー）/ en/（英語版）/ legal/・en/legal/（規約）
-src/core/    plan.js（プラン・ライセンス）extract.js（キーワード抽出）settings.js（書体テーマ・VJ・既定値）
+src/core/    changelog.js（更新履歴・いまのバージョン）plan.js（プラン・ライセンス）extract.js（キーワード抽出）settings.js（書体テーマ・VJ・既定値）
              coin.js（新語ミックスの造語）bus.js（BroadcastChannel）obs.js（obs-websocket）i18n.js
 src/console/ console.js（操作・設定・新語ミックスの発火）recognizer.js speakers.js demo.js
-             help.js（ヘルプ・シーン別プリセット）guide.js（初回の3ステップガイド）
-src/display/ display.js（組版描画・新語の誕生演出・依存ゼロ）vj.js（VJ モード：1px / LED / ネオン / ピクセル / ホロ）
+             help.js（ヘルプ・シーン別プリセット）guide.js（初回の3ステップガイド）news.js（更新情報）
+src/display/ display.js（組版描画・新語の誕生演出・依存ゼロ）vj.js（VJ モード：1px / LED / ネオン / ピクセル）
 src/lp/ src/ui/  LP のデモ、言語切替、表示モード、スマホのメニュー
 functions/api/   checkout.js license.js license-email.js portal.js stripe-webhook.js _lib.js
 tools/           bump-version.sh make-headers.py make-en-app.py make-legal.py stripe-setup.mjs test-api.mjs og/
@@ -49,7 +49,8 @@ docs/            調査メモ
 6. **データは端末内だけ**：文字起こし・設定・背景画像は localStorage。OBS の接続先とパスワードは URL の `#` 以降に入れ、サーバーに送らない
 7. **Stripe は KANPE 専用に絞る**：`metadata.project=kanpe`、lookup_key は `kanpe_` で始める。他プロジェクトの価格・契約には触れない
 8. **秘密情報をコミット・ファイルに書かない**：Stripe キー・`LICENSE_SECRET`・`RESEND_API_KEY`・`STRIPE_WEBHOOK_SECRET` は Cloudflare Pages の環境変数（本番とプレビューで別）。手元で API を動かすときの `.dev.vars` はコミットしない
-9. **軽さ優先**：アニメーションは transform / opacity 中心、タイマー 1 本、消えた要素はすぐ DOM から外す
+9. **更新履歴を書く**：本番に出すたびに `src/core/changelog.js` の先頭へバージョンと内容（新機能 / 改善 / 修正）を足す。アプリの「更新情報」に表示され、新しい版を初めて見た人には1時間「NEW」が付く
+10. **軽さ優先**：アニメーションは transform / opacity 中心、タイマー 1 本、消えた要素はすぐ DOM から外す
 
 ## 書き方
 - 日本語のコメント・文言はやさしい言葉で、ユーザー向け説明は「です・ます」
@@ -62,6 +63,7 @@ docs/            調査メモ
 - 確認待ちのブランチ：`feat/coin-guide-vj1px` → テスト URL https://feat-coin-guide-vj1px.kanpe-ahr.pages.dev/app.html?welcome=1
   - 新語ミックス（ブレスト）／初回の3ステップガイド／初期の文字サイズ 40→34／VJ に「1px」スタイル追加・VJ の設定を半分に（ドットの細かさ・演出の強さを画面から外した）
   - 2回目の修正：ガイドが終わったらページ先頭へ戻る／初期の書体テーマを墨に／別窓ボタンをプレビューの右下へ／新語の色（虹・ランダム含む）・出かた（衝突・開花・グリッチ・タイプ・落下・ランダム）・速さを選べるように
+  - 3回目の修正：スマホでプレビューを上に固定／VJ の「ホロ」を削除／更新情報（バージョン履歴・1時間 NEW 表示）を追加。このブランチを出すときのバージョンは v1.3.0
   - このブランチで Cursor 用の設定ファイル（AGENTS.md・.cursor/・docs/）もリポジトリに入れた
 - プレビュー用の環境変数は未設定（テスト URL では決済 API が「準備中」になる）。設定方法は `DEPLOY.md`
 - Mac の `~/kanpesystem2` フォルダは古い版の手元コピー。今後はこのリポジトリを使う

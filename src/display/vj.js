@@ -1,15 +1,15 @@
 // VJ モード：話した言葉をドットアート（ドット絵）で描く。canvas 1枚・依存なし。
 // - 言葉は選んだ書体で 16〜38 段のドットに起こし、1 ドットずつ光らせる（段数が多いほど細かく読みやすい）
 // - 最新の言葉を中央に大きく、ひとつ前までの言葉は小さくなって周りを漂う
-// - スタイルごとに「動き」を持つ：LED＝声で脈打ち光が走る／ネオン＝波打つ／ピクセル＝1字ずつ跳ねる／ホロ＝立体的に回って色がずれる
+// - スタイルごとに「動き」を持つ：LED＝声で脈打ち光が走る／ネオン＝波打つ／ピクセル＝1字ずつ跳ねる
 //   1px＝白黒の 1px の点と線だけで組む（方眼・目盛り・座標の読み出し・書き込みヘッド）
 // - 繰り返した言葉はコンボ（×2, ×3 …）、初めて出た目立つ言葉はインパクト（閃光・揺れ・グリッチ）
-// - 背景もスタイルごと：ステージの光線／シンセウェーブの床／星空／ホログラムの走査線。声の大きさで強まる
-import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610150914';
+// - 背景もスタイルごと：ステージの光線／シンセウェーブの床／星空。声の大きさで強まる
+import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610150959';
 
 const FALLBACK = '"Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif';
 const PIXEL_PALETTE = ['#ff004d', '#ffa300', '#ffec27', '#00e436', '#29adff', '#ff77a8', '#ffccaa', '#83f3ff'];
-const HOLO_A = '#ff2a6d', HOLO_B = '#16e0ff';
+const STYLES = ['micro', 'led', 'neon', 'pixel']; // 知らない見た目（以前のホロなど）は 1px にする
 const MAX_SAT = 6;
 
 // 3×5 ピクセルの英数字（1px モードの計器用）。5 行 × 3 列を 1 と 0 で
@@ -297,7 +297,6 @@ export function createVJ(stage, { localFonts = false } = {}) {
     if (m.spc) return m.spc;
     if (cfg.style === 'neon') return hsl((wordSeq * 67 + performance.now() / 50) % 360);
     if (cfg.style === 'pixel') return PIXEL_PALETTE[wordSeq % PIXEL_PALETTE.length];
-    if (cfg.style === 'holo') return m.kind === 'registered' || m.kind === 'new' ? cfg.accent : '#9ffbff';
     return m.kind === 'registered' ? cfg.accent2 : cfg.accent;
   }
 
@@ -324,9 +323,6 @@ export function createVJ(stage, { localFonts = false } = {}) {
       } else if (cfg.style === 'neon') { // 左から走査線のように点灯
         w.starts[i * 2] = tx; w.starts[i * 2 + 1] = ty;
         w.delays[i] = (px / bmp.w) * 420;
-      } else if (cfg.style === 'holo') { // 縦の軸で回りながら現れる（左から順に）
-        w.starts[i * 2] = tx; w.starts[i * 2 + 1] = ty;
-        w.delays[i] = (px / bmp.w) * 300 + (py / bmp.h) * 60;
       } else { // 中心から弾けて集まる
         const a = Math.random() * Math.PI * 2, r = (0.25 + Math.random() * 0.6) * Math.max(W, H) * 0.5;
         w.starts[i * 2] = cx + Math.cos(a) * r; w.starts[i * 2 + 1] = cy + Math.sin(a) * r;
@@ -473,7 +469,6 @@ export function createVJ(stage, { localFonts = false } = {}) {
   const glowFor = () => {
     const fine = clamp((spec.rows - 16) / 16, 0, 1);
     if (cfg.style === 'neon') return 1.9 - fine * 0.5;
-    if (cfg.style === 'holo') return 1.5 - fine * 0.25;
     return 1.6 - fine * 0.42;
   };
 
@@ -486,7 +481,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
     let bx = x0 + w.bmp.w * P - bmp.w * bp, by = y0 - bmp.h * bp - P * 3;
     if (by < cell) { bx = x0 + w.bmp.w * P + P * 3; by = y0; }
     bx = clamp(bx, cell, W - bmp.w * bp - cell); by = Math.max(cell, by);
-    const bc = age < 260 ? '#ffffff' : cfg.style === 'holo' ? cfg.accent : w.color;
+    const bc = age < 260 ? '#ffffff' : w.color;
     const bn = bmp.pts.length / 2;
     for (let i = 0; i < bn; i++) drawDot(bx + bmp.pts[i * 2] * bp, by + bmp.pts[i * 2 + 1] * bp, bp, bc, base, gk);
   }
@@ -548,13 +543,6 @@ export function createVJ(stage, { localFonts = false } = {}) {
       ctx.fillRect(Math.round(s.x / 2) * 2, Math.round(s.y / 2) * 2, sz, sz);
     }
   }
-  // ホログラムの走査線：明るい帯がゆっくり下りる
-  function drawScan(now, f) {
-    const y = ((now / 9) % (H + 240)) - 120;
-    const g = ctx.createLinearGradient(0, y - 60, 0, y + 60);
-    g.addColorStop(0, hexA(HOLO_B, 0)); g.addColorStop(0.5, hexA(HOLO_B, 0.1 * f)); g.addColorStop(1, hexA(HOLO_B, 0));
-    ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.fillRect(0, y - 60, W, 120);
-  }
 
   // ---------------------------------------------------------------- 1コマ
   function frame() {
@@ -591,7 +579,6 @@ export function createVJ(stage, { localFonts = false } = {}) {
       if (cfg.style === 'led') drawBeams(now, f, lv);
       else if (cfg.style === 'neon') drawFloor(now, f, lv);
       else if (cfg.style === 'pixel') drawStars(dt, f, lv);
-      else if (cfg.style === 'holo') drawBeams(now * 0.7, f * 0.6, lv);
     }
     ctx.globalCompositeOperation = glowy() ? 'lighter' : 'source-over';
 
@@ -648,7 +635,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
       const flashK = w.flash ? Math.max(0, 1 - (now - w.flash) / 500) : 0;
       const color = flashK > 0.5 ? '#ffffff' : w.color;
       const c = cfg.style === 'neon' && !flashK && !w.fixed ? hsl((w.seed * 37 + now / 40) % 360) : color; // ネオンはゆっくり色が移ろう
-      const dur = (cfg.calm ? 300 : cfg.style === 'pixel' ? 620 : cfg.style === 'holo' ? 680 : 760) * (w.spd || 1);
+      const dur = (cfg.calm ? 300 : cfg.style === 'pixel' ? 620 : 760) * (w.spd || 1);
       // コンボの「パンチ」：一瞬大きく膨らむ
       const punch = w.comboAt ? Math.exp(-(now - w.comboAt) / 200) : 0;
       const P = w.pitch * (1 + 0.16 * punch * Math.max(f, 0.3));
@@ -671,7 +658,6 @@ export function createVJ(stage, { localFonts = false } = {}) {
       const glint = ((now % 2600) / 2600) * (w.bmp.w + w.bmp.h + 24) - 12;
       const hopChar = Math.floor(now / 260) % Math.max(1, w.bmp.nChars), hopT = (now % 260) / 260;
       const flicker = cfg.style === 'neon' && isHero && f > 0 && hash(gSeed, w.seed) < 0.025 * f ? 0.35 : 1;
-      const chroma = cfg.style === 'holo' ? P * (0.16 + 0.35 * lv + (glitching ? 0.9 * glitchAmt : 0)) * Math.max(f, 0.25) : 0;
       for (let i = 0; i < n; i++) {
         const px = w.bmp.pts[i * 2], py = w.bmp.pts[i * 2 + 1];
         let x = x0 + px * P, y = y0 + py * P, a = base * flicker, size = P;
@@ -680,7 +666,6 @@ export function createVJ(stage, { localFonts = false } = {}) {
           if (p < 1) {
             if (cfg.calm) a *= p;
             else if (cfg.style === 'neon' && !w.travel) { a *= p > 0 ? Math.min(1, p * 3) * (p < 0.3 ? (Math.random() < 0.6 ? 1 : 0.2) : 1) : 0; }
-            else if (cfg.style === 'holo' && !w.travel) { const e = easeOut(p); x = cxw + (x - cxw) * Math.max(0.03, e); y = cyw + (y - cyw) * (0.85 + 0.15 * e); a *= Math.min(1, p * 2.5); }
             else {
               const e = cfg.style === 'pixel' ? easeBack(p) : easeOut(p);
               x = w.starts[i * 2] + (x - w.starts[i * 2]) * e;
@@ -704,13 +689,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
           if (hash(band, gSeed) > 0.62) x += (hash(band + 9, gSeed) - 0.5) * P * 10 * glitchAmt * f;
         }
         const off = (size - P) / 2;
-        if (chroma && isHero) { // ホロ：赤と青にずらして重ねる
-          drawDot(x - off - chroma, y - off, size, HOLO_A, a * 0.55, gk);
-          drawDot(x - off + chroma, y - off, size, HOLO_B, a * 0.55, gk);
-          drawDot(x - off, y - off, size, c, a * 0.75, gk);
-        } else {
-          drawDot(x - off, y - off, size, c, a, gk);
-        }
+        drawDot(x - off, y - off, size, c, a, gk);
         if (live && cfg.style === 'led') { // 光の筋が斜めに走る
           const d = px + py * 0.6 - glint;
           if (d > -2.5 && d < 2.5) drawDot(x - off, y - off, size, '#ffffff', a * (1 - Math.abs(d) / 2.5) * 0.8 * f, gk);
@@ -750,9 +729,8 @@ export function createVJ(stage, { localFonts = false } = {}) {
       drawDot(s.x + s.vx * t - cell * 0.2, s.y + s.vy * t + 0.00012 * t * t - cell * 0.2, cell * 0.45, s.color, a, 1.6);
     }
 
-    // 仕上げの重ね：ホロの走査線、インパクトの閃光
+    // 仕上げの重ね：インパクトの閃光
     if (!cfg.transparent && f) {
-      if (cfg.style === 'holo') { ctx.globalCompositeOperation = 'lighter'; drawScan(now, f); }
       const fa = now - flash.t0 < 260 ? flash.a * (1 - (now - flash.t0) / 260) : 0;
       if (fa > 0.005) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = fa; ctx.fillStyle = '#ffffff'; ctx.fillRect(-20, -20, W + 40, H + 40); }
     }
@@ -956,6 +934,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
   }
   function configure(next) {
     cfg = { ...cfg, ...next };
+    if (!STYLES.includes(cfg.style)) cfg.style = 'micro';
     if (cfg.style !== gridStyle) drawGrid();
     if (cfg.style === 'micro') ensureFont(labelSpec, localFonts);
     const s = fontSpec(cfg);

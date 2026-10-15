@@ -30,13 +30,14 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97%20BGMPRcdefhilnotux%E3%82%AF%E3%82%B4%E3%82%B7%E3%83%83%E3%83%88%E3%83%89%E4%B8%B8%E5%A4%AA%E6%98%8E%E6%9C%9D%E6%A5%B5&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="styles/console.css?v=202610150914">
+<link rel="stylesheet" href="styles/console.css?v=202610150959">
 </head>
 <body>
 <header class="top">
   <a class="brand" href="index.html" title="KANPE のトップへ"><span class="mark">K</span>KANPE<small>リアルタイムカンペ</small></a>
   <div class="top-right">
     <div class="status"><span id="dot" class="dot"></span><span id="statusText">待機中</span></div>
+    <button id="btnNews" class="news-btn" type="button" data-news-open aria-haspopup="dialog" title="更新情報（バージョンの更新履歴）"><b>更新情報</b><em class="news-new">NEW</em></button>
     <button id="btnHelp" class="help-btn" type="button" aria-haspopup="dialog" title="使い方ガイド（?）"><span aria-hidden="true">?</span><b>ヘルプ</b></button>
     <a class="lang-link" href="en/app.html" hreflang="en" lang="en" data-lang-switch title="English version">EN</a>
     <button class="mode-btn" type="button" data-mode-toggle aria-label="表示モードを切り替える"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg></button>
@@ -44,6 +45,7 @@
     <button class="menu-btn" type="button" data-menu-btn aria-controls="appMenu" aria-expanded="false" aria-label="メニュー"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="b1" d="M4 7h16"/><path class="b2" d="M4 12h16"/><path class="b3" d="M4 17h16"/></svg></button>
     <div id="appMenu" class="menu-panel">
       <button class="menu-row" type="button" data-help-open data-menu-close><span class="mi" aria-hidden="true">?</span>使い方ガイド</button>
+      <button class="menu-row news-row" type="button" data-news-open data-menu-close><span class="mi" aria-hidden="true">✦</span>更新情報<em class="news-new">NEW</em></button>
       <a class="menu-row" href="en/app.html" hreflang="en" lang="en" data-lang-switch><span class="mi" aria-hidden="true">EN</span>English</a>
       <button class="menu-row" type="button" data-mode-toggle><span class="mi" aria-hidden="true"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg></span><span class="when-light">ダークモード</span><span class="when-dark">ライトモード</span></button>
     </div>
@@ -126,7 +128,7 @@
       <div class="field"><span class="lbl">レイアウト</span><div id="layouts" class="segmented four" role="radiogroup" aria-label="レイアウト"></div><p id="layoutNote" class="hint"></p></div>
       <div id="vjOpts" class="field vj-opts" hidden>
         <span class="lbl">VJ スタイル <em class="pro-tag">¥480〜</em></span>
-        <div id="vjStyles" class="segmented five" role="radiogroup" aria-label="VJ スタイル"></div>
+        <div id="vjStyles" class="segmented four" role="radiogroup" aria-label="VJ スタイル"></div>
         <p id="vjStyleNote" class="hint"></p>
         <span class="lbl vj-sub">VJ の書体</span>
         <div id="vjFonts" class="segmented five vj-fonts" role="radiogroup" aria-label="VJ の書体"></div>
@@ -236,9 +238,9 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="src/ui/lang.js?v=202610150914" defer></script>
-<script src="src/ui/menu.js?v=202610150914" defer></script>
-<script src="src/ui/mode.js?v=202610150914" defer></script>
-<script type="module" src="src/console/console.js?v=202610150914"></script>
+<script src="src/ui/lang.js?v=202610150959" defer></script>
+<script src="src/ui/menu.js?v=202610150959" defer></script>
+<script src="src/ui/mode.js?v=202610150959" defer></script>
+<script type="module" src="src/console/console.js?v=202610150959"></script>
 </body>
 </html>
