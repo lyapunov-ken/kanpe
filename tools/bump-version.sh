@@ -14,4 +14,5 @@ sed -i.bak -E \
   $FILES
 rm -f *.html.bak en/*.html.bak legal/*.html.bak en/legal/*.html.bak src/*/*.js.bak
 python3 tools/make-headers.py
+python3 tools/make-sitemap.py
 echo "version: $V"

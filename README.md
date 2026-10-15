@@ -31,7 +31,8 @@ URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / do
 - KANPE にはデータを受け取るサーバーがない（Cloudflare Pages の静的配信のみ）。文字起こし・設定・背景画像はブラウザの localStorage にだけ保存
 - 無料・お手軽プランの音声認識はブラウザの Web Speech API。音声はブラウザの提供元（Chrome は Google、Edge は Microsoft、Safari は Apple）が処理する
 - 画面間の同期は BroadcastChannel（同じブラウザ内）、OBS へは手元の obs-websocket に直接接続。OBS 用 URL の接続先とパスワードは `#` 以降に入れ、サーバーへのリクエストに含めない。表示ビューへ送る設定からも外している
-- `_headers` で CSP（スクリプトは自サイトとハッシュ付きのインラインのみ、通信は自サイトと WebSocket のみ）などのセキュリティヘッダーを付ける。`tools/make-headers.py` が生成（bump-version.sh から自動実行）
+- アクセス解析（Google アナリティクス 4）は紹介ページ（LP・規約・404）だけ。アプリの画面（コンソール・表示ビュー）には入れない。詳しくは `DEPLOY.md` の「SEO とアクセス解析」
+- `_headers` で CSP（スクリプトは自サイト・ハッシュ付きのインライン・Google アナリティクスのみ、通信は自サイトと WebSocket と Google アナリティクスのみ）などのセキュリティヘッダーを付ける。`tools/make-headers.py` が生成（bump-version.sh から自動実行）
 
 ## 英語版
 
@@ -114,6 +115,8 @@ styles/                 CSS
 ## 規約ページ
 
 `legal/`（日本語）と `en/legal/`（英語）に利用規約・プライバシーポリシー・特定商取引法に基づく表記。`tools/make-legal.py` で作るので、運営者の情報（`SELLER`）や文面はそちらを直して `python3 tools/make-legal.py && ./tools/bump-version.sh` を実行してください。
+
+見つからないページ（`404.html`・`en/404.html`）も同じスクリプトで作ります。
 
 ## 更新を公開するとき
 

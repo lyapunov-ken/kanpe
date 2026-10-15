@@ -1,14 +1,14 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, VJ_DETAILS, VJ_FX, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610140215';
-import { EN, L, tr } from '../core/i18n.js?v=202610140215';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610140215';
-import { createBus } from '../core/bus.js?v=202610140215';
-import { connectObs } from '../core/obs.js?v=202610140215';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610140215';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610140215';
-import { simulateSpeech } from './demo.js?v=202610140215';
-import { initHelp } from './help.js?v=202610140215';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610140215';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, VJ_DETAILS, VJ_FX, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610151157';
+import { EN, L, tr } from '../core/i18n.js?v=202610151157';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610151157';
+import { createBus } from '../core/bus.js?v=202610151157';
+import { connectObs } from '../core/obs.js?v=202610151157';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610151157';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610151157';
+import { simulateSpeech } from './demo.js?v=202610151157';
+import { initHelp } from './help.js?v=202610151157';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610151157';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);

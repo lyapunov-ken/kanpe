@@ -8,7 +8,6 @@ T = [
   ('<html lang="ja">', '<html lang="en">'),
   ('<title>KANPE コンソール</title>', '<title>KANPE Console</title>'),
   ('content="KANPE の操作画面。マイクで話すと、キーワードがその場で日本語タイポグラフィになります。"', 'content="The KANPE console. Talk into your mic and keywords turn into live typography on screen."'),
-  ('<link rel="canonical" href="https://kanpe.yoneken.xyz/app">', '<link rel="canonical" href="https://kanpe.yoneken.xyz/en/app">'),
   ('<meta property="og:url" content="https://kanpe.yoneken.xyz/app">', '<meta property="og:url" content="https://kanpe.yoneken.xyz/en/app">'),
   ('<meta property="og:locale" content="ja_JP">', '<meta property="og:locale" content="en_US">'),
   ('KANPE コンソール｜話すと、文字が組まれる。', 'KANPE Console | Speak, and your words take shape.'),
@@ -120,7 +119,6 @@ for a, b in T:
     s = s.replace(a, b)
 # 英語版は /en/ にあるので、共有のファイルは1つ上を指す
 s = re.sub(r'(href|src)="(assets|styles|src)/', r'\1="../\2/', s)
-s = s.replace('<link rel="alternate" hreflang="ja" href="https://kanpe.yoneken.xyz/app">', '<link rel="alternate" hreflang="ja" href="https://kanpe.yoneken.xyz/app">')
 left = re.findall(r'[぀-ヿ一-鿿]+', re.sub(r'<a class="lang-link jp"[^>]*>日本語</a>', '', s).replace('title="日本語版"', ''))
 left = [w for w in left if w not in ('字',)]
 if left:

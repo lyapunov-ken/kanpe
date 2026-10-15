@@ -1,6 +1,6 @@
 // 使い方ガイド（アプリ内ヘルプ）。右上の「ヘルプ」、? キー、または app.html#help（#help-scenes など）で開く。
 // 文言は L('日本語', 'English') で持つので、英語版のコンソールでもそのまま使える。
-import { L } from '../core/i18n.js?v=202610140215';
+import { L } from '../core/i18n.js?v=202610151157';
 
 // シーン別のおすすめ設定（無料プランの機能だけで組む。アクセントカラーや背景などは触らない）
 export const PRESETS = {

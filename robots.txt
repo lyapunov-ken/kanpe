@@ -1,0 +1,7 @@
+# KANPE — https://kanpe.yoneken.xyz/
+# アプリの画面（/app・/display）はページ側の noindex で検索結果に出さない（ここで止めると noindex が読まれないため、Disallow にはしない）
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://kanpe.yoneken.xyz/sitemap.xml
