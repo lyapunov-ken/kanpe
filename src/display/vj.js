@@ -5,7 +5,8 @@
 //   1px＝白黒の 1px の点と線だけで組む（方眼・目盛り・座標の読み出し・書き込みヘッド）
 // - 繰り返した言葉はコンボ（×2, ×3 …）、初めて出た目立つ言葉はインパクト（閃光・揺れ・グリッチ）
 // - 背景もスタイルごと：ステージの光線／シンセウェーブの床／星空。声の大きさで強まる
-import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610151011';
+import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610151026';
+import { tuneColor, rainbowColor } from '../core/color.js?v=202610151026';
 
 const FALLBACK = '"Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif';
 const PIXEL_PALETTE = ['#ff004d', '#ffa300', '#ffec27', '#00e436', '#29adff', '#ff77a8', '#ffccaa', '#83f3ff'];
@@ -287,10 +288,11 @@ export function createVJ(stage, { localFonts = false } = {}) {
   }
 
   // 新語の色（1px は白だけ）。虹は鮮やかな色をひとつ選ぶ
+  // VJ はいつも黒地なので、暗い色は明るく整えてから光らせる
   function fusionColor(c) {
-    if (c === 'rainbow') return hsl(Math.random() * 360);
-    if (/^#[0-9a-f]{6}$/i.test(c || '')) return c;
-    return cfg.accent2 || cfg.accent;
+    const BG = '#040506';
+    if (c === 'rainbow') return rainbowColor(Math.random() * 360, BG, 5);
+    return tuneColor(/^#[0-9a-f]{6}$/i.test(c || '') ? c : (cfg.accent2 || cfg.accent), BG, 5);
   }
   function colorFor(m) {
     if (cfg.style === 'micro') return '#ffffff'; // 1px は白だけ
@@ -359,7 +361,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
     wordSeq++;
     const fusion = m.kind === 'fusion';
     const w = { text, kind: m.kind || 'normal', color: fusion && cfg.style !== 'micro' ? fusionColor(m.color) : colorFor(m), spd: fusion ? clamp(+m.k || 1, 0.4, 2) : 1, fixed: !!m.spc || (fusion && !!m.color), bmp: rasterize(text, spec), state: 'in', seed: wordSeq * 17 + text.length,
-      ox: 0, oy: 0, pitch: 1, tox: 0, toy: 0, tpitch: 1, expires: now + cfg.ttl * (fusion ? 2600 : 1500), flash: m.kind === 'new' ? now : 0, combo: 1, comboAt: 0, no: wordSeq };
+      ox: 0, oy: 0, pitch: 1, tox: 0, toy: 0, tpitch: 1, expires: now + cfg.ttl * (fusion ? 3600 : 1500), flash: m.kind === 'new' ? now : 0, combo: 1, comboAt: 0, no: wordSeq };
     if (m.spn && m.sp !== lastSp) w.tag = { text: m.spn };
     if (m.sp != null) lastSp = m.sp;
     // 新語ミックス：親の言葉のいまのドットの位置から飛んできて、新しい言葉になる

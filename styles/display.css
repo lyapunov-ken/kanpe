@@ -198,6 +198,19 @@ body {
 }
 .k-fusion.filled .c { color: var(--fzc, var(--fz, var(--accent2))); -webkit-text-stroke-color: transparent; }
 .k-fusion .s-h { font-weight: var(--w-light); }
+.k-fusion { z-index: 10; }  /* 新語はいつもほかの言葉より手前に */
+/* 下敷き：背景色のやわらかい板で、後ろの言葉が透けて重ならないようにする（色が満ちる前から、生まれた瞬間に敷く） */
+.k-fusion::before {
+  content: ""; position: absolute; z-index: -1; inset: -.62em -.38em -.46em -.38em; border-radius: .28em; pointer-events: none;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  box-shadow: 0 0 .5em .4em color-mix(in srgb, var(--bg) 70%, transparent);
+  opacity: 0; transition: opacity .5s ease;
+}
+.k-fusion.fz-live::before { opacity: 1; }
+.theme-clear .k-fusion::before { background: radial-gradient(closest-side, rgba(0, 0, 0, .5), rgba(0, 0, 0, .28) 70%, transparent); box-shadow: none; inset: -.7em -.6em -.55em; }
+.layout-kanpe .k-fusion::before, .layout-ticker .k-fusion::before { inset: -.2em -.3em; }
+.w.k-fusion.aging { opacity: .82; transition: opacity 3s ease; }  /* 余韻：ほかの言葉より薄れにくく */
+.bg-light .fz-scan { box-shadow: 0 0 .15em .02em var(--fz, var(--accent2)); }
 .fz-scr { opacity: .55; color: var(--fzc, var(--fz, var(--accent2))) !important; -webkit-text-stroke-color: transparent !important; }
 .fz-strip { position: absolute; left: 0; top: 0; visibility: visible; pointer-events: none; }
 .fz-scan { position: absolute; left: 0; top: -.08em; width: max(2px, .035em); height: 1.3em; pointer-events: none;

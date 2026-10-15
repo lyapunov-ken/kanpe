@@ -1,12 +1,13 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610151011';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610151011';
-import { createBus } from '../core/bus.js?v=202610151011';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610151011';
-import { runs } from '../core/extract.js?v=202610151011';
-import { EN, L, tr } from '../core/i18n.js?v=202610151011';
-import { createVJ } from './vj.js?v=202610151011';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610151026';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610151026';
+import { createBus } from '../core/bus.js?v=202610151026';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610151026';
+import { runs } from '../core/extract.js?v=202610151026';
+import { EN, L, tr } from '../core/i18n.js?v=202610151026';
+import { createVJ } from './vj.js?v=202610151026';
+import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610151026';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -117,7 +118,7 @@ function applyTheme() {
     root.style.setProperty('--bg-dim', String(S.bgDim == null ? 0.4 : S.bgDim));
     root.style.setProperty('--bg-dim-color', th.bg === 'transparent' ? '#000' : th.bg);
   }
-  document.body.className = `theme-${S.theme} layout-${S.layout}` + (S.layout === 'vj' ? ` vj-${S.vjStyle || 'micro'}` : '') + (S.reduceMotion ? ' calm' : '') +
+  document.body.className = `theme-${S.theme} layout-${S.layout}` + (isLight(themeBg()) ? ' bg-light' : '') + (S.layout === 'vj' ? ` vj-${S.vjStyle || 'micro'}` : '') + (S.reduceMotion ? ' calm' : '') +
     (S.caption ? ' has-cap' : '') + (EMBED ? ' embed' : '') + (S.credit === false ? '' : ' has-credit') + (S.bgImage || camStream ? ' has-bgimg' : '');
   if (!LOCAL_FONTS && th.gf && !fontLinks.has(th.gf)) {
     fontLinks.add(th.gf);
@@ -258,7 +259,7 @@ function clearSpot(r, self, keep = []) {
   if (!r || r.ov <= 0) return;
   const gap = basePx() * 0.3;
   for (const it of liveItems()) {
-    if (it !== self && !keep.includes(it) && it.rect && overlap(r.x - gap, r.y - gap, r.w + 2 * gap, r.h + 2 * gap, it.rect) > 0) expire(it);
+    if (it !== self && !keep.includes(it) && it.kind !== 'fusion' && it.rect && overlap(r.x - gap, r.y - gap, r.w + 2 * gap, r.h + 2 * gap, it.rect) > 0) expire(it);
   }
 }
 
@@ -292,13 +293,13 @@ async function addWord(m) {
   }
   node.style.fontSize = px + 'px';
   node.style.letterSpacing = TRACK[lv] + 'em';
-  const ttl = S.ttl * 1000 * (kind === 'new' ? 1.25 : kind === 'fusion' ? 2 : 1) * (lv >= 2 ? 1.15 : 1);
+  const ttl = S.ttl * 1000 * (kind === 'new' ? 1.25 : kind === 'fusion' ? 3 : 1) * (lv >= 2 ? 1.15 : 1); // 新語は余韻を残して長めに
   const it = { key, text, kind, count: m.count || 1, lv, el: node, inner, parts, vertical,
     born: now(), ttl, expires: now() + ttl, rect: null, leaving: false, aging: false, fz: m.fz };
 
   const max = Math.min(S.maxWords, MAXW[S.layout]);
   let live = liveItems();
-  while (live.length >= max) { expire(live[0]); live = liveItems(); }
+  while (live.length >= max) { expire(live.find((x) => x.kind !== 'fusion') || live[0]); live = liveItems(); } // 新語は最後まで残す
 
   if (S.layout === 'compose') {
     node.style.visibility = 'hidden';
@@ -405,8 +406,9 @@ function grow(it, nl) {
 function expire(it) {
   if (it.leaving) return;
   it.leaving = true;
-  const a = it.el.animate(S.reduceMotion ? { opacity: 0 } : { opacity: 0, filter: 'blur(3px)' },
-    { duration: 900, easing: 'ease-in', fill: 'forwards' });
+  const slow = it.kind === 'fusion'; // 新語はゆっくり薄れて余韻を残す
+  const a = it.el.animate(S.reduceMotion ? { opacity: 0 } : { opacity: 0, filter: slow ? 'blur(6px)' : 'blur(3px)' },
+    { duration: slow ? 1800 : 900, easing: 'ease-in', fill: 'forwards' });
   a.onfinish = () => removeItem(it);
 }
 
@@ -482,14 +484,23 @@ const fzLook = (m) => ({
 });
 const fzInk = (node) => getComputedStyle(node).getPropertyValue('--fz').trim() || getComputedStyle(root).getPropertyValue('--accent2').trim();
 
-// 色をつける：単色は --fz、虹は1字ずつ --fzc（バッジと線は最初の字の色）
+// 書体テーマの背景色（透過は null＝暗い映像の上とみなす）
+function themeBg() { const th = THEMES[S.theme] || THEMES[DEFAULT_THEME]; return th.bg === 'transparent' ? null : th.bg; }
+// 色をつける：単色は --fz、虹は1字ずつ --fzc（バッジと線は最初の字の色）。
+// どの色も背景に合わせて明るさを整える（明るい紙では濃く、黒地では明るく。コントラスト 4.5 以上）
 function colorize(node, parts, color) {
+  const bg = themeBg();
   if (color === 'rainbow') {
     const h0 = Math.random() * 360, n = Math.max(1, parts.length);
-    parts.forEach((p, i) => p.style.setProperty('--fzc', `hsl(${Math.round(h0 + (i * 300) / n) % 360} 85% 55%)`));
-    node.style.setProperty('--fz', `hsl(${Math.round(h0)} 85% 55%)`);
-  } else if (color) node.style.setProperty('--fz', color);
+    parts.forEach((p, i) => p.style.setProperty('--fzc', rainbowColor(h0 + (i * 300) / n, bg)));
+    node.style.setProperty('--fz', rainbowColor(h0, bg));
+  } else {
+    const th = THEMES[S.theme] || THEMES[DEFAULT_THEME];
+    node.style.setProperty('--fz', tuneColor(color || th.accent2, bg));
+  }
 }
+// スキャンの色ずれ：明るい背景では落ち着いた濃い色、暗い背景ではネオン
+const fringe = (d) => (isLight(themeBg()) ? `${d}em 0 #c2185b, -${d}em 0 #00838f` : `${d}em 0 #ff2a6d, -${d}em 0 #16e0ff`);
 
 // 親から子へ伸びる系統線（描かれて、しばらく残って、消える）
 function lineage(a, b, delay, k = 1, color = '') {
@@ -682,7 +693,7 @@ function fzAnimate(it, motion, k, d0 = 0) {
     parts.forEach((p) => {
       const at = d0 + dur * ((p.offsetLeft + p.offsetWidth / 2) / Math.max(1, w));
       p.animate([
-        { filter: 'blur(4px) brightness(2)', transform: 'scaleY(.2)', textShadow: '.08em 0 #ff2a6d, -.08em 0 #16e0ff' },
+        { filter: isLight(themeBg()) ? 'blur(4px)' : 'blur(4px) brightness(2)', transform: 'scaleY(.2)', textShadow: fringe(0.08) },
         { filter: 'blur(0px) brightness(1.4)', transform: 'scaleY(1.12)', offset: 0.45 },
         { filter: 'none', transform: 'none', textShadow: '0 0 transparent' },
       ], { duration: step(460), delay: at - step(60), easing: EXPO, fill: 'backwards' });
@@ -709,6 +720,7 @@ function fzFinish(it, end, k) {
 // カンペ・テロップでの新語（enter から呼ぶ）
 function fzEnter(it) {
   const { motion, k } = it.fz || { motion: 'collide', k: 1 };
+  it.el.classList.add('fz-live');
   if (S.reduceMotion) { fill(it, 0); return; }
   fzFinish(it, fzAnimate(it, motion, k), k);
 }
@@ -732,7 +744,7 @@ async function fuseWord(m) {
   colorize(node, parts, color);
   node.style.fontSize = px + 'px';
   node.style.letterSpacing = TRACK[lv] + 'em';
-  const ttl = S.ttl * 1000 * 2.2;
+  const ttl = S.ttl * 1000 * 3.2; // 新語は余韻を残して長めに
   const it = { key: text.toLowerCase(), text, kind: 'fusion', count: 1, lv, el: node, inner, parts, vertical: false,
     born: now(), ttl, expires: now() + ttl, rect: null, leaving: false, aging: false, fz: look };
   let live = liveItems();
@@ -754,9 +766,9 @@ async function fuseWord(m) {
   const c = { x: r.x + node.offsetWidth / 2, y: y + node.offsetHeight / 2 };
   const size = Math.max(node.offsetWidth, node.offsetHeight);
   const box = { x: r.x, y, w: node.offsetWidth, h: node.offsetHeight };
-  const ink = color && color !== 'rainbow' ? color : (color === 'rainbow' ? fzInk(node) : '');
+  const ink = fzInk(node); // 背景に合わせて整えた色
 
-  if (S.reduceMotion) { node.style.visibility = ''; fill(it, 0); return; }
+  if (S.reduceMotion) { node.style.visibility = ''; node.classList.add('fz-live'); fill(it, 0); return; }
 
   // 1) 元の2語が光る。衝突では分身がまん中へ吸い寄せられる。どの出かたでも系統線が伸びる
   for (const p of parents) {
@@ -781,6 +793,7 @@ async function fuseWord(m) {
 
   // 2) 出かたごとの登場
   node.style.visibility = '';
+  node.classList.add('fz-live');
   if (motion === 'collide') burst(c, size, k, ink);
   else if (motion === 'converge') rings(c, size, k, ink);
   else if (motion === 'scan') bands(box, k, ink);
@@ -1035,7 +1048,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610151011').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610151026').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 

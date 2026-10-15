@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610151011';
-import { EN, L, tr } from '../core/i18n.js?v=202610151011';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610151011';
-import { createBus } from '../core/bus.js?v=202610151011';
-import { connectObs } from '../core/obs.js?v=202610151011';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610151011';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610151011';
-import { simulateSpeech } from './demo.js?v=202610151011';
-import { initHelp } from './help.js?v=202610151011';
-import { initNews } from './news.js?v=202610151011';
-import { createGuide, guideSeen } from './guide.js?v=202610151011';
-import { coinWord } from '../core/coin.js?v=202610151011';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610151011';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610151026';
+import { EN, L, tr } from '../core/i18n.js?v=202610151026';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610151026';
+import { createBus } from '../core/bus.js?v=202610151026';
+import { connectObs } from '../core/obs.js?v=202610151026';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610151026';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610151026';
+import { simulateSpeech } from './demo.js?v=202610151026';
+import { initHelp } from './help.js?v=202610151026';
+import { initNews } from './news.js?v=202610151026';
+import { createGuide, guideSeen } from './guide.js?v=202610151026';
+import { coinWord } from '../core/coin.js?v=202610151026';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610151026';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
