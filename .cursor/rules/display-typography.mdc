@@ -17,8 +17,13 @@ alwaysApply: false
   - 「新語」の札は塗りのない活字のラベル（細い罫＋字間の広い小さな文字）。元の2語は下に小さく
   - 新語の色は `src/core/color.js` の `tuneColor` / `rainbowColor` で書体テーマの背景に対してコントラスト 4.5 以上に整える（VJ は黒地に対して 5 以上）
   - 「動きを控えめに」では演出を省いてふつうに出す
+- カンペの「同じ話の記憶」（`S.echo`：'0' / '5' / '10' 分。カンペのレイアウトだけ）
+  - 表示ビューが聞こえた語の時刻を `heard` に覚え、その時間内の回数（似た語＝一方がもう一方を含む2字以上の語は 0.5 回）で大きさ（`echoScale`：最大4倍）と表示時間（`echoLife`）を決める
+  - くり返しの総量で埋まりぐあい `--fill`（0〜1）を出し、余白と字間を詰める。同時に出す語の上限も最大 +26 まで広げる
+  - 画面からあふれたら、くり返しの少ない・古い語から `lift()`（流れから外してすばやく消す）。残りがくり返しの語だけなら、`echoK` でそろって縮む（余裕ができたら少しずつ戻す）。語を出し入れしてちらつかせない
+  - Esc の全消去とレイアウトの切り替えで記憶を消す
 - VJ モード（`vj.js`、canvas 1枚）：スタイルは micro（1px・既定）/ led / neon / pixel（ホロは 2026-10-15 に削除。保存済みのホロは 1px になる）。書体は `VJ_FONTS`
   - 画面で選べるのはスタイルと書体だけ。ドットの細かさ（`vjDetail`）と演出の強さ（`vjFx`）は標準に固定（URL の `detail=`・`fx=` では指定できる）
   - 1px は白だけ・デバイスの 1px の点と線で描く（方眼・目盛り・座標の読み出し・書き込みヘッド）。色やにじみを足さない
-- URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / ticker / vj）、`vj`（micro / led / neon / pixel）、`vjfont`、`detail`、`fx`、`size`、`ttl`、`max`、`vert=0`、`cap=0/1`、`calm=1`、`fonts=local`、`demo=1&sp=1`、`script=meeting|speech`
+- URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / ticker / vj）、`vj`（micro / led / neon / pixel）、`vjfont`、`detail`、`fx`、`size`、`ttl`、`max`、`vert=0`、`echo=0|5|10`、`cap=0/1`、`calm=1`、`fonts=local`、`demo=1&sp=1`、`script=meeting|speech`
 - 講演・式典向けの演出を足すときは `docs/projection-research.md` の原則（本編中は背景を静かに、演出は節目だけ）に従う

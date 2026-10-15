@@ -63,11 +63,14 @@ body {
 /* ---- カンペ：下から積み上がる ---- */
 .layout-kanpe #stage { display: flex; flex-direction: column; justify-content: flex-end; }
 .layout-kanpe .flow {
+  --fill: 0; /* 同じ話の記憶：くり返しが増えるほど 1 に近づき、余白と字間を詰めて画面を言葉で埋める */
   display: flex; flex-wrap: wrap; align-items: baseline; align-content: flex-end;
-  gap: calc(var(--base) * .18) calc(var(--base) * .55);
-  padding: 6vh 6vw 6vh;
+  gap: calc(var(--base) * (.18 - .12 * var(--fill))) calc(var(--base) * (.55 - .3 * var(--fill)));
+  padding: calc(6vh - 3.5vh * var(--fill)) calc(6vw - 3.5vw * var(--fill));
+  transition: gap 1.2s ease, padding 1.2s ease;
 }
 .layout-kanpe.has-cap .flow { padding-bottom: calc(var(--base) * 2.2); }
+.calm.layout-kanpe .flow { transition: none; }
 .layout-kanpe .w { position: relative; transform-origin: 50% 50%; }
 
 /* ---- テロップ：下部を横に流れる ---- */

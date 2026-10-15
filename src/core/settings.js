@@ -130,6 +130,13 @@ export const FUSION_SPEEDS = {
   fast: { label: '速い', labelEn: 'Fast', k: 0.6 },
 };
 
+// カンペ：同じ話の記憶（この時間内のくり返しを数える）
+export const ECHO_SPANS = {
+  '0': { label: 'オフ', labelEn: 'Off', note: 'くり返しても大きさは変わりません', noteEn: 'Repeated words keep their size' },
+  '5': { label: '5分', labelEn: '5 min', note: '5分以内にくり返した言葉ほど大きく、長く残ります。同じ話を続けると画面が言葉で埋まっていきます', noteEn: 'Words repeated within 5 minutes grow bigger and stay longer. Keep on the same topic and the screen fills with words' },
+  '10': { label: '10分', labelEn: '10 min', note: '10分以内のくり返しを数えます。長めの講演や会議向けです', noteEn: 'Counts repeats within 10 minutes. Good for longer talks and meetings' },
+};
+
 // 話者の色（ラベルと文字色に使う）
 export const SPEAKER_COLORS = ['#ffb020', '#3fb6ff', '#ff5c8a', '#4cd97b', '#b18cff', '#ffffff'];
 export const MAX_SPEAKERS = 4;
@@ -158,6 +165,7 @@ export const DEFAULTS = {
   fusionColor: '',   // 新語の色（空＝標準。rainbow / random も選べる）
   fusionMotion: 'collide', // 新語の出かた（collide / decode / shutter / converge / scan / random）
   fusionSpeed: 'mid',      // 新語の出る速さ（slow / mid / fast）
+  echo: '5',         // カンペ：同じ話の記憶（分）。この時間内にくり返した言葉ほど大きく・長く残り、画面を埋めていく。'0' でオフ
   speakerMode: 'off', // 話者の色分け：off / manual（手動で切り替え）/ auto（声の高さで推定）
   speakerCount: 2,
   speakers: DEFAULT_SPEAKERS,

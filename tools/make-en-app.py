@@ -70,6 +70,8 @@ T = [
   ('<span class="lbl">文字サイズ</span>', '<span class="lbl">Text size</span>'),
   ('<span class="lbl">表示時間</span>', '<span class="lbl">Display time</span>'),
   ('<span class="lbl">同時に出す語</span>', '<span class="lbl">Words on screen</span>'),
+  ('<span class="lbl">同じ話の記憶</span>', '<span class="lbl">Topic memory</span>'),
+  ('aria-label="同じ話の記憶"', 'aria-label="Topic memory"'),
   ('<span>縦組みを混ぜる</span>', '<span>Mix in vertical text</span>'),
   ('<span>字幕ライン</span>', '<span>Caption line</span>'),
   ('<span>動きを控えめに</span>', '<span>Reduce motion</span>'),

@@ -30,7 +30,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97%20BGMPRcdefhilnotux%E3%82%AF%E3%82%B4%E3%82%B7%E3%83%83%E3%83%88%E3%83%89%E4%B8%B8%E5%A4%AA%E6%98%8E%E6%9C%9D%E6%A5%B5&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="../styles/console.css?v=202610151047">
+<link rel="stylesheet" href="../styles/console.css?v=202610151119">
 </head>
 <body>
 <header class="top">
@@ -132,6 +132,11 @@
         <p id="vjStyleNote" class="hint"></p>
         <span class="lbl vj-sub">VJ typeface</span>
         <div id="vjFonts" class="segmented five vj-fonts" role="radiogroup" aria-label="VJ typeface"></div>
+      </div>
+      <div id="kanpeOpts" class="field" hidden>
+        <span class="lbl">Topic memory</span>
+        <div id="echoSpans" class="segmented" role="radiogroup" aria-label="Topic memory"></div>
+        <p id="echoNote" class="hint"></p>
       </div>
       <div class="sliders">
         <label class="slider" data-novj><span class="lbl">Text size</span><output id="vSize"></output><input id="baseSize" type="range" min="20" max="90" step="1"></label>
@@ -238,9 +243,9 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="../src/ui/lang.js?v=202610151047" defer></script>
-<script src="../src/ui/menu.js?v=202610151047" defer></script>
-<script src="../src/ui/mode.js?v=202610151047" defer></script>
-<script type="module" src="../src/console/console.js?v=202610151047"></script>
+<script src="../src/ui/lang.js?v=202610151119" defer></script>
+<script src="../src/ui/menu.js?v=202610151119" defer></script>
+<script src="../src/ui/mode.js?v=202610151119" defer></script>
+<script type="module" src="../src/console/console.js?v=202610151119"></script>
 </body>
 </html>

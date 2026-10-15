@@ -1,13 +1,13 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610151047';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610151047';
-import { createBus } from '../core/bus.js?v=202610151047';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610151047';
-import { runs } from '../core/extract.js?v=202610151047';
-import { EN, L, tr } from '../core/i18n.js?v=202610151047';
-import { createVJ } from './vj.js?v=202610151047';
-import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610151047';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610151119';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610151119';
+import { createBus } from '../core/bus.js?v=202610151119';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610151119';
+import { runs } from '../core/extract.js?v=202610151119';
+import { EN, L, tr } from '../core/i18n.js?v=202610151119';
+import { createVJ } from './vj.js?v=202610151119';
+import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610151119';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -29,6 +29,7 @@ if (P.get('cap') === '1') LOCK.caption = true;
 if (+P.get('ttl') > 0) LOCK.ttl = Math.min(60, +P.get('ttl'));
 if (+P.get('max') > 0) LOCK.maxWords = Math.min(40, +P.get('max'));
 if (P.get('vert') === '0') LOCK.vertical = false;
+if (['0', '5', '10'].includes(P.get('echo'))) LOCK.echo = P.get('echo');
 const LOCAL_FONTS = P.get('fonts') === 'local';
 const EMBED = P.get('embed') === '1';
 
@@ -55,6 +56,49 @@ const unit = () => Math.max(0.2, Math.min(stage.clientHeight / 720, stage.client
 const basePx = () => S.baseSize * unit();
 const now = () => performance.now();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// ---------------------------------------------------------------- カンペ：同じ話の記憶
+// 決めた時間（5分・10分）のあいだに聞こえた言葉を数える。くり返した言葉ほど大きく・長く残り、
+// 同じ話を続けるほど、画面が言葉で埋まっていく（カンペのレイアウトだけ）。記録はこの窓のメモリだけ。
+const heard = new Map(); // 語 → 聞こえた時刻の列
+const echoMs = () => (S.layout === 'kanpe' ? (+S.echo || 0) * 60000 : 0);
+function hear(key) {
+  const span = echoMs();
+  if (!span) return;
+  const t = performance.now();
+  const a = (heard.get(key) || []).filter((x) => t - x < span);
+  a.push(t);
+  heard.delete(key); heard.set(key, a); // 新しく聞こえた語を後ろへ（古いものから捨てられるように）
+  if (heard.size > 600) heard.delete(heard.keys().next().value);
+}
+function pruneHeard() {
+  const span = echoMs(), t = performance.now();
+  for (const [k, a] of heard) {
+    const b = span ? a.filter((x) => t - x < span) : [];
+    if (b.length) heard.set(k, b); else heard.delete(k);
+  }
+}
+// くり返しの回数。似た言葉（一方がもう一方を含む2字以上の語）は半分として数える
+function echoCount(key) {
+  if (!echoMs()) return 1;
+  const own = (heard.get(key) || []).length;
+  let rel = 0;
+  if ([...key].length >= 2) {
+    for (const [k, a] of heard) if (k !== key && [...k].length >= 2 && (k.includes(key) || key.includes(k))) rel += a.length;
+  }
+  return Math.max(1, own + rel * 0.5);
+}
+const echoScale = (n) => Math.min(4, 1 + 0.3 * (n - 1)); // 2回で1.3倍、5回で2.2倍、11回で4倍まで
+let echoK = 1; // 画面がくり返しの語だけで埋まったら、みんなでそろって少し縮む（あふれた語を出し入れしない）
+const echoPx = (lv, n) => basePx() * RATIOS.kanpe[lv] * Math.max(1, echoScale(n) * echoK);
+const echoLife = (n, fill) => (1 + 0.5 * (n - 1)) * (1 + fill); // くり返した語ほど、画面が埋まっているほど長く残す
+// 画面の埋まりぐあい（0〜1）：記憶の中のくり返しの総量で決める
+function echoFill() {
+  if (!echoMs()) return 0;
+  let r = 0;
+  for (const a of heard.values()) r += a.length - 1;
+  return Math.min(1, r / 30);
+}
+
 const el = (cls, text) => { const e = document.createElement(text === undefined ? 'div' : 'span'); e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 
 // ---------------------------------------------------------------- 背景のカメラ映像
@@ -148,6 +192,7 @@ function setupLayout() {
   items.clear();
   if (vj) { vj.destroy(); vj = null; }
   stage.replaceChildren();
+  heard.clear(); lastFill = -1; echoK = 1;
   lastSp = null;
   if (S.layout === 'vj') {
     vj = createVJ(stage, { localFonts: LOCAL_FONTS });
@@ -264,6 +309,13 @@ function clearSpot(r, self, keep = []) {
 }
 
 function liveItems() { return [...items.values()].filter((it) => !it.leaving); }
+// 先に退いてもらう語：新語は残す。カンペで記憶がオンなら、くり返しの少ない・古い語から
+function evictee(live) {
+  const pool = live.filter((x) => x.kind !== 'fusion');
+  if (!pool.length) return live[0];
+  if (!echoMs()) return pool[0];
+  return pool.reduce((a, b) => ((b.echo || 1) < (a.echo || 1) || ((b.echo || 1) === (a.echo || 1) && b.born < a.born) ? b : a));
+}
 
 // ---------------------------------------------------------------- 追加・成長・退場
 async function addWord(m) {
@@ -272,12 +324,14 @@ async function addWord(m) {
   lastWordAt = now();
   if (vj) { await vj.add(m); updateHint(); return; }
   const key = text.toLowerCase();
+  if (m.kind !== 'fusion') hear(key);
   const prev = items.get(key);
   if (prev && !prev.leaving) { bump(prev, m.count); return; }
 
   const kind = m.kind || 'normal';
   const lv = level(kind, text, m.count);
-  const px = basePx() * RATIOS[S.layout][lv];
+  const echo = echoMs() ? echoCount(key) : 1, fill = echoFill();
+  const px = echo > 1 ? echoPx(lv, echo) : basePx() * RATIOS[S.layout][lv];
   const len = [...text].length;
   const vertical = S.layout === 'compose' && S.vertical && kind !== 'fusion' && !/[A-Za-z]/.test(text) && len >= 2 && len <= 7 &&
     Math.random() < (lv >= 1 ? 0.4 : 0.22);
@@ -292,14 +346,16 @@ async function addWord(m) {
     lastSp = m.sp;
   }
   node.style.fontSize = px + 'px';
-  node.style.letterSpacing = TRACK[lv] + 'em';
-  const ttl = S.ttl * 1000 * (kind === 'new' ? 1.25 : kind === 'fusion' ? 3 : 1) * (lv >= 2 ? 1.15 : 1); // 新語は余韻を残して長めに
+  node.style.letterSpacing = TRACK[Math.min(3, lv + (echo >= 3 ? 1 : 0))] + 'em';
+  const ttl0 = S.ttl * 1000 * (kind === 'new' ? 1.25 : kind === 'fusion' ? 3 : 1) * (lv >= 2 ? 1.15 : 1); // 新語は余韻を残して長めに
+  const ttl = echoMs() ? Math.min(echoMs(), ttl0 * echoLife(echo, fill)) : ttl0;
   const it = { key, text, kind, count: m.count || 1, lv, el: node, inner, parts, vertical,
-    born: now(), ttl, expires: now() + ttl, rect: null, leaving: false, aging: false, fz: m.fz };
+    born: now(), ttl0, ttl, echo, expires: now() + ttl, rect: null, leaving: false, aging: false, fz: m.fz };
 
-  const max = Math.min(S.maxWords, MAXW[S.layout]);
+  // 同時に出す語の上限。カンペで同じ話が続くときは、埋まりぐあいに合わせて上限を広げる
+  const max = Math.min(S.maxWords, MAXW[S.layout]) + (S.layout === 'kanpe' ? Math.round(fill * 26) : 0);
   let live = liveItems();
-  while (live.length >= max) { expire(live.find((x) => x.kind !== 'fusion') || live[0]); live = liveItems(); } // 新語は最後まで残す
+  while (live.length >= max) { expire(evictee(live)); live = liveItems(); } // 新語は最後まで残す
 
   if (S.layout === 'compose') {
     node.style.visibility = 'hidden';
@@ -311,7 +367,7 @@ async function addWord(m) {
     node.style.transform = `translate(${r.x}px, ${r.y}px)`;
     node.style.visibility = '';
   } else if (S.layout === 'kanpe') {
-    flip(() => host.appendChild(node));
+    flip(() => { host.appendChild(node); if (echo > 1) fit(node, px); });
   } else {
     host.appendChild(node);
     shiftTrack(true);
@@ -375,7 +431,8 @@ function bump(it, count) {
   it.expires = now() + it.ttl;
   if (it.aging) { it.aging = false; it.el.classList.remove('aging'); }
   const nl = level(it.kind, it.text, it.count);
-  if (nl > it.lv && S.layout !== 'ticker') grow(it, nl);
+  if (echoMs() && it.kind !== 'fusion') echoGrow(it, Math.max(nl, it.lv));
+  else if (nl > it.lv && S.layout !== 'ticker') grow(it, nl);
   it.inner.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1)' }, { transform: 'scale(1)' }],
     { duration: 380, easing: EASE });
 }
@@ -403,6 +460,64 @@ function grow(it, nl) {
   }
 }
 
+// カンペ：くり返すたびに、回数に合わせて大きく・長く
+function echoGrow(it, nl) {
+  const n = echoCount(it.key);
+  it.echo = n;
+  it.lv = nl;
+  it.ttl = Math.min(echoMs(), (it.ttl0 || it.ttl) * echoLife(n, echoFill()));
+  it.expires = now() + it.ttl;
+  flip(() => sizeEcho(it));
+}
+function sizeEcho(it) {
+  const px = echoPx(it.lv, it.echo || 1);
+  it.el.style.fontSize = px + 'px';
+  it.el.style.letterSpacing = TRACK[Math.min(3, it.lv + ((it.echo || 1) >= 3 ? 1 : 0))] + 'em';
+  fit(it.el, px);
+}
+function resizeEcho() {
+  for (const it of liveItems()) if (it.kind !== 'fusion' && (it.echo || 1) > 1 && it.el.parentNode === host) sizeEcho(it);
+}
+
+// カンペ：言葉が画面からあふれたら、くり返しの少ない・古い語から退いてもらう（いつも画面いっぱいまで）。
+// あふれた面積ぶんだけまとめて退かせる（退場中の語が空ける面積も数に入れて、退かせすぎない）
+let lastFill = -1, lastPrune = 0, lastRelax = 0;
+function echoTick(t) {
+  if (host === stage) return;
+  if (!echoMs()) { if (lastFill >= 0) { host.style.removeProperty('--fill'); lastFill = -1; } return; }
+  if (t - lastPrune > 2000) { lastPrune = t; pruneHeard(); }
+  const fill = echoFill();
+  if (Math.abs(fill - lastFill) > 0.02) { lastFill = fill; host.style.setProperty('--fill', fill.toFixed(2)); }
+  const room = stage.clientHeight - host.scrollHeight;
+  if (room > stage.clientHeight * 0.2 && echoK < 1 && t - lastRelax > 3000) { // 余裕ができたら、少しずつ元の大きさへ
+    lastRelax = t;
+    echoK = Math.min(1, echoK * 1.06);
+    flip(resizeEcho);
+  }
+  if (room >= -2) return;
+  flip(() => {
+    // 退場中でまだ流れの中にいる語から外し、それでもあふれていれば、くり返しの少ない・古い語から
+    const fading = [...items.values()].filter((it) => it.leaving && it.el.parentNode === host);
+    let live = liveItems();
+    while (host.scrollHeight - stage.clientHeight > 2) {
+      if (fading.length) { lift(fading.shift()); continue; }
+      if (live.length <= 1) break;
+      const it = evictee(live);
+      if ((it.echo || 1) >= 2 && echoK > 0.3) { echoK *= 0.88; resizeEcho(); continue; } // 残りがくり返しの語だけなら、そろって縮む
+      live = live.filter((x) => x !== it);
+      lift(it);
+    }
+  });
+}
+// 流れから外して、いまの場所ですばやく消す（ほかの語がすぐに詰めても、重なって見える時間をつくらない）
+function lift(it) {
+  const r = it.el.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+  Object.assign(it.el.style, { position: 'absolute', left: r.left - sr.left + 'px', top: r.top - sr.top + 'px', margin: '0' });
+  stage.appendChild(it.el);
+  expire(it);
+  for (const a of it.el.getAnimations()) a.playbackRate = 4;
+}
+
 function expire(it) {
   if (it.leaving) return;
   it.leaving = true;
@@ -427,6 +542,7 @@ function removeItem(it) {
 function clearAll() {
   if (vj) vj.clear();
   if (fx) fx.replaceChildren();
+  heard.clear(); echoK = 1;
   lastSp = null;
   for (const it of [...items.values()]) expire(it);
   cap.classList.remove('on');
@@ -819,6 +935,7 @@ setInterval(() => {
     if (left <= 0) expire(it);
     else if (!it.aging && left < it.ttl * 0.35) { it.aging = true; it.el.classList.add('aging'); }
   }
+  echoTick(t);
 }, 200);
 
 // ---------------------------------------------------------------- 字幕ライン
@@ -1053,7 +1170,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610151047').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610151119').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 

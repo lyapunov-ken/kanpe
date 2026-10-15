@@ -1,6 +1,6 @@
 // はじめての人向けの 3 ステップのガイド。画面の実物を枠で囲み、順番に案内する。
 // 「無料ではじめる」から初めて開いたときに一度だけ自動で出る。右上の「使い方」からいつでも見直せる。
-import { L } from '../core/i18n.js?v=202610151047';
+import { L } from '../core/i18n.js?v=202610151119';
 
 const KEY = 'kanpe.guide.v1';
 export function guideSeen() { try { return localStorage.getItem(KEY) === '1'; } catch { return true; } }

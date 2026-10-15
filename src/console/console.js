@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610151047';
-import { EN, L, tr } from '../core/i18n.js?v=202610151047';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610151047';
-import { createBus } from '../core/bus.js?v=202610151047';
-import { connectObs } from '../core/obs.js?v=202610151047';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610151047';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610151047';
-import { simulateSpeech } from './demo.js?v=202610151047';
-import { initHelp } from './help.js?v=202610151047';
-import { initNews } from './news.js?v=202610151047';
-import { createGuide, guideSeen } from './guide.js?v=202610151047';
-import { coinWord } from '../core/coin.js?v=202610151047';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610151047';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610151119';
+import { EN, L, tr } from '../core/i18n.js?v=202610151119';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610151119';
+import { createBus } from '../core/bus.js?v=202610151119';
+import { connectObs } from '../core/obs.js?v=202610151119';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610151119';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610151119';
+import { simulateSpeech } from './demo.js?v=202610151119';
+import { initHelp } from './help.js?v=202610151119';
+import { initNews } from './news.js?v=202610151119';
+import { createGuide, guideSeen } from './guide.js?v=202610151119';
+import { coinWord } from '../core/coin.js?v=202610151119';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610151119';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -392,6 +392,7 @@ function segButtons(container, entries, key) {
   if (key === 'layout') {
     $('#layoutNote').textContent = entries[S[key]] ? tr(entries[S[key]], 'note') : '';
     $('#vjOpts').hidden = S.layout !== 'vj';
+    $('#kanpeOpts').hidden = S.layout !== 'kanpe'; // 同じ話の記憶はカンペのときだけ
     document.body.classList.toggle('is-vj', S.layout === 'vj'); // VJ では効かない設定（文字サイズ・同時に出す語・縦組み）を隠す
   }
 }
@@ -418,6 +419,7 @@ function pick(container, entries, key, id, def) {
   if (key === 'theme') renderThemes(); else segButtons(container, entries, key);
   if (key === 'vjStyle') $('#vjStyleNote').textContent = tr(VJ_STYLES[id], 'note');
   if (key === 'fusionMotion') $('#fzMotionNote').textContent = tr(FUSION_MOTIONS[id], 'note');
+  if (key === 'echo') $('#echoNote').textContent = tr(ECHO_SPANS[id], 'note');
   if (key === 'fusionMotion' || key === 'fusionSpeed') setTimeout(() => fuse(false), 150); // 選んだ見た目をすぐ見せる（言葉が出ていれば）
   updateTrial();
   pushSettings();
@@ -915,6 +917,9 @@ if (!FUSION_SPEEDS[S.fusionSpeed]) S.fusionSpeed = 'mid';
 renderFzColors();
 segButtons('#fzMotions', FUSION_MOTIONS, 'fusionMotion');
 segButtons('#fzSpeeds', FUSION_SPEEDS, 'fusionSpeed');
+if (!ECHO_SPANS[S.echo]) S.echo = DEFAULTS.echo;
+segButtons('#echoSpans', ECHO_SPANS, 'echo');
+$('#echoNote').textContent = tr(ECHO_SPANS[S.echo], 'note');
 $('#fzMotionNote').textContent = tr(FUSION_MOTIONS[S.fusionMotion], 'note');
 setInterval(() => { // 話している間だけ、ときどき自動で混ぜる
   const t = performance.now();
