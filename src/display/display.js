@@ -54,24 +54,53 @@ const MAXW = { compose: 40, kanpe: 14, ticker: 30 };
 // 基準の大きさ：1280×720 を 1 として、窓の高さと幅の小さい方に合わせる（縦長・小さな窓でもはみ出しにくい）
 const unit = () => Math.max(0.2, Math.min(stage.clientHeight / 720, stage.clientWidth / 800));
 const basePx = () => S.baseSize * unit();
-const now = () => performance.now();
+// 時計。あとから開いた窓が流れをなぞって追いつくあいだ（replay）だけ、過去の時刻を指す
+let clockShift = 0;
+const now = () => performance.now() - clockShift;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// 決まった種から、いつも同じ並びの乱数を出す（mulberry32）。
+// コンソールが言葉ごとに種を付けて送るので、プレビューも別窓も同じ置き場所・同じ縦横になる
+function seededRandom(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rngFor = (m) => (m && Number.isFinite(m.seed) ? seededRandom(m.seed) : Math.random);
+let replaying = false; // 追いつき中は、登場・退場のアニメーションを省いてすぐに組む
+// 言葉の時刻：コンソールが送った時刻（ts）を使う。書体の読み込み待ちなどで窓ごとに処理が遅れても、
+// 生まれた時刻・消える時刻がどの窓でも同じになる（時計が5秒以上ずれていそうなときは受け取った時刻）。
+// ts からこの窓の時計への換算は、最初に1回だけ決めた差（EPOCH）で行う。毎回換算すると1ms ほどの揺れが出て、
+// 「消える直前に次の言葉が来た」ときの判断が窓ごとに分かれてしまうため
+const EPOCH = Date.now() - performance.now();
+const tsClock = (ts) => ts - EPOCH;
+let evAt = null; // いま組んでいる言葉の時刻（そのあいだに退く語は、この時刻に退いたことにする）
+const clockAt = () => (evAt ?? now());
+function evTime(m) {
+  const n = now();
+  if (replaying || !m || !Number.isFinite(m.ts)) return n;
+  const t = tsClock(m.ts);
+  return t <= n + 50 && t > n - 5000 ? t : n;
+}
 // ---------------------------------------------------------------- カンペ：同じ話の記憶
 // 決めた時間（5分・10分）のあいだに聞こえた言葉を数える。くり返した言葉ほど大きく・長く残り、
 // 同じ話を続けるほど、画面が言葉で埋まっていく（カンペのレイアウトだけ）。記録はこの窓のメモリだけ。
 const heard = new Map(); // 語 → 聞こえた時刻の列
 const echoMs = () => (S.layout === 'kanpe' ? (+S.echo || 0) * 60000 : 0);
-function hear(key) {
+function hear(key, t = now()) {
   const span = echoMs();
   if (!span) return;
-  const t = performance.now();
   const a = (heard.get(key) || []).filter((x) => t - x < span);
   a.push(t);
   heard.delete(key); heard.set(key, a); // 新しく聞こえた語を後ろへ（古いものから捨てられるように）
   if (heard.size > 600) heard.delete(heard.keys().next().value);
 }
 function pruneHeard() {
-  const span = echoMs(), t = performance.now();
+  const span = echoMs(), t = now();
   for (const [k, a] of heard) {
     const b = span ? a.filter((x) => t - x < span) : [];
     if (b.length) heard.set(k, b); else heard.delete(k);
@@ -176,14 +205,14 @@ function applyTheme() {
 }
 
 // 表示する語の字形だけを先読み（Google Fonts は文字範囲ごとに分割配信）。最大120msで見切る。
-function fontReady(text, px) {
+function fontReady(text, px, wait = 120) {
   if (LOCAL_FONTS || !document.fonts) return Promise.resolve();
   const th = THEMES[S.theme] || THEMES.yoru;
   const p = Promise.all([
     document.fonts.load(`${th.strong} ${px}px ${th.family}`, text),
     document.fonts.load(`${th.light} ${px}px ${th.family}`, text),
   ]).catch(() => {});
-  return Promise.race([p, sleep(120)]);
+  return Promise.race([p, sleep(wait)]);
 }
 
 // ---------------------------------------------------------------- レイアウト
@@ -265,39 +294,67 @@ function overlap(x, y, w, h, r) {
 }
 
 // 12カラムの格子にスナップしながら、重ならない場所を探す。大きい語ほど中央寄り。
-function place(w, h, lv, self) {
-  const W = stage.clientWidth, H = stage.clientHeight;
+// 計算は「1280×720 を 1 とした基準の大きさ」で行う（字の大きさと同じ倍率 unit() で割る）。
+// w・h も基準の大きさで測ったもの（refSize）を受け取る。こうすると、プレビューと別窓のように
+// 大きさの違う窓でも、同じ種から同じ答えが出る。
+function place(w, h, lv, self, rand = Math.random) {
+  const s = unit();
+  const W = Math.round(stage.clientWidth / s), H = Math.round(stage.clientHeight / s);
   const pad = Math.min(W, H) * 0.05;
   const reserve = S.caption ? H * 0.15 : 0;
   const maxX = Math.max(pad, W - pad - w), maxY = Math.max(pad, H - pad - reserve - h);
-  const col = (W - 2 * pad) / 12, row = Math.max(6, basePx() * 0.5);
-  const gap = basePx() * 0.3;
+  const col = (W - 2 * pad) / 12, row = Math.max(6, S.baseSize * 0.5);
+  const gap = S.baseSize * 0.3;
   const cx = W / 2, cy = (H - reserve) / 2;
   const centerWeight = w * h * (lv >= 3 ? 1.4 : lv === 2 ? 0.8 : lv === 1 ? 0.25 : 0.08);
+  const others = [];
+  const t = clockAt();
+  for (const it of items.values()) {
+    if (it === self || !it.rect || (it.leaving && it.goneAt <= t)) continue;
+    others.push({ r: { x: it.rect.x / s, y: it.rect.y / s, w: it.rect.w / s, h: it.rect.h / s }, leaving: it.leaving, fz: it.kind === 'fusion' });
+  }
   let best = null;
   for (let i = 0; i < 120; i++) {
-    const x = Math.min(maxX, pad + Math.round((Math.random() * (maxX - pad)) / col) * col);
-    const y = Math.min(maxY, pad + Math.round((Math.random() * (maxY - pad)) / row) * row);
+    const x = Math.min(maxX, pad + Math.round((rand() * (maxX - pad)) / col) * col);
+    const y = Math.min(maxY, pad + Math.round((rand() * (maxY - pad)) / row) * row);
     let ov = 0, fade = 0, fz = 0;
-    for (const it of items.values()) {
-      if (it === self || !it.rect) continue;
-      const o = overlap(x - gap, y - gap, w + 2 * gap, h + 2 * gap, it.rect);
-      if (it.leaving) fade += o; else if (it.kind === 'fusion') fz += o; else ov += o;
+    for (const o of others) {
+      const a = overlap(x - gap, y - gap, w + 2 * gap, h + 2 * gap, o.r);
+      if (o.leaving) fade += a; else if (o.fz) fz += a; else ov += a;
     }
     const dc = Math.hypot((x + w / 2 - cx) / W, (y + h / 2 - cy) / H);
     // 新語には絶対に重ねない（ほかの語を退かせてでも空ける）。次にほかの語と重ならないこと、退場中の語を避け、最後に中央寄せ
     const score = (fz > 0 ? 1e12 + fz : 0) + (ov > 0 ? 1e9 + ov : 0) + (fade > 0 ? 1e6 + fade : 0) + dc * centerWeight;
     if (!best || score < best.score) best = { x, y, w, h, ov, score };
   }
-  return best;
+  // 実際の窓の大きさに戻す
+  return { x: best.x * s, y: best.y * s, w: best.w * s, h: best.h * s, ov: best.ov, score: best.score };
 }
 
-// 画面（字幕ぶんを除く）に収まらない語は縮める。縦組みの長い語は高さで効く
+// 語の大きさを「基準の大きさ」（1280×720 の窓に出したとき）で測る。
+// 窓ごとの字の大きさで測ると、端数の丸めで1〜2px ずれて置き場所が変わってしまうので、
+// 写しを基準の字の大きさで組んで測る（どの窓でも同じ数字になる）
+function refSize(node) {
+  const s = unit();
+  const c = node.cloneNode(true);
+  c.style.fontSize = (node._vpx || parseFloat(node.style.fontSize) / s) + 'px';
+  c.style.transform = 'none';
+  c.style.visibility = 'hidden';
+  c.setAttribute('aria-hidden', 'true');
+  (node.parentNode || host).appendChild(c);
+  const r = { w: c.offsetWidth, h: c.offsetHeight };
+  c.remove();
+  return r;
+}
+// 画面（字幕ぶんを除く）に収まらない語は縮める。縦組みの長い語は高さで効く（判断は基準の大きさで）
 function fit(node, px) {
-  const W = stage.clientWidth, H = stage.clientHeight;
+  const s = unit();
+  const W = Math.round(stage.clientWidth / s), H = Math.round(stage.clientHeight / s);
   const maxW = W * 0.9, maxH = (H - (S.caption ? H * 0.15 : 0)) * 0.86;
-  const k = Math.min(1, maxW / node.offsetWidth, maxH / node.offsetHeight);
-  if (k < 1) node.style.fontSize = px * k + 'px';
+  node._vpx = px / s;
+  const r = refSize(node);
+  const k = Math.min(1, maxW / r.w, maxH / r.h);
+  if (k < 1) { node._vpx = (px * k) / s; node.style.fontSize = px * k + 'px'; }
 }
 
 function clearSpot(r, self, keep = []) {
@@ -318,7 +375,7 @@ function capFusion(fresh) {
   if (old.length + 1 >= FZ_MAX && old.length) {
     const o = old[0];
     o.hurry = true;
-    o.expires = Math.min(o.expires, now() + FZ_HURRY);
+    o.expires = Math.min(o.expires, clockAt() + FZ_HURRY);
   }
 }
 // 先に退いてもらう語：新語は残す。カンペで記憶がオンなら、くり返しの少ない・古い語から
@@ -333,12 +390,19 @@ function evictee(live) {
 async function addWord(m) {
   const text = m.text;
   if (!text) return;
-  lastWordAt = now();
-  if (vj) { await vj.add(m); updateHint(); return; }
+  if (vj) { lastWordAt = now(); await vj.add(m); updateHint(); return; }
+  const t0 = evTime(m);
+  tick(t0); // この時刻で消えているはずの語を先に消す（タイマーの刻みは窓ごとにずれるので）
+  lastWordAt = Math.max(lastWordAt, t0);
+  evAt = t0;
+  try { await addWordAt(m, text, t0); } finally { evAt = null; }
+}
+async function addWordAt(m, text, t0) {
   const key = text.toLowerCase();
-  if (m.kind !== 'fusion') hear(key);
+  const rand = rngFor(m);
+  if (m.kind !== 'fusion') hear(key, t0);
   const prev = items.get(key);
-  if (prev && !prev.leaving) { bump(prev, m.count); return; }
+  if (prev && !prev.leaving) { bump(prev, m.count, rand, t0); return; }
 
   const kind = m.kind || 'normal';
   const lv = level(kind, text, m.count);
@@ -346,11 +410,11 @@ async function addWord(m) {
   const px = echo > 1 ? echoPx(lv, echo) : basePx() * RATIOS[S.layout][lv];
   const len = [...text].length;
   const vertical = S.layout === 'compose' && S.vertical && kind !== 'fusion' && !/[A-Za-z]/.test(text) && len >= 2 && len <= 7 &&
-    Math.random() < (lv >= 1 ? 0.4 : 0.22);
+    rand() < (lv >= 1 ? 0.4 : 0.22);
   await fontReady(text, px);
 
   const { node, inner, parts } = build(text, kind, vertical, m.from);
-  if (kind === 'fusion' && m.fz) colorize(node, parts, m.fz.color);
+  if (kind === 'fusion' && m.fz) colorize(node, parts, m.fz.color, rand);
   if (m.spc) { // 話者の色とラベル（話者が替わった最初の語にだけ名前を添える）
     node.classList.add('has-sp');
     node.style.setProperty('--spc', m.spc);
@@ -362,7 +426,7 @@ async function addWord(m) {
   const ttl0 = S.ttl * 1000 * (kind === 'new' ? 1.25 : kind === 'fusion' ? 3 : 1) * (lv >= 2 ? 1.15 : 1); // 新語は余韻を残して長めに
   const ttl = echoMs() ? Math.min(echoMs(), ttl0 * echoLife(echo, fill)) : ttl0;
   const it = { key, text, kind, count: m.count || 1, lv, el: node, inner, parts, vertical,
-    born: now(), ttl0, ttl, echo, expires: now() + ttl, rect: null, leaving: false, aging: false, fz: m.fz };
+    born: t0, ttl0, ttl, echo, expires: t0 + ttl, rect: null, leaving: false, aging: false, fz: m.fz };
 
   // 同時に出す語の上限。カンペで同じ話が続くときは、埋まりぐあいに合わせて上限を広げる
   const max = Math.min(S.maxWords, MAXW[S.layout]) + (S.layout === 'kanpe' ? Math.round(fill * 26) : 0);
@@ -373,7 +437,8 @@ async function addWord(m) {
     node.style.visibility = 'hidden';
     host.appendChild(node);
     fit(node, px);
-    const r = place(node.offsetWidth, node.offsetHeight, lv, it);
+    const ref = refSize(node);
+    const r = place(ref.w, ref.h, lv, it, rand);
     clearSpot(r, it); // 空きがなければ、その場所にいる語に早めに退場してもらう
     it.rect = r;
     node.style.transform = `translate(${r.x}px, ${r.y}px)`;
@@ -392,6 +457,7 @@ async function addWord(m) {
 
 const EASE = 'cubic-bezier(.2,.75,.15,1)';
 function enter(it) {
+  if (replaying) { if (it.kind === 'fusion') it.el.classList.add('fz-live', 'filled'); return; }
   if (it.kind === 'fusion') { fzEnter(it); return; }
   const calm = S.reduceMotion;
   const stagger = calm ? 0 : Math.min(34, 300 / Math.max(1, it.parts.length));
@@ -438,20 +504,20 @@ function countUp(it) {
   requestAnimationFrame(step);
 }
 
-function bump(it, count) {
+function bump(it, count, rand, t0 = now()) {
   it.count = Math.max(it.count + 1, count || 0);
-  it.born = now();
+  it.born = t0;
   it.hurry = false;
-  it.expires = now() + it.ttl;
+  it.expires = t0 + it.ttl;
   if (it.aging) { it.aging = false; it.el.classList.remove('aging'); }
   const nl = level(it.kind, it.text, it.count);
-  if (echoMs() && it.kind !== 'fusion') echoGrow(it, Math.max(nl, it.lv));
-  else if (nl > it.lv && S.layout !== 'ticker') grow(it, nl);
-  it.inner.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1)' }, { transform: 'scale(1)' }],
+  if (echoMs() && it.kind !== 'fusion') echoGrow(it, Math.max(nl, it.lv), t0);
+  else if (nl > it.lv && S.layout !== 'ticker') grow(it, nl, rand);
+  if (!replaying) it.inner.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1)' }, { transform: 'scale(1)' }],
     { duration: 380, easing: EASE });
 }
 
-function grow(it, nl) {
+function grow(it, nl, rand) {
   it.lv = nl;
   const px = basePx() * RATIOS[S.layout][nl];
   if (S.layout === 'kanpe') {
@@ -462,25 +528,26 @@ function grow(it, nl) {
   it.el.style.fontSize = px + 'px';
   it.el.style.letterSpacing = TRACK[nl] + 'em';
   fit(it.el, px);
-  const w = it.el.offsetWidth, h = it.el.offsetHeight;
-  const r = place(w, h, nl, it);
+  const h = it.el.offsetHeight;
+  const ref = refSize(it.el);
+  const r = place(ref.w, ref.h, nl, it, rand);
   clearSpot(r, it);
   it.rect = r;
   const to = `translate(${r.x}px, ${r.y}px)`;
   it.el.style.transform = to;
-  if (old && !S.reduceMotion) {
+  if (old && !S.reduceMotion && !replaying) {
     it.el.animate([{ transform: `translate(${old.x}px, ${old.y}px) scale(${old.h / h})` }, { transform: to }],
       { duration: 520, easing: EASE });
   }
 }
 
 // カンペ：くり返すたびに、回数に合わせて大きく・長く
-function echoGrow(it, nl) {
+function echoGrow(it, nl, t0 = now()) {
   const n = echoCount(it.key);
   it.echo = n;
   it.lv = nl;
   it.ttl = Math.min(echoMs(), (it.ttl0 || it.ttl) * echoLife(n, echoFill()));
-  it.expires = now() + it.ttl;
+  it.expires = t0 + it.ttl;
   flip(() => sizeEcho(it));
 }
 function sizeEcho(it) {
@@ -532,16 +599,23 @@ function lift(it) {
   for (const a of it.el.getAnimations()) a.playbackRate = 4;
 }
 
-function expire(it) {
+function expire(it, at = clockAt()) {
   if (it.leaving) return;
   it.leaving = true;
   const slow = it.kind === 'fusion'; // 新語はゆっくり薄れて余韻を残す
-  const a = it.el.animate(S.reduceMotion ? { opacity: 0 } : { opacity: 0, filter: slow ? 'blur(6px)' : 'blur(3px)' },
+  it.goneAt = at + (slow ? 1800 : 900); // 消え終わる時刻（置き場所を決めるときは、これを過ぎた語を数えない）
+  if (replaying) { // 追いつき中：見えなくして、本来なら消え終わる時刻に外す（置き場所の判断は同じになる）
+    it.el.style.opacity = '0';
+    return;
+  }
+  // 外すのはタイマー（tick）が goneAt を過ぎたときに行う（窓ごとの描画のタイミングによらず、そろって外れる）
+  it.el.animate(S.reduceMotion ? { opacity: 0 } : { opacity: 0, filter: slow ? 'blur(6px)' : 'blur(3px)' },
     { duration: slow ? 1800 : 900, easing: 'ease-in', fill: 'forwards' });
-  a.onfinish = () => removeItem(it);
 }
 
 function removeItem(it) {
+  if (it.removed) return;
+  it.removed = true;
   const first = host.firstElementChild === it.el;
   const doRemove = () => {
     it.el.remove();
@@ -567,7 +641,7 @@ function flip(mutate) {
   const before = new Map();
   for (const it of items.values()) if (it.el.isConnected) before.set(it, it.el.getBoundingClientRect());
   mutate();
-  if (S.reduceMotion) return;
+  if (S.reduceMotion || replaying) return;
   for (const [it, b] of before) {
     if (!it.el.isConnected) continue;
     const a = it.el.getBoundingClientRect();
@@ -618,10 +692,10 @@ const fzInk = (node) => getComputedStyle(node).getPropertyValue('--fz').trim() |
 function themeBg() { const th = THEMES[S.theme] || THEMES[DEFAULT_THEME]; return th.bg === 'transparent' ? null : th.bg; }
 // 色をつける：単色は --fz、虹は1字ずつ --fzc（バッジと線は最初の字の色）。
 // どの色も背景に合わせて明るさを整える（明るい紙では濃く、黒地では明るく。コントラスト 4.5 以上）
-function colorize(node, parts, color) {
+function colorize(node, parts, color, rand = Math.random) {
   const bg = themeBg();
   if (color === 'rainbow') {
-    const h0 = Math.random() * 360, n = Math.max(1, parts.length);
+    const h0 = rand() * 360, n = Math.max(1, parts.length);
     parts.forEach((p, i) => p.style.setProperty('--fzc', rainbowColor(h0 + (i * 300) / n, bg)));
     node.style.setProperty('--fz', rainbowColor(h0, bg));
   } else {
@@ -633,9 +707,9 @@ function colorize(node, parts, color) {
 const fringe = (d) => (isLight(themeBg()) ? `${d}em 0 #c2185b, -${d}em 0 #00838f` : `${d}em 0 #ff2a6d, -${d}em 0 #16e0ff`);
 
 // 親から子へ伸びる系統線（描かれて、しばらく残って、消える）
-function lineage(a, b, delay, k = 1, color = '') {
+function lineage(a, b, delay, k = 1, color = '', rand = Math.random) {
   const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
-  const bend = Math.min(80, len * 0.22) * (Math.random() < 0.5 ? 1 : -1);
+  const bend = Math.min(80, len * 0.22) * (rand() < 0.5 ? 1 : -1);
   const cx = (a.x + b.x) / 2 - (dy / len) * bend, cy = (a.y + b.y) / 2 + (dx / len) * bend;
   const path = svg('path', { d: `M${a.x},${a.y} Q${cx},${cy} ${b.x},${b.y}`, pathLength: '1', class: 'fz-line' });
   const head = svg('circle', { cx: a.x, cy: a.y, r: 2.6, class: 'fz-head' });
@@ -858,12 +932,19 @@ function fzEnter(it) {
 async function fuseWord(m) {
   const text = (m.text || '').trim();
   if (!text) return;
-  lastWordAt = now();
   const look = fzLook(m);
-  if (vj) { await vj.fuse({ text, from: [m.a, m.b], color: look.color, k: look.k }); updateHint(); return; }
+  const rand = rngFor(m);
+  if (vj) { lastWordAt = now(); await vj.fuse({ text, from: [m.a, m.b], color: look.color, k: look.k }); updateHint(); return; }
   const prev = items.get(text.toLowerCase());
-  if (prev && !prev.leaving) { bump(prev, 0); return; }
-  if (S.layout !== 'compose') { await addWord({ text, kind: 'fusion', count: 1, from: [m.a, m.b], fz: look }); return; }
+  if (S.layout !== 'compose') { await addWord({ text, kind: 'fusion', count: 1, from: [m.a, m.b], fz: look, seed: m.seed, ts: m.ts }); return; }
+  const t0 = evTime(m);
+  tick(t0);
+  lastWordAt = Math.max(lastWordAt, t0);
+  evAt = t0;
+  try { await fuseWordAt(m, text, look, rand, prev, t0); } finally { evAt = null; }
+}
+async function fuseWordAt(m, text, look, rand, prev, t0) {
+  if (prev && !prev.leaving) { bump(prev, 0, rand, t0); return; }
 
   const { motion, k, color } = look;
   const parents = [m.a, m.b].map((t) => items.get(String(t || '').toLowerCase())).filter((it) => it && !it.leaving && it.rect && it.el.isConnected);
@@ -871,12 +952,12 @@ async function fuseWord(m) {
   const px = basePx() * RATIOS.compose[lv];
   await fontReady(text, px);
   const { node, inner, parts } = build(text, 'fusion', false, [m.a, m.b]);
-  colorize(node, parts, color);
+  colorize(node, parts, color, rand);
   node.style.fontSize = px + 'px';
   node.style.letterSpacing = TRACK[lv] + 'em';
   const ttl = S.ttl * 1000 * 3.2; // 新語は余韻を残して長めに
   const it = { key: text.toLowerCase(), text, kind: 'fusion', count: 1, lv, el: node, inner, parts, vertical: false,
-    born: now(), ttl, expires: now() + ttl, rect: null, leaving: false, aging: false, fz: look };
+    born: t0, ttl, expires: t0 + ttl, rect: null, leaving: false, aging: false, fz: look };
   let live = liveItems();
   const max = Math.min(S.maxWords, MAXW.compose);
   while (live.length >= max) { const old = live.find((x) => !parents.includes(x)) || live[0]; expire(old); live = liveItems(); }
@@ -885,7 +966,8 @@ async function fuseWord(m) {
   fit(node, px);
   // 上の「新語」バッジと下の元の2語のぶんも空けて置く（新語はなるべく中央に）
   const fs = parseFloat(node.style.fontSize) || px, tagH = Math.max(10, fs * 0.17) * 1.9;
-  const r = place(node.offsetWidth, node.offsetHeight + tagH * 2, 3, it);
+  const ref = refSize(node), vTag = Math.max(10, node._vpx * 0.17) * 1.9; // 置き場所は基準の大きさで決める
+  const r = place(ref.w, ref.h + vTag * 2, 3, it, rand);
   clearSpot(r, it, parents);
   it.rect = r;
   const y = r.y + tagH;
@@ -899,8 +981,27 @@ async function fuseWord(m) {
   const box = { x: r.x, y, w: node.offsetWidth, h: node.offsetHeight };
   const ink = fzInk(node); // 背景に合わせて整えた色
 
-  if (S.reduceMotion) { node.style.visibility = ''; node.classList.add('fz-live'); fill(it, 0); return; }
-
+  // 元の2語が新語に重なっていたら、誕生を見届けたあとで静かに退場してもらう。
+  // 時刻は演出の長さから決めて、タイマー（tick）で行う（どの窓でも、追いつき中でも同じになる）
+  if (!S.reduceMotion) {
+    const at = t0 + (parents.length ? (motion === 'collide' ? 800 : 520) * k : 0) + fzDur(motion, k, parts.length) + 400;
+    for (const p of parents) p.stepAside = { at, r };
+  }
+  if (S.reduceMotion || replaying) { node.style.visibility = ''; node.classList.add('fz-live'); fill(it, 0); return; }
+  // 置き場所はもう決まったので、誕生の演出は待たずに次の言葉へ進む
+  // （演出のあいだ次の言葉を止めると、窓ごとに言葉の出る時刻がずれて、並びがそろわなくなる）
+  fzBirth(it, { node, parents, motion, k, c, size, box, ink, rand }).catch(() => {});
+}
+// 出かたごとの登場の長さ（fzAnimate の戻り値と同じ計算。集束の揺らぎは最大で見積もる）
+function fzDur(motion, k, n) {
+  const m = Math.max(0, n - 1);
+  if (motion === 'decode') return (320 + 95 * m) * k + 60;
+  if (motion === 'shutter') return (70 * m + 45 * 3 + 560) * k;
+  if (motion === 'converge') return (30 * m + 120 + 820) * k;
+  if (motion === 'scan') return 1200 * k;
+  return 720 * k;
+}
+async function fzBirth(it, { node, parents, motion, k, c, size, box, ink, rand }) {
   // 1) 元の2語が光る。衝突では分身がまん中へ吸い寄せられる。どの出かたでも系統線が伸びる
   for (const p of parents) {
     p.el.classList.add('fz-parent');
@@ -918,7 +1019,7 @@ async function fuseWord(m) {
         { transform: `translate(${c.x - (pw * kk) / 2}px, ${c.y - (ph * kk) / 2}px) scale(${kk})`, opacity: 0.6 },
       ], { duration: 680 * k, delay: 120 * k, easing: 'cubic-bezier(.6,0,.85,.25)', fill: 'both' }).onfinish = () => ghost.remove();
     }
-    lineage(centerOf(p), c, 120 * k, k, ink);
+    lineage(centerOf(p), c, 120 * k, k, ink, rand);
   }
   await sleep(parents.length ? (motion === 'collide' ? 800 : 520) * k : 0);
 
@@ -930,28 +1031,82 @@ async function fuseWord(m) {
   else if (motion === 'scan') bands(box, k, ink);
   else if (motion === 'shutter') slits(box, k, ink);
   const end = fzAnimate(it, motion, k);
-  // 元の2語が新語に重なっていたら、誕生を見届けたあとで静かに退場してもらう
-  setTimeout(() => {
-    const g = basePx() * 0.3;
-    for (const p of parents) if (!p.leaving && p.rect && overlap(r.x - g, r.y - g, r.w + 2 * g, r.h + 2 * g, p.rect) > 0) expire(p);
-  }, end + 400);
   if (motion === 'decode') brackets(box, k, ink, end + 200);
   fzFinish(it, end, k);
 }
 
 // ---------------------------------------------------------------- 時間経過（タイマーは1本だけ）
-setInterval(() => {
-  const t = now();
-  const silent = t - lastWordAt > 3000; // 間があいたら、言葉を余韻として長めに残す
+let tickedAt = 0;
+function tick(t) {
+  // 間があいたら（最後の言葉から3秒すぎたら）、そのあいだは言葉の残り時間を減らさない（余韻として長めに残す）。
+  // 前回からの「間があいていた時間」をそのまま足すので、タイマーの刻みかたによらず同じ結果になる
+  const quiet = t - Math.max(tickedAt, lastWordAt + 3000);
+  tickedAt = Math.max(tickedAt, t);
   for (const it of items.values()) {
     if (it.leaving) continue;
-    if (silent && !it.hurry) it.expires = Math.min(it.expires + 200, it.born + it.ttl * 2.5);
+    if (it.stepAside && t >= it.stepAside.at) { // 新語の誕生を見届けた元の語：まだ新語に重なっていれば退く
+      const r = it.stepAside.r, g = basePx() * 0.3, at0 = it.stepAside.at;
+      it.stepAside = null;
+      if (it.rect && overlap(r.x - g, r.y - g, r.w + 2 * g, r.h + 2 * g, it.rect) > 0) { expire(it, at0); continue; }
+    }
+    if (quiet > 0 && !it.hurry) it.expires = Math.max(it.expires, Math.min(it.expires + quiet, it.born + it.ttl * 2.5));
     const left = it.expires - t;
-    if (left <= 0) expire(it);
+    if (left <= 0) expire(it, it.expires); // 刻みの遅れによらず、本来の時刻に退いたことにする
     else if (!it.aging && left < it.ttl * 0.35) { it.aging = true; it.el.classList.add('aging'); }
   }
-  echoTick(t);
-}, 200);
+  sweepGone(t);
+}
+// 届いた言葉を組んでいる途中（pending）は時間を進めない。言葉の側がその時刻で tick を呼ぶので、
+// 処理の遅れぐあいが窓ごとに違っても、消える・残るの順番がそろう。
+// 届く途中の言葉を追い越さないよう、時計より 60ms 遅れて進める（見た目にはわからない差）
+setInterval(() => { const t = now(); if (!pending) tick(t - 60); echoTick(t); }, 200);
+
+// ---------------------------------------------------------------- あとから開いた窓の追いつき
+// コンソールが「これまでの流れ」（最近の言葉と、それぞれ何ミリ秒前か）を送ってくるので、
+// 時計を巻き戻して同じ順番・同じ種でなぞり直す。プレビューと同じ画面ができあがる。
+function sweepGone(t = now()) {
+  for (const it of [...items.values()]) if (it.leaving && it.goneAt && it.goneAt <= t) removeItem(it);
+}
+async function replay(msg, recvAt) {
+  if (vj) return; // VJ は流れの演出なので、途中からでも困らない
+  let evs = (Array.isArray(msg.events) ? msg.events : []).filter((e) => e && Number.isFinite(e.ago));
+  // コンソールの設定に連動する窓は、レイアウトを切り替えたときに画面が作り直されるので、それ以降だけ
+  if (!LOCK.layout && Number.isFinite(msg.since)) evs = evs.filter((e) => e.ago <= msg.since);
+  const words = evs.filter((e) => (e.t === 'word' || e.t === 'fuse') && e.text);
+  const cap0 = evs.filter((e) => e.t === 'caption').pop();
+  if (words.length) {
+    if (items.size) setupLayout(); // 追いつく前に届いた言葉は、流れの中にも入っているので組み直す
+    // 字の幅で置き場所が決まるので、書体を先に読み込んでおく（最大2.5秒）
+    await Promise.race([Promise.all(words.map((e) => fontReady(e.text, basePx(), 2500))), sleep(2500)]);
+    replaying = true;
+    lastWordAt = -Infinity; tickedAt = 0; // 時計を巻き戻すので、「最後の言葉」も過去からなぞり直す
+    // 時刻はふだんと同じく ts から（ずれていそうなら「何ミリ秒前か」から）
+    const at = (e) => {
+      const a = recvAt - e.ago;
+      if (!Number.isFinite(e.ts)) return a;
+      const b = tsClock(e.ts);
+      return Math.abs(b - a) < 2000 ? b : a;
+    };
+    const setClock = (v) => { clockShift = performance.now() - v; };
+    let v = at(words[0]);
+    try {
+      for (const e of words) {
+        const target = at(e);
+        for (v += 200; v < target; v += 200) { setClock(v); tick(v); } // 言葉と言葉のあいだの時間を進める
+        v = target;
+        setClock(v);
+        if (e.t === 'word') await addWord(e); else await fuseWord(e);
+        echoTick(now());
+      }
+      for (const end = performance.now(); v + 200 <= end; ) { v += 200; setClock(v); tick(v); }
+    } finally {
+      replaying = false;
+      clockShift = 0;
+    }
+    updateHint(); // 消えかけの語は、いつものタイマーが本来の時刻に外す
+  }
+  if (cap0 && performance.now() - (recvAt - cap0.ago) < 4000) caption(cap0.text, cap0.final, cap0);
+}
 
 // ---------------------------------------------------------------- 字幕ライン
 let capTimer = 0;
@@ -987,6 +1142,11 @@ function onMessage(m) {
   else if (m.t === 'clear') clearAll();
   else if (m.t === 'lvl') { if (vj) vj.level(m.v); }
   else if (m.t === 'settings') applySettings(m.s);
+  else if (m.t === 'sync') {
+    const recvAt = performance.now();
+    pending++;
+    queue = queue.then(() => replay(m, recvAt)).catch(() => {}).finally(() => { pending--; });
+  }
 }
 
 let lastSettings = null; // コンソールから届いた最新の設定（別窓で「連動」に戻すときに使う）

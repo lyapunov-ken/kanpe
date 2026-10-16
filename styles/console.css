@@ -214,7 +214,9 @@ details.obs[open] { padding-bottom: 12px; }
 .preview-head { display: flex; align-items: center; justify-content: space-between; }
 .preview-head h2 { margin: 0; }
 .ops { display: flex; gap: 6px; }
-.preview { position: relative; aspect-ratio: 16 / 9; width: 100%; max-width: 100%; max-height: 62vh; border-radius: var(--r); overflow: hidden; border: 1px solid var(--line);
+/* 中身（表示ビュー）をいつもちょうど 16:9 に保つ。別窓（1280×720）と同じ形なので、言葉の並びもそろう。
+   高さが足りないときは、つぶさずに幅を狭める（max-height で縦だけ縮めると形がずれていた） */
+.preview { position: relative; box-sizing: content-box; aspect-ratio: 16 / 9; width: min(calc(100% - 2px), calc(62vh * 16 / 9)); margin-inline: auto; border-radius: var(--r); overflow: hidden; border: 1px solid var(--line);
   background: repeating-conic-gradient(var(--check1) 0 25%, var(--check2) 0 50%) 0 0 / 20px 20px; }
 .preview iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
@@ -284,7 +286,7 @@ details.obs[open] { padding-bottom: 12px; }
   .controls > .sec + .sec { border-top: 1px solid var(--line); }
   .controls > .mic-sec { order: 1; }
   .right > .preview-head { order: 2; margin-top: 4px; }
-  .right > .preview { order: 3; max-height: none; }
+  .right > .preview { order: 3; width: calc(100% - 2px); }
   .right > .transcript { order: 5; }
   .tx { max-height: 40vh; }
 }
