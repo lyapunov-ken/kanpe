@@ -2,6 +2,12 @@
 // type：new＝新機能 / improve＝改善 / fix＝修正。文言は短く、利用者向けのやさしい言葉で（日本語と英語）。
 export const CHANGELOG = [
   {
+    v: '1.3.1', date: '2026-10-17',
+    items: [
+      { type: 'improve', ja: '「ブレスト」を「ブレストモード」に改め、マイクのすぐ下へ。新語ミックスをオンにすると「オン」の印が付き、枠が光ります', en: 'Brainstorm is now “Brainstorm mode”, placed right below the mic. When Word mix is on, an “ON” badge appears and the panel glows' },
+    ],
+  },
+  {
     v: '1.3.0', date: '2026-10-15',
     items: [
       { type: 'new', ja: '新語ミックス：画面に出た言葉どうしを掛け合わせて、新しい言葉を生み出します（ブレスト向け）。色・出かた（衝突・デコード・シャッター・集束・スキャン）・速さも選べます。新語はほかの言葉と重ならない場所に、いつも手前に出て余韻を残し、色は背景に合わせて読みやすく整えます。同時に出る新語は5つまでで、それを超えると古い新語から早めに消えます', en: 'Word mix: combines words on screen into brand-new words (for brainstorming), with your choice of color, entrance (Collide, Decode, Shutter, Converge, Scan) and speed. New words never overlap other words, stay in front, linger longer, and their colors adjust to the background for readability. Up to five new words show at once; beyond that, the oldest fade out early' },

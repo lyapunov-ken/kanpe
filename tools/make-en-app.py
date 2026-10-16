@@ -108,7 +108,7 @@ T = [
   ('src="display.html?embed=1" title="表示プレビュー"', 'src="../display.html?embed=1&amp;hl=en" title="Display preview"'),
   ('<h2>文字起こし</h2>', '<h2>TRANSCRIPT</h2>'),
   ('class="ghost small">消去</button>', 'class="ghost small">Clear</button>'),
-  ('<h2>ブレスト</h2>', '<h2>BRAINSTORM</h2>'),
+  ('<h2 class="coin-h"><span class="coin-ic" aria-hidden="true">✦</span>ブレストモード<em class="coin-state">オン</em></h2>', '<h2 class="coin-h"><span class="coin-ic" aria-hidden="true">✦</span>BRAINSTORM MODE<em class="coin-state">ON</em></h2>'),
   ('<span class="ca-a">価格</span><span class="ca-x">×</span><span class="ca-b">地方</span><span class="ca-eq">→</span><span class="ca-c">地格</span>', '<span class="ca-a">Typography</span><span class="ca-x">×</span><span class="ca-b">Browser</span><span class="ca-eq">→</span><span class="ca-c">Typowser</span>'),
   ('<b>新語ミックス</b><small>画面に出た言葉どうしを掛け合わせて、新しい言葉を生み出します</small>', '<b>Word mix</b><small>Combines words on screen into brand-new coined words</small>'),
   ('type="button">いま混ぜる <kbd>M</kbd></button>', 'type="button">Mix now <kbd>M</kbd></button>'),

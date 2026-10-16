@@ -90,6 +90,23 @@
       </div>
     </div>
 
+    <div class="sec coin-sec" id="coinSec">
+      <h2 class="coin-h"><span class="coin-ic" aria-hidden="true">✦</span>ブレストモード<em class="coin-state">オン</em></h2>
+      <div class="coin-card">
+        <div class="coin-art" aria-hidden="true"><span class="ca-a">価格</span><span class="ca-x">×</span><span class="ca-b">地方</span><span class="ca-eq">→</span><span class="ca-c">地格</span></div>
+        <label class="switch coin-switch"><span><b>新語ミックス</b><small>画面に出た言葉どうしを掛け合わせて、新しい言葉を生み出します</small></span><input id="fusion" type="checkbox" role="switch"></label>
+        <div class="coin-row">
+          <button id="btnFuse" class="btn" type="button">いま混ぜる <kbd>M</kbd></button>
+          <span class="hint">オンにすると、話している間ときどき自動で生まれます</span>
+        </div>
+        <div class="coin-opts">
+          <div class="coin-opt"><span class="lbl">新語の色</span><div id="fzColors" class="accents fz-colors" role="radiogroup" aria-label="新語の色"></div></div>
+          <div class="coin-opt"><span class="lbl">出かた</span><div id="fzMotions" class="segmented" role="radiogroup" aria-label="新語の出かた"></div><p id="fzMotionNote" class="hint"></p></div>
+          <div class="coin-opt"><span class="lbl">速さ</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="新語の出る速さ"></div></div>
+        </div>
+      </div>
+    </div>
+
     <div class="sec">
       <h2>表示</h2>
       <div class="field"><span class="lbl">書体テーマ</span><div id="themes" class="themes" role="radiogroup" aria-label="書体テーマ"></div></div>
@@ -145,23 +162,6 @@
         <label class="switch" data-novj><span>縦組みを混ぜる</span><input id="vertical" type="checkbox" role="switch"></label>
         <label class="switch"><span>字幕ライン</span><input id="caption" type="checkbox" role="switch"></label>
         <label class="switch"><span>動きを控えめに</span><input id="reduceMotion" type="checkbox" role="switch"></label>
-      </div>
-    </div>
-
-    <div class="sec coin-sec" id="coinSec">
-      <h2>ブレスト</h2>
-      <div class="coin-card">
-        <div class="coin-art" aria-hidden="true"><span class="ca-a">価格</span><span class="ca-x">×</span><span class="ca-b">地方</span><span class="ca-eq">→</span><span class="ca-c">地格</span></div>
-        <label class="switch coin-switch"><span><b>新語ミックス</b><small>画面に出た言葉どうしを掛け合わせて、新しい言葉を生み出します</small></span><input id="fusion" type="checkbox" role="switch"></label>
-        <div class="coin-row">
-          <button id="btnFuse" class="btn" type="button">いま混ぜる <kbd>M</kbd></button>
-          <span class="hint">オンにすると、話している間ときどき自動で生まれます</span>
-        </div>
-        <div class="coin-opts">
-          <div class="coin-opt"><span class="lbl">新語の色</span><div id="fzColors" class="accents fz-colors" role="radiogroup" aria-label="新語の色"></div></div>
-          <div class="coin-opt"><span class="lbl">出かた</span><div id="fzMotions" class="segmented" role="radiogroup" aria-label="新語の出かた"></div><p id="fzMotionNote" class="hint"></p></div>
-          <div class="coin-opt"><span class="lbl">速さ</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="新語の出る速さ"></div></div>
-        </div>
       </div>
     </div>
 

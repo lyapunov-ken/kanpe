@@ -482,7 +482,19 @@ details.obs[open] { padding-bottom: 12px; }
 .is-vj [data-novj] { display: none !important; }
 .vj-opts .segmented.four button { font-variant-numeric: tabular-nums; }
 
-/* ---- ブレスト：新語ミックス ---- */
+/* ---- ブレストモード：新語ミックス ----
+   サイドメニューの2番目（マイクのすぐ下）。青（--demo）の差し色で、ほかの設定より少し目立たせる。
+   新語ミックスがオンのあいだは、見出しに「オン」が付き、枠が光る */
+.coin-sec { background: linear-gradient(180deg, color-mix(in srgb, var(--demo) 7%, transparent), transparent 70%); }
+.coin-h { display: flex; align-items: center; gap: 7px; color: var(--demo); font-size: 12px; }
+.coin-ic { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; font-size: 11px; letter-spacing: 0;
+  color: var(--panel); background: var(--demo); }
+.coin-state { display: none; margin-left: auto; font-style: normal; font-size: 9.5px; letter-spacing: .1em; padding: 2px 7px; border-radius: 999px;
+  color: var(--panel); background: var(--demo); }
+.coin-sec:has(#fusion:checked) .coin-state { display: inline-block; }
+.coin-sec .coin-card { border-color: color-mix(in srgb, var(--demo) 35%, var(--line2)); }
+.coin-sec:has(#fusion:checked) .coin-card { border-color: var(--demo); box-shadow: 0 0 0 3px color-mix(in srgb, var(--demo) 16%, transparent); }
+.coin-switch b { color: var(--ink); }
 .coin-card { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px;
   border: 1px solid var(--line2); background:
   radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--demo) 10%, transparent), transparent 60%), var(--raise); overflow: hidden; }
