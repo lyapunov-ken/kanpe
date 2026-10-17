@@ -147,6 +147,13 @@ export const DEFAULT_SPEAKERS = [
   { name: 'ゲスト3', nameEn: 'Guest 3', color: '#4cd97b', f0: 0 },
 ];
 
+// カスタムロゴの大きさ。ref は 1280×720 の画面での一辺（px）。表示ビューは窓の大きさに合わせて拡縮する
+export const LOGO_SIZES = {
+  s: { label: '小', labelEn: 'S', ref: 72, note: '控えめに、画面の隅に', noteEn: 'Small, tucked into the corner' },
+  m: { label: '中', labelEn: 'M', ref: 104, note: 'ふつうの大きさ', noteEn: 'Medium' },
+  l: { label: '大', labelEn: 'L', ref: 144, note: '大きく目立たせる', noteEn: 'Large and prominent' },
+};
+
 export const DEFAULTS = {
   theme: 'sumi',     // 初めての人は墨（明るい紙と朱）から
   layout: 'compose',
@@ -174,6 +181,8 @@ export const DEFAULTS = {
   bgCamera: false,   // 背景にカメラの映像を映す（お手軽プラン。映像はこの端末の中だけで扱う）
   bgCameraId: '',    // 使うカメラ（空なら既定のカメラ）
   bgMirror: true,    // カメラの映像を左右反転（鏡のように）
+  logo: '',          // カスタムロゴ（data URL。正方形に切り抜いて 320px 以下に縮小済み。お手軽プラン）
+  logoSize: 'm',     // ロゴの大きさ：s / m / l（LOGO_SIZES）
   lang: 'ja-JP',
   registered: '',
   ng: '',

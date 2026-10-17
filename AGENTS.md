@@ -24,7 +24,7 @@ Cursor（および AGENTS.md を読むエージェント）向けのプロジェ
 - `file://` ではマイクが使えない。必ず localhost か https で開く
 - マイクなし確認：`display.html?demo=1`（`&layout=vj&vj=micro` など）、コンソールの「デモを流す」
 - 初回ガイドの確認：`app.html?welcome=1`（一度見ると localStorage の `kanpe.guide.v1` に記録される。消すと再表示）
-- 決済 API のテスト：`node tools/test-api.mjs`（Stripe は偽物。通信・キー不要。32 件すべて通ること）
+- 決済 API のテスト：`node tools/test-api.mjs`（Stripe は偽物。通信・キー不要。39 件すべて通ること）
 - SEO とアクセス解析：`robots.txt`・`sitemap.xml`（`tools/make-sitemap.py`、bump-version.sh から自動）・`404.html`（`tools/make-legal.py` で生成）。GA4 の測定 ID は `src/lp/analytics.js` の `GA_ID`（G-YK9R5RH3V8）。テスト URL では `?ga=debug` で計測。詳しくは `DEPLOY.md`
 
 ## 構成
@@ -36,7 +36,7 @@ src/console/ console.js（操作・設定・新語ミックスの発火）recogn
              help.js（ヘルプ・シーン別プリセット）guide.js（初回の3ステップガイド）news.js（更新情報）
 src/display/ display.js（組版描画・新語の誕生演出・依存ゼロ）vj.js（VJ モード：1px / LED / ネオン / ピクセル）
 src/lp/ src/ui/  LP のデモ・アクセス解析（analytics.js）、言語切替、表示モード、スマホのメニュー
-functions/api/   checkout.js license.js license-email.js portal.js stripe-webhook.js _lib.js
+functions/api/   checkout.js license.js license-email.js portal.js stripe-webhook.js dev.js（開発者モード）_lib.js
 tools/           bump-version.sh make-headers.py make-sitemap.py make-en-app.py make-legal.py stripe-setup.mjs test-api.mjs og/
 docs/            調査メモ
 ```
@@ -50,7 +50,7 @@ docs/            調査メモ
 5. **文言は日英両方**：JS 内は `L('日本語', 'English')`（`src/core/i18n.js`）、`app.html` の文言は `tools/make-en-app.py` の置換表 `T` にも足す
 6. **データは端末内だけ**：文字起こし・設定・背景画像は localStorage。OBS の接続先とパスワードは URL の `#` 以降に入れ、サーバーに送らない
 7. **Stripe は KANPE 専用に絞る**：`metadata.project=kanpe`、lookup_key は `kanpe_` で始める。他プロジェクトの価格・契約には触れない
-8. **秘密情報をコミット・ファイルに書かない**：Stripe キー・`LICENSE_SECRET`・`RESEND_API_KEY`・`STRIPE_WEBHOOK_SECRET` は Cloudflare Pages の環境変数（本番とプレビューで別）。手元で API を動かすときの `.dev.vars` はコミットしない
+8. **秘密情報をコミット・ファイルに書かない**：Stripe キー・`LICENSE_SECRET`・`RESEND_API_KEY`・`STRIPE_WEBHOOK_SECRET`・`DEV_PASSWORD`（開発者モードのパスワード）は Cloudflare Pages の環境変数（本番とプレビューで別）。手元で API を動かすときの `.dev.vars` はコミットしない
 9. **更新履歴を書く**：本番に出すたびに `src/core/changelog.js` の先頭へバージョンと内容（新機能 / 改善 / 修正）を足す。アプリの「更新情報」に表示され、新しい版を初めて見た人には1時間「NEW」が付く
 10. **軽さ優先**：アニメーションは transform / opacity 中心、タイマー 1 本、消えた要素はすぐ DOM から外す
 
@@ -61,6 +61,7 @@ docs/            調査メモ
 - コミットメッセージは英語で、何を・なぜを短く。1 つのブランチに関係のない変更を混ぜない
 
 ## いまの状態（2026-10-17 時点）
+- 作業中：`feat/custom-logo`（v1.4.0）開発者モードも同じブランチ：ヘルプの一番下の「開発者」→ `/api/dev` がパスワードを環境変数 `DEV_PASSWORD` と照らし合わせ、おトクプランの開発者ライセンス（`c: 'dev'`・30日・自動更新）を出す。カスタムロゴ。`logo:custom`＝お手軽プラン。設定は `S.logo`（正方形に切り抜いた data URL、一辺 320px 以下）と `S.logoSize`（`LOGO_SIZES`）。表示ビューは左上に出し、`place()` はロゴを新語と同じく絶対に避ける。OBS へは背景画像と同じく変わった時だけ送る
 - 本番：`main` = v1.3.1（2026-10-17 公開。`release/v1.3.1` を早送りで取り込んだ）
   - 別窓とプレビューの同期（`fix/popout-sync`）：コンソールが言葉ごとに種（seed）と時刻（ts）を付けて送り、表示ビューは 1280×720 基準で同じ置き場所を計算する。あとから開いた窓には `sync` で流れを渡してなぞらせる。`display.js` の置き場所の乱数は `Math.random` ではなく `rngFor(m)` を使うこと
   - サイドメニューを3つのタブに（`feat/sidebar-tabs`）：マイクは上に固定、「表示」「ブレストモード」「詳細」。詳細は `<details name="more">` のアコーディオン。設定を足すときは、どのタブに入れても 1280×800 でスクロールなしに収まるか確かめる

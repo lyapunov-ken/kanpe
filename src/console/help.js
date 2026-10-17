@@ -1,6 +1,6 @@
 // 使い方ガイド（アプリ内ヘルプ）。右上の「ヘルプ」、? キー、または app.html#help（#help-scenes など）で開く。
 // 文言は L('日本語', 'English') で持つので、英語版のコンソールでもそのまま使える。
-import { L } from '../core/i18n.js?v=202610171656';
+import { L } from '../core/i18n.js?v=202610171959';
 
 // シーン別のおすすめ設定（無料プランの機能だけで組む。アクセントカラーや背景などの好みは触らない）
 export const PRESETS = {
@@ -80,8 +80,8 @@ function html() {
           'The settings below the mic are split into three tabs: Display, Brainstorm and More. The last tab you opened is remembered; use ← → to switch with the keyboard.')}</dd>
         <dt>${L('表示', 'Display')}</dt>
         <dd>${L(
-          '<b>書体テーマ</b>は文字と背景の雰囲気、<b>レイアウト</b>は言葉の置き方です。組版＝画面いっぱいに組む／カンペ＝下から大きく積み上がる／テロップ＝下部を横に流れる／VJ＝ドット絵で光らせる。<b>表示時間</b>は言葉が消えるまでの秒数、<b>同時に出す語</b>は画面に残す最大の語数です。<br>カンペでは<b>同じ話の記憶</b>（5分・10分・オフ）を選べます。その時間内にくり返した言葉ほど大きく、長く残り、同じ話を続けるほど画面が言葉で埋まっていきます。<br>アクセントカラーは無料プランでも自由に変えられます。プレミアム書体・背景（画像・カメラ）・VJ はお手軽プラン以上の機能で、無料プランでも1日お試しできます。<br>VJ ではスタイル（1px・LED・ネオン・ピクセル）と書体（5種）を選べます。1px は白黒の点と線だけで組む繊細な表示です。文字が読みにくいときは、書体を「ゴシック」か「明朝」にしてください。動きは「動きを控えめに」で止められます。<br>ブレストモードの<b>新語ミックス</b>をオンにすると、画面に出た言葉どうしが掛け合わさって新しい言葉が生まれます。「いま混ぜる」か <kbd>M</kbd> キーで好きなときにも混ぜられ、生まれた言葉は文字起こしの上に残ります。画面に出る新語は5つまでで、続けて混ぜると古い新語から早めに消えます。新語の色（虹・ランダムも）、出かた（衝突・デコード・シャッター・集束・スキャン・ランダム）、速さも選べます。',
-          '<b>Typeface theme</b> sets the look of the letters and background; <b>Layout</b> sets where words go: Compose fills the screen, Cue stacks big words from the bottom, Ticker scrolls along the bottom, VJ draws words in glowing dots. <b>Display time</b> is how long words stay, and <b>Words on screen</b> is the most shown at once.<br>In Cue layout, <b>Topic memory</b> (5 min, 10 min or off) makes words you repeat within that time grow bigger and stay longer, so the more you stay on one topic, the more the screen fills with words.<br>Accent colors are free to change on any plan. Premium typefaces, backgrounds (image / camera) and VJ are Plus features you can try free for one day.<br>In VJ mode you pick a style (1px, LED, Neon, Pixel) and a typeface (5 kinds). 1px is a delicate monochrome look built only from dots and lines. If letters are hard to read, choose Gothic or Mincho. “Reduce motion” stops the movement.<br>Turn on <b>Word mix</b> in Brainstorm mode and words on screen combine into brand-new words. Press “Mix now” or <kbd>M</kbd> any time; new words are kept above the transcript. Up to five new words stay on screen; keep mixing and the oldest fade out early. You can also pick the new word’s color (including rainbow and random), entrance (Collide, Decode, Shutter, Converge, Scan, Random) and speed.')}</dd>
+          '<b>書体テーマ</b>は文字と背景の雰囲気、<b>レイアウト</b>は言葉の置き方です。組版＝画面いっぱいに組む／カンペ＝下から大きく積み上がる／テロップ＝下部を横に流れる／VJ＝ドット絵で光らせる。<b>表示時間</b>は言葉が消えるまでの秒数、<b>同時に出す語</b>は画面に残す最大の語数です。<br>カンペでは<b>同じ話の記憶</b>（5分・10分・オフ）を選べます。その時間内にくり返した言葉ほど大きく、長く残り、同じ話を続けるほど画面が言葉で埋まっていきます。<br>アクセントカラーは無料プランでも自由に変えられます。プレミアム書体・背景（画像・カメラ）・カスタムロゴ・VJ はお手軽プラン以上の機能で、無料プランでも1日お試しできます。<br>「詳細」タブの<b>ロゴ</b>で画像を選ぶと、真ん中を正方形に切り抜いて画面の左上に出します（大きさは小・中・大）。組版では言葉がロゴを避けて並び、別窓や OBS にも同じように出ます。<br>VJ ではスタイル（1px・LED・ネオン・ピクセル）と書体（5種）を選べます。1px は白黒の点と線だけで組む繊細な表示です。文字が読みにくいときは、書体を「ゴシック」か「明朝」にしてください。動きは「動きを控えめに」で止められます。<br>ブレストモードの<b>新語ミックス</b>をオンにすると、画面に出た言葉どうしが掛け合わさって新しい言葉が生まれます。「いま混ぜる」か <kbd>M</kbd> キーで好きなときにも混ぜられ、生まれた言葉は文字起こしの上に残ります。画面に出る新語は5つまでで、続けて混ぜると古い新語から早めに消えます。新語の色（虹・ランダムも）、出かた（衝突・デコード・シャッター・集束・スキャン・ランダム）、速さも選べます。',
+          '<b>Typeface theme</b> sets the look of the letters and background; <b>Layout</b> sets where words go: Compose fills the screen, Cue stacks big words from the bottom, Ticker scrolls along the bottom, VJ draws words in glowing dots. <b>Display time</b> is how long words stay, and <b>Words on screen</b> is the most shown at once.<br>In Cue layout, <b>Topic memory</b> (5 min, 10 min or off) makes words you repeat within that time grow bigger and stay longer, so the more you stay on one topic, the more the screen fills with words.<br>Accent colors are free to change on any plan. Premium typefaces, backgrounds (image / camera), a custom logo and VJ are Plus features you can try free for one day.<br>Choose an image under <b>Logo</b> in the More tab and its center is cropped to a square and shown in the top-left corner (small, medium or large). In Compose layout words are placed around it, and it appears the same in pop-out windows and OBS.<br>In VJ mode you pick a style (1px, LED, Neon, Pixel) and a typeface (5 kinds). 1px is a delicate monochrome look built only from dots and lines. If letters are hard to read, choose Gothic or Mincho. “Reduce motion” stops the movement.<br>Turn on <b>Word mix</b> in Brainstorm mode and words on screen combine into brand-new words. Press “Mix now” or <kbd>M</kbd> any time; new words are kept above the transcript. Up to five new words stay on screen; keep mixing and the oldest fade out early. You can also pick the new word’s color (including rainbow and random), entrance (Collide, Decode, Shutter, Converge, Scan, Random) and speed.')}</dd>
         <dt>${L('話者（詳細タブ）', 'Speakers (More tab)')}</dt>
         <dd>${L(
           '話している人ごとに名前と色を付けます（最大4人）。切り替えはボタンかキーボードの <kbd>1</kbd>〜<kbd>4</kbd>。PC では声の高さで自動切り替えもできます。お手軽プラン以上の機能です。',
@@ -214,12 +214,21 @@ function html() {
       <a href="index.html#faq">${L('よくある質問', 'FAQ')}</a>
       <a href="index.html#business">${L('ビジネスでの使い方', 'For business')}</a>
       <a href="index.html#pricing">${L('料金', 'Pricing')}</a>
+      <button class="hp-dev-btn" type="button" data-dev-toggle aria-expanded="false" aria-controls="hpDev">${L('開発者', 'Developer')}</button>
     </footer>
+    <form id="hpDev" class="hp-dev" data-dev-form hidden>
+      <label class="hp-dev-lbl" for="hpDevPw">${L('開発者のパスワード', 'Developer password')}</label>
+      <div class="hp-dev-row">
+        <input id="hpDevPw" type="password" autocomplete="off" spellcheck="false">
+        <button class="btn" type="submit">${L('有効にする', 'Unlock')}</button>
+      </div>
+      <p class="hint" data-dev-msg aria-live="polite">${L('有料版のすべての機能が、このブラウザで使えるようになります。', 'Unlocks every paid feature in this browser.')}</p>
+    </form>
   </div>
 </div>`;
 }
 
-export function initHelp({ onPreset, onGuide } = {}) {
+export function initHelp({ onPreset, onGuide, onDev } = {}) {
   const btn = document.getElementById('btnHelp');
   let dlg = null, body = null, links = [], sections = [];
   let pinned = ''; // 目次から飛んだ先（末尾近くの章でも、その章を選んだ状態にする）
@@ -254,6 +263,25 @@ export function initHelp({ onPreset, onGuide } = {}) {
     for (const ev of ['wheel', 'touchmove', 'keydown']) body.addEventListener(ev, () => { pinned = ''; }, { passive: true });
     const g = dlg.querySelector('[data-guide-start]');
     if (g) g.addEventListener('click', () => { close(); onGuide && onGuide(); });
+    // 開発者：パスワードを入れると有料版の機能が使えるようになる（確かめるのはサーバー）
+    const devBtn = dlg.querySelector('[data-dev-toggle]'), devForm = dlg.querySelector('[data-dev-form]');
+    if (devBtn && devForm) {
+      devBtn.addEventListener('click', () => {
+        devForm.hidden = !devForm.hidden;
+        devBtn.setAttribute('aria-expanded', String(!devForm.hidden));
+        if (!devForm.hidden) { devForm.querySelector('input').focus(); devForm.scrollIntoView({ block: 'nearest' }); }
+      });
+      devForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = devForm.querySelector('input'), go = devForm.querySelector('button'), msg = devForm.querySelector('[data-dev-msg]');
+        if (!input.value || !onDev) return;
+        go.disabled = true;
+        msg.textContent = L('確かめています…', 'Checking…');
+        msg.textContent = await onDev(input.value);
+        input.value = '';
+        go.disabled = false;
+      });
+    }
     for (const b of dlg.querySelectorAll('[data-preset]')) {
       b.addEventListener('click', () => {
         const p = PRESETS[b.dataset.preset];

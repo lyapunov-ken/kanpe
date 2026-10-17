@@ -6,6 +6,7 @@ import { onRequestPost as license } from '../functions/api/license.js';
 import { onRequestPost as portal } from '../functions/api/portal.js';
 import { onRequestPost as webhook } from '../functions/api/stripe-webhook.js';
 import { onRequestPost as licenseEmail, onRequestGet as licenseEmailGet } from '../functions/api/license-email.js';
+import { onRequestPost as dev } from '../functions/api/dev.js';
 import { signLicense, verifyLicense } from '../functions/api/_lib.js';
 import { createHmac } from 'node:crypto';
 
@@ -256,5 +257,50 @@ await t('resend: bad email 400, not set up 503, cross-site 403', async () => {
   assert.equal((await resend({ email: 'nope' })).status, 400);
   const r = await resend({ email: 'a@example.com' }, { env }); assert.equal(r.status, 503); assert.equal(r.data.error.code, 'mail_not_configured');
   assert.equal((await resend({ email: 'a@example.com' }, { origin: 'https://evil.example' })).status, 403);
+});
+// ---- 開発者モード（パスワードはテスト用の値。本物は Cloudflare の環境変数にだけ置く）
+const devEnv = { LICENSE_SECRET: 'x'.repeat(40), SITE_URL: SITE, DEV_PASSWORD: 'test-dev-pass', DEV_FAIL_DELAY_MS: 0 }; // Stripe は未設定でも動く
+await t('dev: not set up → 503; cross-site 403; missing password 400', async () => {
+  assert.equal((await call(dev, '/api/dev', { password: 'x' }, { env })).status, 503);
+  assert.equal((await call(dev, '/api/dev', { password: 'test-dev-pass' }, { env: devEnv, origin: 'https://evil.example' })).status, 403);
+  assert.equal((await call(dev, '/api/dev', {}, { env: devEnv })).status, 400);
+});
+await t('dev: wrong password → 401 bad_password, no token', async () => {
+  for (const password of ['', 'test-dev-pas', 'test-dev-pass ', 'TEST-DEV-PASS']) {
+    const r = await call(dev, '/api/dev', { password }, { env: devEnv });
+    assert.equal(r.status, 401); assert.equal(r.data.error.code, 'bad_password'); assert.equal(r.data.token, undefined);
+  }
+});
+let devToken = '';
+await t('dev: right password → signed pro license marked dev, about 30 days', async () => {
+  const r = await call(dev, '/api/dev', { password: 'test-dev-pass' }, { env: devEnv });
+  assert.equal(r.status, 200); assert.equal(r.data.plan, 'pro'); assert.equal(r.data.status, 'dev');
+  assert.ok(Math.abs(r.data.expires - (now + 30 * 86400)) < 60);
+  const lic = await verifyLicense(devEnv, r.data.token);
+  assert.equal(lic.c, 'dev'); assert.equal(lic.p, 'pro');
+  assert.ok(!JSON.stringify(lic).includes('test-dev-pass')); // パスワードそのものは札に入れない
+  devToken = r.data.token;
+});
+await t('dev: license refresh renews without Stripe', async () => {
+  const r = await call(license, '/api/license', { token: devToken }, { env: devEnv });
+  assert.equal(r.status, 200); assert.equal(r.data.plan, 'pro'); assert.equal(r.data.status, 'dev');
+});
+await t('dev: changing DEV_PASSWORD or removing it revokes issued dev licenses', async () => {
+  assert.equal((await call(license, '/api/license', { token: devToken }, { env: { ...devEnv, DEV_PASSWORD: 'new-pass' } })).status, 401);
+  assert.equal((await call(license, '/api/license', { token: devToken }, { env: { ...devEnv, DEV_PASSWORD: '' } })).status, 401);
+});
+await t('dev: tampered dev token, or a dev license from another secret, rejected', async () => {
+  const [a, b, c] = devToken.split('.');
+  const forged = JSON.parse(Buffer.from(b, 'base64url').toString()); forged.e += 365 * 86400;
+  const live = { ...env, DEV_PASSWORD: 'test-dev-pass' }; // 本番と同じく Stripe も設定済み
+  assert.equal((await call(license, '/api/license', { token: `${a}.${Buffer.from(JSON.stringify(forged)).toString('base64url')}.${c}` }, { env: live })).status, 401);
+  assert.equal((await call(license, '/api/license', { token: devToken }, { env: { ...live, LICENSE_SECRET: 'y'.repeat(40) } })).status, 401);
+});
+await t('dev: billing portal refuses dev licenses; paid refresh still goes to Stripe', async () => {
+  const r = await call(portal, '/api/portal', { token: devToken }, { env: { ...env, DEV_PASSWORD: 'test-dev-pass' } });
+  assert.equal(r.status, 400); assert.equal(r.data.error.code, 'dev_license');
+  const { token } = await signLicense(env, { customer: 'cus_A', plan: 'plus', periodEnd: now + 86400 });
+  const p = await call(license, '/api/license', { token }, { env: { ...env, DEV_PASSWORD: 'test-dev-pass' } });
+  assert.equal(p.status, 200); assert.equal(p.data.plan, 'plus');
 });
 console.log(`\n${n} tests passed`);

@@ -132,7 +132,6 @@ kbd { font-family: inherit; font-size: 10px; color: var(--faint); border: 1px so
 
 /* Pro 書体とお試し */
 .pro-themes .themes { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-.pro-tag { font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: .08em; color: var(--accent-ink); background: var(--accent); border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: 1px; }
 .theme.locked .tile { filter: grayscale(.6) brightness(.7); }
 .theme.locked .tile::before { content: ""; position: absolute; left: 6px; top: 6px; width: 14px; height: 14px; border-radius: 4px; background-color: rgba(0,0,0,.55); background:
   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='5' y='11' width='14' height='10' rx='2' fill='%23fff'/%3E%3Cpath d='M8 11V8a4 4 0 0 1 8 0v3' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E") center / 10px no-repeat, rgba(0,0,0,.55); }
@@ -314,9 +313,10 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px va
 .plan-foot a { color: var(--sub); }
 .plan-close { margin-left: auto; height: 32px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line2); background: var(--raise); font-weight: 700; font-size: 12.5px; }
 
-/* 有料プランの人には、UI 内の価格表示（¥480〜 の札、おトクプランの価格案内）を出さない。
+/* 有料プランの人には、UI 内の価格表示（お手軽プランの「+」の印と凡例、おトクプランの価格案内）を出さない。
    プランが分かるまでは隠しておき、無料プランと分かってから出す（支払い済みの人に一瞬でも見せないため） */
-:root:not([data-plan="free"]) .pro-tag,
+:root:not([data-plan="free"]) .plus-mark,
+:root:not([data-plan="free"]) .more-legend,
 :root:not([data-plan="free"]) .price-txt { display: none !important; }
 
 /* ---- 使い方ガイド（ヘルプ） ---- */
@@ -668,7 +668,6 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px va
 .theme-row .pro-row { grid-template-columns: repeat(2, minmax(0, 1fr)); position: relative; }
 .theme-row .pro-row::before { content: ""; position: absolute; left: -5px; top: 4px; bottom: 18px; border-left: 1px dashed var(--line2); }
 .pro-lbl { text-align: center; }
-.pro-lbl .pro-tag { margin-left: 0; }
 .theme-row .theme { gap: 4px; font-size: 10.5px; white-space: nowrap; }
 .theme-row .theme .tile { font-size: 19px; border-radius: 8px; }
 .theme-row .theme .tile::after { right: 5px; bottom: 5px; width: 5px; height: 5px; }
@@ -714,7 +713,6 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px va
 .acc-sec[open] > summary::after { transform: rotate(-135deg) translateY(-2px); }
 .acc-sec[open] > summary { border-bottom: 1px solid var(--line); border-radius: 10px 10px 0 0; }
 .acc-t { grid-area: t; display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: var(--ink); min-width: 0; }
-.acc-t .pro-tag { margin-left: 0; }
 .acc-tag { font-size: 10px; font-weight: 500; color: var(--faint); border: 1px solid var(--line2); border-radius: 4px; padding: 0 5px; }
 .acc-d { grid-area: d; font-size: 11px; color: var(--faint); line-height: 1.5; min-width: 0; }
 .acc-st { grid-area: s; font-size: 10.5px; font-weight: 700; color: var(--accent-text); border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line2));
@@ -753,3 +751,39 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px va
 /* 英語版は見出しと数字が長いので、スライダーの左右の幅を広げる */
 html[lang="en"] .slider { grid-template-columns: 104px minmax(0, 1fr) 72px; }
 .slider output { white-space: nowrap; }
+
+/* ---- カスタムロゴ（お手軽プラン）：正方形のサムネイルと、選ぶ・外すボタン ---- */
+.logo-row { display: flex; align-items: center; gap: 12px; }
+.logo-thumb { width: 56px; height: 56px; flex: none; border-radius: 8px; display: grid; place-items: center; color: var(--faint); font-size: 11px;
+  background: repeating-conic-gradient(var(--check1) 0 25%, var(--check2) 0 50%) 0 0 / 10px 10px; box-shadow: inset 0 0 0 1px var(--line2); }
+.logo-thumb img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
+.logo-thumb:empty::before { content: "なし"; }
+:lang(en) .logo-thumb:empty::before { content: "None"; }
+.logo-pick { position: relative; overflow: hidden; cursor: pointer; }
+.logo-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
+.logo-pick.locked { opacity: .45; }
+
+/* ---- お手軽プランの印「+」：機能ごとに値段を出さず、同じ小さな印だけを付ける。
+   印の意味と値段は、凡例（表示タブのお試しの行・詳細タブの下）で1回だけ伝える ---- */
+.plus-mark { display: inline-grid; place-items: center; width: 15px; height: 15px; margin-left: 5px; border-radius: 50%; flex: none; vertical-align: 1px;
+  font-style: normal; color: var(--accent-text); background: color-mix(in srgb, var(--accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
+.plus-mark b { font-size: 11px; font-weight: 800; line-height: 1; transform: translateY(-.5px); }
+.acc-t .plus-mark, .pro-lbl .plus-mark { margin-left: 0; }
+.pro-lbl { display: flex; justify-content: center; align-items: center; }
+.seg-tag.plus-mark { position: absolute; top: 3px; right: 4px; width: 12px; height: 12px; margin: 0; }
+.seg-tag.plus-mark b { font-size: 9px; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.trial-note, .more-legend { display: flex; align-items: center; gap: 6px; }
+.trial-note .plus-mark, .more-legend .plus-mark { margin-left: 0; }
+.more-legend { margin: 4px 2px 0; }
+
+/* ---- ヘルプの一番下の「開発者」：目立たせず、押すとパスワードの欄が開く ---- */
+.hp-dev-btn { margin-left: auto; font-size: 11.5px; color: var(--faint); padding: 2px 6px; border-radius: 6px; }
+.hp-dev-btn:hover, .hp-dev-btn[aria-expanded="true"] { color: var(--sub); background: var(--raise); }
+.hp-dev { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; padding: 12px 14px; border: 1px dashed var(--line2); border-radius: 10px; }
+.hp-dev[hidden] { display: none; }
+.hp-dev-lbl { font-size: 12px; color: var(--sub); }
+.hp-dev-row { display: flex; gap: 8px; }
+.hp-dev-row input { flex: 1; min-width: 0; height: 36px; }
+.plan-actions:empty { display: none; }

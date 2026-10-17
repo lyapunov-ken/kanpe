@@ -53,6 +53,8 @@ async function post(path, body) {
 export async function activateFromSession(sessionId) { return saveLicense(await post('/api/license', { session_id: sessionId })); }
 // 別の端末で使う：ライセンスコードを入れて復元する
 export async function activateFromCode(code) { return saveLicense(await post('/api/license', { token: String(code || '').trim() })); }
+// 開発者モード：パスワードはサーバーで確かめる（コードには書かない）。合えば全機能のライセンスが届く
+export async function activateDev(password) { return saveLicense(await post('/api/dev', { password: String(password || '') })); }
 // コードをなくした：お申し込みのメールアドレスにコードを送り直してもらう（契約の有無は返ってこない）
 export async function requestLicenseEmail(email, lang) { return post('/api/license-email', { email: String(email || '').trim(), lang }); }
 // 契約の最新の状態に更新する（force でなければ半日に1回まで。通信できないときは手元の情報のまま）
@@ -84,6 +86,7 @@ export const REQUIRES = {
   // アクセントカラーは 2026-10-15 から無料プランでも変えられる（ここに載せない機能は誰でも使える）
   'bg:image': 'plus',        // 背景画像のアップロード
   'bg:camera': 'plus',       // 背景にカメラの映像を映す
+  'logo:custom': 'plus',     // 画面の左上にカスタムロゴ（1:1）を出す
   'layout:vj': 'plus',       // ドットアートの VJ モード
   'speaker:labels': 'plus',  // 話者のラベルと色分け（手動切り替え・声の高さで自動）
   'speaker:diarize': 'pro',  // クラウド認識による話者の自動聞き分け

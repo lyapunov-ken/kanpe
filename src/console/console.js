@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610171656';
-import { EN, L, tr } from '../core/i18n.js?v=202610171656';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610171656';
-import { createBus } from '../core/bus.js?v=202610171656';
-import { connectObs } from '../core/obs.js?v=202610171656';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610171656';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610171656';
-import { simulateSpeech } from './demo.js?v=202610171656';
-import { initHelp } from './help.js?v=202610171656';
-import { initNews } from './news.js?v=202610171656';
-import { createGuide, guideSeen } from './guide.js?v=202610171656';
-import { coinWord } from '../core/coin.js?v=202610171656';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610171656';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610171959';
+import { EN, L, tr } from '../core/i18n.js?v=202610171959';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610171959';
+import { createBus } from '../core/bus.js?v=202610171959';
+import { connectObs } from '../core/obs.js?v=202610171959';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610171959';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610171959';
+import { simulateSpeech } from './demo.js?v=202610171959';
+import { initHelp } from './help.js?v=202610171959';
+import { initNews } from './news.js?v=202610171959';
+import { createGuide, guideSeen } from './guide.js?v=202610171959';
+import { coinWord } from '../core/coin.js?v=202610171959';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610171959';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -418,7 +418,14 @@ function segButtons(container, entries, key) {
       if (key === 'vjFont') { b.style.fontFamily = `${def.family}, sans-serif`; b.style.fontWeight = def.weight; } // 書体の名前をその書体で見せる
     }
     if (def.pro && plusLocked(key === 'layout' ? 'layout:vj' : 'theme:premium')) b.classList.add('locked');
-    if (def.pro && key === 'layout') { const t = document.createElement('em'); t.className = 'seg-tag'; t.textContent = '+'; b.appendChild(t); }
+    if (def.pro && key === 'layout') { // お手軽プランの印（無料プランのときだけ見える。console.css）
+      const t = document.createElement('em');
+      t.className = 'seg-tag plus-mark';
+      t.title = L('お手軽プランの機能', 'Plus plan feature');
+      t.setAttribute('aria-hidden', 'true');
+      t.innerHTML = '<b>+</b>';
+      b.appendChild(t);
+    }
     b.addEventListener('click', () => pick(container, entries, key, id, def));
     box.appendChild(b);
   }
@@ -514,7 +521,7 @@ function renderAccents() {
   custom.appendChild(input);
   box.appendChild(custom);
 }
-const usingPlusTrial = () => !canUse('theme:premium') && ((THEMES[S.theme] && THEMES[S.theme].pro) || !!S.bgImage || !!S.bgCamera ||
+const usingPlusTrial = () => !canUse('theme:premium') && ((THEMES[S.theme] && THEMES[S.theme].pro) || !!S.bgImage || !!S.bgCamera || !!S.logo ||
   S.layout === 'vj' || S.speakerMode !== 'off');
 function updateTrial() {
   const box = $('#trialBox');
@@ -527,7 +534,7 @@ function updateTrial() {
   box.classList.toggle('active', trialStarted() && rem > 0);
   $('#trialNote').textContent = rem <= 0 ? L(`お試し期間（1日）は終わりました。${PLUS_LABEL}で続けて使えます`, `Your 1-day trial has ended. Keep using these with ${PLUS_LABEL}.`)
     : trialStarted() ? L(`お試し中　残り ${left}（終わると標準の見た目に戻ります）`, `Trial: ${left} left (then everything returns to the standard look)`)
-    : L('¥480〜 の機能は、無料でも1日お試しできます', 'Features marked ¥480+ can be tried free for a day');
+    : L('お手軽プランの機能です。無料でも1日お試しできます', 'Plus plan features — try them free for a day');
 }
 let trialLast = performance.now();
 setInterval(() => {
@@ -540,9 +547,11 @@ setInterval(() => {
       if (THEMES[S.theme] && THEMES[S.theme].pro) S.theme = DEFAULT_THEME;
       S.bgImage = '';
       S.bgCamera = false;
+      S.logo = '';
       if (S.layout === 'vj') S.layout = 'compose';
       S.speakerMode = 'off';
       renderBg();
+      renderLogo();
       renderCam();
       pushSettings();
       renderThemes();
@@ -610,6 +619,62 @@ $('#bgFile').addEventListener('change', async (e) => {
   }
 });
 $('#bgRemove').addEventListener('click', () => { S.bgImage = ''; renderBg(); updateTrial(); pushSettings(); });
+
+// ---- カスタムロゴ（お手軽プラン以上。無料プランは1日お試し）----
+// 真ん中を正方形に切り抜き、一辺 320px 以下に縮小する。透明な部分はそのまま残す（WebP、使えなければ PNG）。
+// 表示ビューは左上に出し、組版では言葉がロゴを避けて並ぶ。
+const LOGO_MAX = 320;
+const logoLocked = () => !canUse('logo:custom') && trialRemainingMs() <= 0;
+async function squareLogo(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error('decode'));
+      i.src = url;
+    });
+    const w0 = img.naturalWidth || LOGO_MAX, h0 = img.naturalHeight || LOGO_MAX; // SVG は大きさがないことがある
+    const side = Math.min(w0, h0);
+    const n = Math.max(1, Math.min(LOGO_MAX, Math.round(side)));
+    const c = document.createElement('canvas');
+    c.width = c.height = n;
+    c.getContext('2d').drawImage(img, (w0 - side) / 2, (h0 - side) / 2, side, side, 0, 0, n, n);
+    const webp = c.toDataURL('image/webp', 0.92);
+    return { data: webp.startsWith('data:image/webp') ? webp : c.toDataURL('image/png'), n, cropped: w0 !== h0 };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+function renderLogo() {
+  const thumb = $('#logoThumb');
+  thumb.replaceChildren();
+  if (S.logo) { const i = document.createElement('img'); i.src = S.logo; i.alt = ''; thumb.appendChild(i); }
+  $('#logoRemove').hidden = !S.logo;
+  $('#logoSizeRow').hidden = !S.logo;
+  document.querySelector('.logo-pick').classList.toggle('locked', logoLocked());
+  segButtons('#logoSizes', LOGO_SIZES, 'logoSize');
+}
+$('#logoFile').addEventListener('click', (e) => {
+  if (logoLocked()) { e.preventDefault(); toast(L(`お試し期間（1日）は終わりました。カスタムロゴは${PLUS_LABEL}で使えます`, `Your 1-day trial has ended. Custom logos are part of ${PLUS_LABEL}.`)); }
+});
+$('#logoFile').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (!/^image\//.test(file.type)) { toast(L('画像ファイルを選んでください', 'Please choose an image file')); return; }
+  try {
+    const { data, cropped } = await squareLogo(file);
+    S.logo = data;
+    renderLogo();
+    updateTrial();
+    pushSettings();
+    toast(cropped ? L('ロゴを設定しました（真ん中を正方形に切り抜きました）', 'Logo set (cropped to a square from the center)') : L('ロゴを設定しました', 'Logo set'));
+  } catch {
+    toast(L('この画像は読み込めませんでした。PNG か JPEG で試してください', 'Couldn’t read this image. Please try a PNG or JPEG.'));
+  }
+});
+$('#logoRemove').addEventListener('click', () => { S.logo = ''; renderLogo(); updateTrial(); pushSettings(); });
 
 // ---- 背景にカメラの映像（お手軽プラン以上。無料プランは1日お試し）----
 // 許可はここ（コンソール）で一度だけ取る。映像を映すのは表示ビュー側で、同じサイトなので許可を引き継ぐ。
@@ -692,6 +757,8 @@ if (!THEMES[S.theme] || (THEMES[S.theme].pro && !canUse('theme:premium') && tria
 if (S.accent && accentLocked()) S.accent = '';
 if (S.bgImage && accentLocked()) S.bgImage = '';
 if (S.bgCamera && (camLocked() || !CAN_CAM)) S.bgCamera = false;
+if (S.logo && logoLocked()) S.logo = '';
+if (!LOGO_SIZES[S.logoSize]) S.logoSize = 'm';
 if (S.layout === 'vj' && plusLocked('layout:vj')) S.layout = 'compose';
 if (!LAYOUTS[S.layout]) S.layout = 'compose';
 if (S.speakerMode !== 'off' && plusLocked('speaker:labels')) S.speakerMode = 'off';
@@ -711,6 +778,7 @@ bindRange('maxWords', 'vMax', (v) => L(`${v}語`, `${v} words`));
 bindRange('bgDim', 'vBgDim', (v) => `${Math.round(v * 100)}%`);
 renderBg();
 renderCam();
+renderLogo();
 if (S.bgCamera) listCameras();
 bindCheck('vertical');
 bindCheck('caption');
@@ -732,7 +800,20 @@ function applyPreset(p) {
   showTab(S.fusion ? 'coin' : 'look'); // 選んだ設定が見えるタブへ（ブレスト会議ならブレストモード）
   toast(L(`「${p.label}」向けの設定にしました`, `Switched to settings for: ${p.label}`));
 }
-const help = initHelp({ onPreset: applyPreset, onGuide: () => guide.start() });
+const help = initHelp({ onPreset: applyPreset, onGuide: () => guide.start(), onDev: devUnlock });
+// 開発者モード（ヘルプの一番下）：パスワードが合えば全機能のライセンスを受け取る。返り値はヘルプに出す一言
+async function devUnlock(password) {
+  try {
+    await activateDev(password);
+    applyPlanUI();
+    toast(L('開発者モード：有料版のすべての機能が使えます', 'Developer mode: every paid feature is unlocked'));
+    return L('有効にしました。このブラウザで、有料版のすべての機能が使えます（右上のプランのボタンから外せます）。', 'Unlocked. Every paid feature works in this browser (remove it from the plan button at the top right).');
+  } catch (e) {
+    if (e.code === 'bad_password') return L('パスワードが違います', 'Wrong password');
+    if (e.code === 'not_configured' || e.code === 'http_404' || e.code === 'http_405') return L('このサイトでは、開発者モードがまだ設定されていません', 'Developer mode isn’t set up on this site yet');
+    return payError(e);
+  }
+}
 
 // ------------------------------------------------------------ サイドメニューのタブ（表示・ブレストモード・詳細）
 // 最後に開いていたタブはこの端末に覚えておく。← → で隣のタブへ（Home / End で端へ）
@@ -772,6 +853,7 @@ sideTabs.forEach((t, i) => {
 function updateMore() {
   const st = (id, text) => { const e = document.getElementById(id); if (e) { e.textContent = text; e.hidden = !text; } };
   st('stBg', S.bgCamera ? L('カメラ', 'Camera') : S.bgImage ? L('画像', 'Image') : '');
+  st('stLogo', S.logo ? L('オン', 'On') : '');
   st('stSp', S.speakerMode && S.speakerMode !== 'off' ? L('オン', 'On') : '');
   const words = (S.registered || '').split(/[、,，\n]/).map((w) => w.trim()).filter(Boolean).length;
   st('stDict', words ? L(`${words}語`, `${words} words`) : '');
@@ -1037,13 +1119,14 @@ function applyPlanUI() {
   const badge = $('#planBadge');
   badge.innerHTML = plan === 'free'
     ? `<b>${tr(PLANS.free)}</b><span>${L('アップグレード', 'Upgrade')}</span>`
-    : `<b>${tr(PLANS[plan])}</b><span>${L('管理', 'Manage')}</span>`;
+    : `<b>${(licenseInfo() || {}).status === 'dev' ? L('開発者モード', 'Developer') : tr(PLANS[plan])}</b><span>${L('管理', 'Manage')}</span>`;
   badge.classList.toggle('paid', plan !== 'free');
   renderThemes();
   segButtons('#layouts', LAYOUTS, 'layout');
   renderSpeakers();
   renderBg();
   renderCam();
+  renderLogo();
   updateTrial();
   pushSettings(false);
 }
@@ -1068,16 +1151,19 @@ function renderPlanDialog() {
   const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   box.append(h('p', 'lang-icon', 'K'));
   const title = h('h2', null, L('プラン', 'Your plan')); title.id = 'planDlgTitle'; box.append(title);
-  box.append(h('p', 'plan-now', tr(PLANS[plan])));
-  if (plan !== 'free' && lic) {
+  const dev = plan !== 'free' && lic && lic.status === 'dev';
+  box.append(h('p', 'plan-now', dev ? L('開発者モード', 'Developer mode') : tr(PLANS[plan])));
+  if (dev) {
+    box.append(h('p', 'lang-body', L(`有料版のすべての機能が使えます。${fmtDate(lic.expires)} まで（このページを開いていると自動で延びます）`, `Every paid feature is unlocked until ${fmtDate(lic.expires)} (extends automatically while you use KANPE).`)));
+  } else if (plan !== 'free' && lic) {
     box.append(h('p', 'lang-body', lic.cancelAtPeriodEnd
       ? L(`解約済みです。${fmtDate(lic.expires - 3 * 86400)} まで使えます`, `Cancelled — available until ${fmtDate(lic.expires - 3 * 86400)}`)
       : L(`次回の更新日：${fmtDate(lic.expires - 3 * 86400)}（${lic.interval === 'year' ? '年払い' : '月払い'}）`, `Renews on ${fmtDate(lic.expires - 3 * 86400)} (${lic.interval === 'year' ? 'yearly' : 'monthly'})`)));
   } else if (lic && lic.plan !== 'free' && lic.expires * 1000 <= Date.now()) {
     box.append(h('p', 'lang-body', L('ご契約の期限が切れています。更新するとまた使えます', 'Your subscription has ended. Renew to keep using paid features.')));
   } else {
-    box.append(h('p', 'lang-body', L('お手軽プラン（月¥480・税込）で、VJ モード・話者の色分け・プレミアム書体・背景画像が使え、「KANPE」表示を消せます。いつでも解約できます。',
-      'Plus (¥480/mo incl. tax) unlocks VJ mode, speaker colors, premium typefaces and background images, and removes the “KANPE” mark. Cancel any time.')));
+    box.append(h('p', 'lang-body', L('お手軽プラン（月¥480・税込）で、VJ モード・話者の色分け・プレミアム書体・背景画像・カスタムロゴが使え、「KANPE」表示を消せます。いつでも解約できます。',
+      'Plus (¥480/mo incl. tax) unlocks VJ mode, speaker colors, premium typefaces, background images and a custom logo, and removes the “KANPE” mark. Cancel any time.')));
   }
   const actions = h('div', 'plan-actions');
   const msg = h('p', 'plan-msg'); msg.setAttribute('aria-live', 'polite');
@@ -1091,7 +1177,7 @@ function renderPlanDialog() {
       busy(b, true, L('お支払いページへ…', 'Opening checkout…'));
       try { await startCheckout('plus', 'year', LANG2); } catch (e) { msg.textContent = payError(e); busy(b, false, L('年払い　¥4,800（2か月分おトク）', 'Yearly — ¥4,800 (2 months free)')); }
     });
-  } else {
+  } else if (!dev) {
     btn(L('支払い方法・解約・領収書', 'Billing, cancel, receipts'), 'lang-ok', async (b) => {
       busy(b, true, L('開いています…', 'Opening…'));
       try { await openPortal(LANG2); } catch (e) { msg.textContent = payError(e); busy(b, false, L('支払い方法・解約・領収書', 'Billing, cancel, receipts')); }
@@ -1145,7 +1231,8 @@ function renderPlanDialog() {
     fetch('/api/license-email', { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : {})).then((x) => { if (x.enabled) for (const el of [mhint, mrow]) el.hidden = false; }).catch(() => {});
     det.append(mhint, mrow, mmsg);
   } else {
-    const p = h('p', 'hint', L('この端末では無料プランに戻ります。ご契約は続くので、ライセンスコードでいつでも戻せます（解約は「支払い方法・解約・領収書」から）。', 'This browser goes back to Free. Your subscription continues — restore it any time with your license code (cancel from “Billing, cancel, receipts”).'));
+    const p = h('p', 'hint', dev ? L('このブラウザで開発者モードを終え、無料プランに戻ります。', 'Ends developer mode in this browser and goes back to Free.')
+      : L('この端末では無料プランに戻ります。ご契約は続くので、ライセンスコードでいつでも戻せます（解約は「支払い方法・解約・領収書」から）。', 'This browser goes back to Free. Your subscription continues — restore it any time with your license code (cancel from “Billing, cancel, receipts”).'));
     const rm = h('button', 'btn', L('外す', 'Remove')); rm.type = 'button';
     rm.addEventListener('click', () => { clearLicense(); applyPlanUI(); renderPlanDialog(); });
     det.append(p, rm);
