@@ -149,7 +149,7 @@ export const DEFAULT_SPEAKERS = [
   { name: 'ゲスト3', nameEn: 'Guest 3', color: '#4cd97b', f0: 0 },
 ];
 
-// 文字サイズ・表示時間・同時に出す語は5段階から選ぶ（まん中が初めの値）。保存された値は近い段に寄せる
+// 別窓の操作バーの「文字サイズ」（その窓だけ、言葉の基準の大きさを変える）は5段階。保存された値は近い段に寄せる
 export const SIZE_STEPS = {
   26: { label: '極小', labelEn: 'XS', note: 'とても小さく（画面の隅で控えめに）', noteEn: 'Extra small' },
   30: { label: '小', labelEn: 'S', note: '小さめ', noteEn: 'Small' },
@@ -157,20 +157,62 @@ export const SIZE_STEPS = {
   42: { label: '大', labelEn: 'L', note: '大きめ（配信の画面でも読みやすく）', noteEn: 'Large' },
   56: { label: '特大', labelEn: 'XL', note: 'とても大きく（講演・会場のスクリーン向け）', noteEn: 'Extra large, for stages and big screens' },
 };
-export const TTL_STEPS = {
-  4: { label: '4秒', labelEn: '4s', note: 'すぐ消える（テンポの速い話に）', noteEn: 'Gone quickly, for fast talk' },
-  6: { label: '6秒', labelEn: '6s', note: '短め', noteEn: 'Short' },
-  8: { label: '8秒', labelEn: '8s', note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
-  15: { label: '15秒', labelEn: '15s', note: '長め（ゆっくり話すとき）', noteEn: 'Long, for slower talk' },
-  30: { label: '30秒', labelEn: '30s', note: 'とても長く（ブレストや講演で言葉を残したいとき）', noteEn: 'Very long, to keep words up during brainstorms and talks' },
+
+// ---- 字幕ライン（画面の最下部に出る、聞き取った文）の3つの設定 ----
+// ref は 1280×720 の画面での文字の大きさ（px）。表示ビューは窓の大きさに合わせて拡縮する
+export const CAP_SIZES = {
+  s: { label: '小', labelEn: 'S', ref: 14, note: '字幕を小さく、控えめに', noteEn: 'Small, unobtrusive captions' },
+  m: { label: '中', labelEn: 'M', ref: 18, note: 'ふつうの大きさ（初めの値）', noteEn: 'Medium (default)' },
+  l: { label: '大', labelEn: 'L', ref: 26, note: '大きく（会場のスクリーンや、聞き取りにくい方に）', noteEn: 'Large, for venue screens and accessibility' },
 };
-export const WORD_STEPS = {
-  10: { label: '10語', labelEn: '10', note: '少なく、大きく見せる', noteEn: 'Few words, shown big' },
-  16: { label: '16語', labelEn: '16', note: '少なめ', noteEn: 'Fewer' },
-  24: { label: '24語', labelEn: '24', note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
-  32: { label: '32語', labelEn: '32', note: '多め', noteEn: 'More' },
-  40: { label: '40語', labelEn: '40', note: 'とても多く（画面を言葉で埋める）', noteEn: 'Lots — fill the screen' },
+// 話し終えてから、字幕が消えるまでの秒数
+export const CAP_TTLS = {
+  3: { label: '3秒', labelEn: '3s', note: 'すぐ消える', noteEn: 'Disappears quickly' },
+  5: { label: '5秒', labelEn: '5s', note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
+  10: { label: '10秒', labelEn: '10s', note: '長く残す（ゆっくり読みたいとき）', noteEn: 'Stays longer, for slower reading' },
 };
+// 同時に出す行：いま話している文に加えて、少し前の文を何行まで残すか
+export const CAP_LINES = {
+  1: { label: '1行', labelEn: '1', note: 'いま話している文だけ', noteEn: 'Only the current sentence' },
+  2: { label: '2行', labelEn: '2', note: '1つ前の文も残す', noteEn: 'Keep the previous sentence too' },
+  3: { label: '3行', labelEn: '3', note: '2つ前の文まで残す（字幕のように流れる）', noteEn: 'Keep two previous sentences, like subtitles' },
+};
+
+// ---- レイアウトごとの設定（3段階）----
+// 文字の大きさ：レイアウトごとの倍率
+export const LAYOUT_SIZES = {
+  s: { label: '小', labelEn: 'S', k: 0.8, note: '小さめ。言葉を多く並べたいときに', noteEn: 'Smaller, to fit more words' },
+  m: { label: '中', labelEn: 'M', k: 1, note: 'ふつう（初めの値）', noteEn: 'Medium (default)' },
+  l: { label: '大', labelEn: 'L', k: 1.32, note: '大きく。遠くからでも読みやすく', noteEn: 'Larger, readable from afar' },
+};
+// 育つまで：同じ言葉を何回くり返したら、ひと回り大きくなるか
+export const GROW_STEPS = {
+  1: { label: '1回', labelEn: '1×', note: 'くり返すたびに大きくなる（初めの値）', noteEn: 'Grows every time it’s repeated (default)' },
+  2: { label: '2回', labelEn: '2×', note: '2回くり返すごとに大きくなる', noteEn: 'Grows every second repeat' },
+  3: { label: '3回', labelEn: '3×', note: '3回くり返すごとに大きくなる（大きさが落ち着く）', noteEn: 'Grows every third repeat, for a calmer screen' },
+};
+// 組版：大小の差（ジャンプ率）。r は語の重みごとの倍率
+export const JUMP_STEPS = {
+  low: { label: '控えめ', labelEn: 'Low', r: [1, 1.3, 1.7, 2.3], note: '大きさをそろえて、落ち着いた組み', noteEn: 'Even sizes for a calm layout' },
+  mid: { label: '標準', labelEn: 'Mid', r: [1, 1.5, 2.25, 3.4], note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
+  high: { label: '大胆', labelEn: 'High', r: [1, 1.75, 2.8, 4.3], note: '大きい語をより大きく、ポスターのように', noteEn: 'Big words get bigger, poster-style' },
+};
+// 組版：縦組みの量。p は [ふつうの語, 重い語] が縦になる割合
+export const VERT_STEPS = {
+  off: { label: 'なし', labelEn: 'Off', p: [0, 0], note: '縦組みを混ぜない', noteEn: 'No vertical text' },
+  low: { label: '少し', labelEn: 'Few', p: [0.1, 0.2], note: 'ときどき縦に組む', noteEn: 'Now and then' },
+  mid: { label: '標準', labelEn: 'Mid', p: [0.22, 0.4], note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
+  high: { label: '多め', labelEn: 'Lots', p: [0.4, 0.65], note: '縦組みを多くして、和のポスターのように', noteEn: 'Lots of vertical text, like a Japanese poster' },
+};
+// テロップ：流れる速さ。sec は1語が画面を横切る秒数
+export const TICKER_SPEEDS = {
+  slow: { label: 'ゆっくり', labelEn: 'Slow', sec: 12, note: 'ゆっくり流れる（読みやすい）', noteEn: 'Slow and easy to read' },
+  mid: { label: 'ふつう', labelEn: 'Mid', sec: 8, note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
+  fast: { label: '速い', labelEn: 'Fast', sec: 5, note: '速く流れる（テンポの速い話に）', noteEn: 'Fast, for quick talk' },
+};
+// レイアウトごとの文字の大きさは、どの設定に入っているか
+export const SIZE_KEY = { compose: 'cSize', kanpe: 'kSize', ticker: 'tSize' };
+
 export function nearestStep(steps, v) {
   const keys = Object.keys(steps).map(Number);
   const n = Number(v);
@@ -188,11 +230,24 @@ export const LOGO_SIZES = {
 export const DEFAULTS = {
   theme: 'sumi',     // 初めての人は墨（明るい紙と朱）から
   layout: 'compose',
-  baseSize: 34,      // 1280×720 換算の px。表示ビューの大きさ（縦・横の小さい方の比率）に合わせて拡縮する
-  ttl: 8,            // 秒
-  maxWords: 24,
-  vertical: true,    // 縦組みを混ぜる（組版レイアウト）
-  caption: true,     // 最新の発話を字幕ラインで出す
+  baseSize: 34,      // 言葉の基準の大きさ（1280×720 換算の px）。コンソールでは変えず、レイアウトごとの倍率（cSize など）で変える。別窓の操作バーの「文字サイズ」はこの窓だけこれを変える
+  ttl: 8,            // 言葉が消えるまでの秒数（固定。テロップは tSpeed で流れる速さを決める）
+  maxWords: 24,      // 同時に出す言葉の上限（固定。レイアウトごとの上限 MAXW もある）
+  vertical: true,    // 縦組みを混ぜる（古い設定。いまは cVert。false なら縦組みなし）
+  // レイアウトごとの設定（3段階）
+  cSize: 'm',        // 組版：文字の大きさ（LAYOUT_SIZES）
+  kSize: 'm',        // カンペ：文字の大きさ
+  tSize: 'm',        // テロップ：文字の大きさ
+  cGrow: 1,          // 組版：育つまでのくり返し回数（GROW_STEPS）
+  kGrow: 1,          // カンペ：育つまでのくり返し回数
+  cJump: 'mid',      // 組版：大小の差（JUMP_STEPS）
+  cVert: 'mid',      // 組版：縦組みの量（VERT_STEPS）
+  tSpeed: 'mid',     // テロップ：流れる速さ（TICKER_SPEEDS）
+  // 字幕ライン（画面の最下部に、聞き取った文を出す）
+  caption: true,     // 字幕ラインを出す
+  capSize: 'm',      // 文字サイズ（CAP_SIZES）
+  capTtl: 5,         // 表示時間：話し終えてから消えるまでの秒数（CAP_TTLS）
+  capLines: 1,       // 同時に出す行（CAP_LINES）
   reduceMotion: false,
   accent: '',        // アクセントカラー（空＝書体テーマ標準）
   vjStyle: 'micro',  // VJ モードの見た目（1px / LED / ネオン / ピクセル）

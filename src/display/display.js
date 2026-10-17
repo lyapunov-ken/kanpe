@@ -1,13 +1,14 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, LOGO_SIZES, SIZE_STEPS, nearestStep, loadSettings } from '../core/settings.js?v=202610180310';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610180310';
-import { createBus } from '../core/bus.js?v=202610180310';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610180310';
-import { runs } from '../core/extract.js?v=202610180310';
-import { EN, L, tr } from '../core/i18n.js?v=202610180310';
-import { createVJ } from './vj.js?v=202610180310';
-import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610180310';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, LOGO_SIZES, SIZE_STEPS, nearestStep, loadSettings,
+  CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, TICKER_SPEEDS, SIZE_KEY } from '../core/settings.js?v=202610180554';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610180554';
+import { createBus } from '../core/bus.js?v=202610180554';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610180554';
+import { runs } from '../core/extract.js?v=202610180554';
+import { EN, L, tr } from '../core/i18n.js?v=202610180554';
+import { createVJ } from './vj.js?v=202610180554';
+import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610180554';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -45,14 +46,27 @@ let lastWordAt = performance.now();
 let vj = null; // VJ モードの描画エンジン
 let lastSp = null; // 直前に表示した話者（話者が替わった最初の語にだけラベルを付ける）
 
-// ジャンプ率：組版は大胆に、カンペ・テロップは読みやすさ優先で控えめに
-const RATIOS = { compose: [1, 1.5, 2.25, 3.4], kanpe: [1, 1.2, 1.42, 1.7], ticker: [1, 1.14, 1.3, 1.48] };
+// ジャンプ率：組版は大胆に（「大小の差」で3段階）、カンペ・テロップは読みやすさ優先で控えめに
+const RATIOS = { kanpe: [1, 1.2, 1.42, 1.7], ticker: [1, 1.14, 1.3, 1.48] };
+const ratio = (layout, lv) => (layout === 'compose' ? (JUMP_STEPS[S.cJump] || JUMP_STEPS.mid).r : RATIOS[layout] || RATIOS.kanpe)[lv];
 const TRACK = [0.02, 0, -0.025, -0.045]; // 大きい語ほど字間を詰める
 const MAXW = { compose: 40, kanpe: 14, ticker: 30 };
 
 // 基準の大きさ：1280×720 を 1 として、窓の高さと幅の小さい方に合わせる（縦長・小さな窓でもはみ出しにくい）
 const unit = () => Math.max(0.2, Math.min(stage.clientHeight / 720, stage.clientWidth / 800));
-const basePx = () => S.baseSize * unit();
+// レイアウトごとの「文字の大きさ」（小・中・大）は、基準の大きさにかける倍率
+const layoutK = () => (LAYOUT_SIZES[S[SIZE_KEY[S.layout]]] || LAYOUT_SIZES.m).k;
+const refBase = () => S.baseSize * layoutK(); // 1280×720 換算の基準の大きさ
+const basePx = () => refBase() * unit();
+// 育つまで：同じ言葉を何回くり返したら、ひと回り大きくなるか（組版・カンペ）
+const growEvery = () => +(S.layout === 'kanpe' ? S.kGrow : S.layout === 'compose' ? S.cGrow : 1) || 1;
+// 組版の縦組みの量（古い設定の vertical: false は「なし」）
+const vertP = () => (S.vertical === false ? VERT_STEPS.off : VERT_STEPS[S.cVert] || VERT_STEPS.mid).p;
+// ---- 字幕ライン（画面の最下部）：文字の大きさ・行数と、言葉を置かずに空けておく高さ（どれも 1280×720 換算）
+const capRef = () => (CAP_SIZES[S.capSize] || CAP_SIZES.m).ref;
+const capLineMax = () => +(CAP_LINES[S.capLines] ? S.capLines : 1);
+const capTtlMs = () => +(CAP_TTLS[S.capTtl] ? S.capTtl : 5) * 1000;
+const capReserve = (H) => (S.caption ? H * 0.045 + capRef() * (1.55 * capLineMax() + 0.9) : 0);
 // 時計。あとから開いた窓が流れをなぞって追いつくあいだ（replay）だけ、過去の時刻を指す
 let clockShift = 0;
 const now = () => performance.now() - clockShift;
@@ -115,9 +129,9 @@ function echoCount(key) {
   }
   return Math.max(1, own + rel * 0.5);
 }
-const echoScale = (n) => Math.min(4, 1 + 0.3 * (n - 1)); // 2回で1.3倍、5回で2.2倍、11回で4倍まで
+const echoScale = (n) => Math.min(4, 1 + 0.3 * (n - 1) / growEvery()); // 2回で1.3倍、5回で2.2倍、11回で4倍まで（「育つまで」が2回・3回ならゆっくり）
 let echoK = 1; // 画面がくり返しの語だけで埋まったら、みんなでそろって少し縮む（あふれた語を出し入れしない）
-const echoPx = (lv, n) => basePx() * RATIOS.kanpe[lv] * Math.max(1, echoScale(n) * echoK);
+const echoPx = (lv, n) => basePx() * ratio('kanpe', lv) * Math.max(1, echoScale(n) * echoK);
 const echoLife = (n, fill) => (1 + 0.5 * (n - 1)) * (1 + fill); // くり返した語ほど、画面が埋まっているほど長く残す
 // 画面の埋まりぐあい（0〜1）：記憶の中のくり返しの総量で決める
 function echoFill() {
@@ -179,6 +193,7 @@ function applyTheme() {
     '--bg': th.bg, '--ink': th.ink, '--sub': th.sub, '--accent': S.accent || th.accent, '--accent2': th.accent2, '--stroke': th.stroke,
     '--font': `${th.family}, ${th.fallback}`, '--w-strong': th.strong, '--w-light': th.light, '--base': basePx() + 'px',
   };
+  setCapVars();
   for (const k in vars) root.style.setProperty(k, vars[k]);
   // 背景画像：窓に合わせて cover でトリミング。上に地色を重ねて文字を読みやすくする
   const bgEl = document.getElementById('bg');
@@ -253,13 +268,13 @@ function configureVJ() {
   root.style.setProperty('--vj-font', VJ_FONTS[font].family); // 字幕も VJ の書体にそろえる
   root.style.setProperty('--vj-weight', String(VJ_FONTS[font].weight));
   vj.configure({ style: S.vjStyle || 'micro', accent: S.accent || th.accent, accent2: th.accent2,
-    transparent: th.bg === 'transparent' || !!S.bgImage || !!camStream, calm: !!S.reduceMotion, caption: !!S.caption, ttl: S.ttl,
+    transparent: th.bg === 'transparent' || !!S.bgImage || !!camStream, calm: !!S.reduceMotion, caption: !!S.caption, capRes: capReserve(720) / 720, ttl: S.ttl,
     font, detail: S.vjDetail || 'mid', fx: S.vjFx || 'mid' });
 }
 
 function level(kind, text, count) {
   let l = (kind === 'new' || kind === 'registered' || kind === 'fusion') ? 2 : (kind === 'number' || [...text].length >= 4) ? 1 : 0;
-  l += Math.min((count || 1) - 1, 2); // 繰り返すと育つ
+  l += Math.min(Math.floor(((count || 1) - 1) / growEvery()), 2); // 繰り返すと育つ（「育つまで」の回数ごとに）
   return Math.min(l, 3);
 }
 
@@ -324,10 +339,10 @@ function place(w, h, lv, self, rand = Math.random) {
   const s = unit();
   const W = Math.round(stage.clientWidth / s), H = Math.round(stage.clientHeight / s);
   const pad = Math.min(W, H) * 0.05;
-  const reserve = S.caption ? H * 0.15 : 0;
+  const reserve = capReserve(H);
   const maxX = Math.max(pad, W - pad - w), maxY = Math.max(pad, H - pad - reserve - h);
-  const col = (W - 2 * pad) / 12, row = Math.max(6, S.baseSize * 0.5);
-  const gap = S.baseSize * 0.3;
+  const col = (W - 2 * pad) / 12, row = Math.max(6, refBase() * 0.5);
+  const gap = refBase() * 0.3;
   const cx = W / 2, cy = (H - reserve) / 2;
   const centerWeight = w * h * (lv >= 3 ? 1.4 : lv === 2 ? 0.8 : lv === 1 ? 0.25 : 0.08);
   const others = [];
@@ -375,7 +390,7 @@ function refSize(node) {
 function fit(node, px) {
   const s = unit();
   const W = Math.round(stage.clientWidth / s), H = Math.round(stage.clientHeight / s);
-  const maxW = W * 0.9, maxH = (H - (S.caption ? H * 0.15 : 0)) * 0.86;
+  const maxW = W * 0.9, maxH = (H - capReserve(H)) * 0.86;
   node._vpx = px / s;
   const r = refSize(node);
   const k = Math.min(1, maxW / r.w, maxH / r.h);
@@ -436,10 +451,11 @@ async function addWordAt(m, text, t0) {
   const kind = m.kind || 'normal';
   const lv = level(kind, text, m.count);
   const echo = echoMs() ? echoCount(key) : 1, fill = echoFill();
-  const px = echo > 1 ? echoPx(lv, echo) : basePx() * RATIOS[S.layout][lv];
+  const px = echo > 1 ? echoPx(lv, echo) : basePx() * ratio(S.layout, lv);
   const len = [...text].length;
-  const vertical = S.layout === 'compose' && S.vertical && kind !== 'fusion' && !/[A-Za-z]/.test(text) && len >= 2 && len <= 7 &&
-    rand() < (lv >= 1 ? 0.4 : 0.22);
+  const vp = vertP();
+  const vertical = S.layout === 'compose' && vp[0] > 0 && kind !== 'fusion' && !/[A-Za-z]/.test(text) && len >= 2 && len <= 7 &&
+    rand() < (lv >= 1 ? vp[1] : vp[0]);
   await fontReady(text, px);
 
   const { node, inner, parts } = build(text, kind, vertical, m.from);
@@ -549,7 +565,7 @@ function bump(it, count, rand, t0 = now()) {
 
 function grow(it, nl, rand) {
   it.lv = nl;
-  const px = basePx() * RATIOS[S.layout][nl];
+  const px = basePx() * ratio(S.layout, nl);
   if (S.layout === 'kanpe') {
     flip(() => { it.el.style.fontSize = px + 'px'; it.el.style.letterSpacing = TRACK[nl] + 'em'; });
     return;
@@ -661,7 +677,7 @@ function clearAll() {
   heard.clear(); echoK = 1;
   lastSp = null;
   for (const it of [...items.values()]) expire(it);
-  cap.classList.remove('on');
+  clearCaption();
 }
 
 // カンペ：並びが変わるときに位置差分だけを補間（FLIP）
@@ -681,7 +697,7 @@ function flip(mutate) {
 }
 
 // ---------------------------------------------------------------- テロップ：ニュースのように一定の速さで流れる
-// 言葉は画面の右の外から入り、左へ流れて、画面から出たら消える。「表示時間」は、1語が画面を横切る秒数。
+// 言葉は画面の右の外から入り、左へ流れて、画面から出たら消える。「流れる速さ」は、1語が画面を横切る秒数で決める。
 // 話すのが速くて右の外に言葉がたまったら、そのぶん速く流して追いつく。動かすのは translateX だけ
 let tickerRaf = 0, tickerLast = 0;
 const tickerItems = () => [...items.values()].filter((it) => it.tx != null);
@@ -704,7 +720,7 @@ function tickerStep(t) {
   let right = 0;
   for (const it of list) right = Math.max(right, it.tx + it.tw);
   const backlog = Math.max(0, right - W);
-  const v = (W * 0.9 / Math.max(3, S.ttl)) * (1 + (backlog / W) * 1.5);
+  const v = (W * 0.9 / (TICKER_SPEEDS[S.tSpeed] || TICKER_SPEEDS.mid).sec) * (1 + (backlog / W) * 1.5);
   for (const it of list) {
     it.tx -= v * dt;
     it.el.style.transform = `translateX(${it.tx.toFixed(1)}px)`;
@@ -1247,7 +1263,7 @@ async function fuseWordAt(m, text, look, rand, prev, t0) {
   const { motion, k, color } = look;
   const parents = [m.a, m.b].map((t) => items.get(String(t || '').toLowerCase())).filter((it) => it && !it.leaving && it.rect && it.el.isConnected);
   const lv = 2;
-  const px = basePx() * RATIOS.compose[lv];
+  const px = basePx() * ratio('compose', lv);
   await fontReady(text, px);
   const { node, inner, parts } = build(text, 'fusion', false, [m.a, m.b]);
   colorize(node, parts, color, rand);
@@ -1364,7 +1380,7 @@ async function replay(msg, recvAt) {
   // コンソールの設定に連動する窓は、レイアウトを切り替えたときに画面が作り直されるので、それ以降だけ
   if (!LOCK.layout && Number.isFinite(msg.since)) evs = evs.filter((e) => e.ago <= msg.since);
   const words = evs.filter((e) => (e.t === 'word' || e.t === 'fuse') && e.text);
-  const cap0 = evs.filter((e) => e.t === 'caption').pop();
+  const caps = evs.filter((e) => e.t === 'caption' && e.text);
   if (words.length) {
     if (items.size) setupLayout(); // 追いつく前に届いた言葉は、流れの中にも入っているので組み直す
     // 字の幅で置き場所が決まるので、書体を先に読み込んでおく（最大2.5秒）
@@ -1396,26 +1412,87 @@ async function replay(msg, recvAt) {
     }
     updateHint(); // 消えかけの語は、いつものタイマーが本来の時刻に外す
   }
-  if (cap0 && performance.now() - (recvAt - cap0.ago) < 4000) caption(cap0.text, cap0.final, cap0);
+  for (const c of caps) caption(c.text, c.final, c, recvAt - c.ago); // 消える時刻を過ぎたものは renderCap が外す
 }
 
-// ---------------------------------------------------------------- 字幕ライン
+// ---------------------------------------------------------------- 字幕ライン（画面の最下部）
+// いま話している文と、少し前の文（「同時に出す行」の数まで）を、1文1行で下から積む。
+// 行に入りきらない長い文は、頭を「…」で省いて終わりの方を見せる。話し終えた文は「表示時間」のあとに消える。
+// 大きさと行数は 1280×720 換算で決め、言葉はそのぶんの高さ（--cap-res）を空けて置く
+let capRows = []; // { text, final, at, spn, spc }
 let capTimer = 0;
-function caption(text, final, m = {}) {
+function setCapVars() {
+  const s = unit();
+  root.style.setProperty('--cap', capRef() * s + 'px');
+  root.style.setProperty('--cap-res', capReserve(stage.clientHeight / s) * s + 'px');
+}
+// 消える時刻：話し終えた文は「表示時間」のあと。話している途中の文は、途切れても少し長めに残す
+const capEnd = (r) => r.at + (r.final ? capTtlMs() : Math.max(capTtlMs(), 6000) + 2000);
+function caption(text, final, m = {}, at = performance.now()) {
   if (!S.caption || !text) return;
-  const arr = [...text];
-  const body = arr.length > 44 ? '…' + arr.slice(-43).join('') : text;
-  if (m.spn) {
-    const tag = el('cap-sp', m.spn);
-    tag.style.setProperty('--spc', m.spc || 'currentColor');
-    cap.replaceChildren(tag, document.createTextNode(body));
-  } else {
-    cap.textContent = body;
-  }
-  cap.classList.toggle('final', !!final);
-  cap.classList.add('on');
+  const row = { text, final: !!final, at, spn: m.spn || '', spc: m.spc || '' };
+  const last = capRows[capRows.length - 1];
+  if (last && !last.final) capRows[capRows.length - 1] = row; else capRows.push(row);
+  renderCap();
+}
+function renderCap() {
   clearTimeout(capTimer);
-  capTimer = setTimeout(() => cap.classList.remove('on'), final ? 4200 : 6000);
+  const t = performance.now();
+  capRows = capRows.filter((r) => capEnd(r) > t).slice(-capLineMax());
+  if (!S.caption || !capRows.length) { cap.classList.remove('on'); return; } // 中身はそのまま薄れて消える
+  const lines = capRows.map((r, i) => {
+    const line = el('cap-l' + (r.final ? ' final' : '') + (i < capRows.length - 1 ? ' old' : ''));
+    if (r.spn) {
+      const tag = el('cap-sp', r.spn);
+      tag.style.setProperty('--spc', r.spc || 'currentColor');
+      line.appendChild(tag);
+    }
+    line.appendChild(el('cap-t', r.text));
+    return line;
+  });
+  cap.replaceChildren(...lines);
+  cap.classList.remove('peek');
+  for (const l of lines) fitCapLine(l);
+  cap.classList.add('on');
+  capTimer = setTimeout(renderCap, Math.max(60, Math.min(...capRows.map(capEnd)) - t));
+}
+// 1行に収まるまで、文の頭を「…」で省く（終わりの方＝いま話している言葉を残す）
+function fitCapLine(line) {
+  const body = line.lastChild;
+  if (line.scrollWidth <= line.clientWidth + 1) return;
+  const chars = [...body.textContent];
+  let lo = 1, hi = chars.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    body.textContent = '…' + chars.slice(-mid).join('');
+    if (line.scrollWidth <= line.clientWidth + 1) lo = mid; else hi = mid - 1;
+  }
+  body.textContent = '…' + chars.slice(-lo).join('');
+}
+function clearCaption() {
+  capRows = [];
+  clearTimeout(capTimer);
+  cap.classList.remove('on', 'peek');
+}
+// プレビューだけ：コンソールで字幕ラインの設定にふれたとき、最下部の字幕の場所を枠で示す
+// （字幕が出ていなければ見本の文を出す）。別窓・OBS には出さない
+let peekTimer = 0;
+function capPeek() {
+  if (!EMBED) return;
+  clearTimeout(peekTimer);
+  if (!S.caption) { cap.classList.remove('peek'); return; }
+  if (!capRows.length) {
+    const n = capLineMax();
+    const sample = [L('ここに、聞き取った文が出ます', 'What you say appears here'), L('少し前の文も残せます', 'Earlier sentences can stay too'), L('いちばん下が、いま話している文です', 'The bottom line is what you’re saying now')];
+    const lines = sample.slice(3 - n).map((x, i) => { const l = el('cap-l final' + (i < n - 1 ? ' old' : '')); l.appendChild(el('cap-t', x)); return l; });
+    cap.replaceChildren(...lines);
+    cap.classList.add('on');
+  }
+  cap.classList.add('peek');
+  peekTimer = setTimeout(() => {
+    cap.classList.remove('peek');
+    if (!capRows.length) cap.classList.remove('on');
+  }, 1800);
 }
 
 // ---------------------------------------------------------------- メッセージ
@@ -1430,6 +1507,7 @@ function onMessage(m) {
     pending++;
     queue = queue.then(() => fuseWord(m)).catch(() => {}).finally(() => { pending--; });
   } else if (m.t === 'caption') caption(m.text, m.final, m);
+  else if (m.t === 'capPeek') capPeek();
   else if (m.t === 'clear') clearAll();
   else if (m.t === 'lvl') { if (vj) vj.level(m.v); }
   else if (m.t === 'settings') applySettings(m.s);
@@ -1450,7 +1528,8 @@ function applySettings(s) {
   applyTheme();
   if (prev.layout !== S.layout) setupLayout();
   else configureVJ();
-  if (!S.caption) cap.classList.remove('on');
+  setCapVars();
+  if (!S.caption) clearCaption(); else renderCap(); // 行数・表示時間が変わったら、すぐに合わせる
 }
 
 const bus = createBus(onMessage);
@@ -1485,6 +1564,7 @@ function setWindowOpt(key, val) {
   S = { ...DEFAULTS, ...(lastSettings || loadSettings()), ...LOCK };
   applyTheme();
   root.style.setProperty('--base', basePx() + 'px');
+  setCapVars();
   if (prev.layout !== S.layout) setupLayout();
   renderBar();
 }
@@ -1707,7 +1787,7 @@ window.addEventListener('keydown', (e) => {
   else return;
   showUi();
 });
-window.addEventListener('resize', () => { root.style.setProperty('--base', basePx() + 'px'); applyLogo(); });
+window.addEventListener('resize', () => { root.style.setProperty('--base', basePx() + 'px'); setCapVars(); applyLogo(); renderCap(); });
 
 applyTheme();
 setupLayout();
@@ -1721,7 +1801,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610180310').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610180554').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech', 'talk'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 

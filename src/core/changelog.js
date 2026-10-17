@@ -2,6 +2,15 @@
 // type：new＝新機能 / improve＝改善 / fix＝修正。文言は短く、利用者向けのやさしい言葉で（日本語と英語）。
 export const CHANGELOG = [
   {
+    v: '1.6.0', date: '2026-10-18',
+    items: [
+      { type: 'improve', ja: '「文字サイズ・表示時間・同時に出す行」は、画面の最下部に聞き取った文を出す「字幕ライン」の設定になりました。小さな画面の絵の付いたまとまりにまとめ、設定にふれるとプレビューで字幕の出る場所に枠が出ます', en: 'Text size, Display time and Lines now belong to the Caption line — the transcript at the very bottom of the screen. They sit together in their own panel, and touching them outlines the caption area in the preview' },
+      { type: 'new', ja: '字幕ラインを最大3行に。少し前の文も残せて、字幕のように下から流れます。長い文は頭を「…」で省いて1行に収めます', en: 'The caption line can now show up to 3 lines, keeping earlier sentences like subtitles. Long sentences are shortened from the start to fit on one line' },
+      { type: 'new', ja: 'レイアウトごとの設定（3段階）：文字の大きさ（組版・カンペ・テロップそれぞれ）、育つまで（同じ言葉を何回くり返したら大きくなるか。組版・カンペ）、大小の差と縦組みの量（組版）、流れる速さ（テロップ）', en: 'Per-layout settings in three steps: text size (for Compose, Cue and Ticker separately), Grow after (how many repeats before a word gets bigger; Compose and Cue), size contrast and amount of vertical text (Compose), and scrolling speed (Ticker)' },
+      { type: 'improve', ja: '「動きを控えめに」はレイアウトの見出しの横に移しました。以前の文字サイズ・縦組みの設定は、新しい設定に引き継がれます', en: 'Reduce motion now sits next to the Layout heading. Your previous text size and vertical-text choices carry over to the new settings' },
+    ],
+  },
+  {
     v: '1.5.1', date: '2026-10-17',
     items: [
       { type: 'improve', ja: '別窓（カンペ・組版を別窓で）の操作を一新。マウスを動かすと画面の下に操作バーが出て、レイアウト・文字サイズ・書体と色・消去・全画面をその場で切り替えられます。変えた設定はその窓だけに効き、「コンソールに合わせる」でまとめて戻せます。キー操作（F・L・T・+ −・0・Esc・?）とダブルクリックで全画面にも対応。窓のタイトルにレイアウト名が出るので、OBS のウィンドウキャプチャで選びやすくなりました', en: 'Pop-out windows got a new control bar: move the mouse to show it at the bottom, then switch layout, text size, typeface and color, clear, or go full screen. Changes apply to that window only, and “Follow console” resets them all. Keyboard shortcuts (F, L, T, + −, 0, Esc, ?) and double-click for full screen are supported, and the window title shows the layout name for easy picking in OBS window capture' },

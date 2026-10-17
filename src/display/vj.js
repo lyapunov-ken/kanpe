@@ -5,8 +5,8 @@
 //   1px＝白黒の 1px の点と線だけで組む（方眼・目盛り・座標の読み出し・書き込みヘッド）
 // - 繰り返した言葉はコンボ（×2, ×3 …）、初めて出た目立つ言葉はインパクト（閃光・揺れ・グリッチ）
 // - 背景もスタイルごと：ステージの光線／シンセウェーブの床／星空。声の大きさで強まる
-import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610180310';
-import { tuneColor, rainbowColor } from '../core/color.js?v=202610180310';
+import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610180554';
+import { tuneColor, rainbowColor } from '../core/color.js?v=202610180554';
 
 const FALLBACK = '"Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif';
 const PIXEL_PALETTE = ['#ff004d', '#ffa300', '#ffec27', '#00e436', '#29adff', '#ff77a8', '#ffccaa', '#83f3ff'];
@@ -232,7 +232,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
   }
 
   // ---------------------------------------------------------------- 配置
-  const reserve = () => (cfg.caption ? H * 0.16 : H * 0.06);
+  const reserve = () => (cfg.caption ? H * Math.max(0.12, (cfg.capRes || 0.16) + 0.02) : H * 0.06); // 字幕ラインの大きさ・行数ぶん空ける
   const rowsK = () => 16 / spec.rows; // 段数が増えても見た目の大きさを揃える
   function heroTarget(w) {
     const avH = H - reserve() - H * 0.12;

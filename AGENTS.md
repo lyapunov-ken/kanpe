@@ -60,7 +60,12 @@ docs/            調査メモ
 - 機能とプランの対応は `src/core/plan.js` の `REQUIRES`（free / plus / pro）で管理する
 - コミットメッセージは英語で、何を・なぜを短く。1 つのブランチに関係のない変更を混ぜない
 
-## いまの状態（2026-10-17 時点）
+## いまの状態（2026-10-18 時点）
+- 作業中：`feat/caption-layout-opts`（v1.6.0）表示タブの組み直し
+  - 「文字サイズ・表示時間・同時に出す行」は字幕ライン（最下部の聞き取った文）専用：`capSize`（s/m/l・`CAP_SIZES`）・`capTtl`（3/5/10秒）・`capLines`（1〜3行）。`display.js` の「字幕ライン」：1文1行で下から積み、入りきらない文は頭を「…」で省く（`fitCapLine`）。言葉は `capReserve()` の高さを空けて置く（CSS は `--cap` / `--cap-res`）。プレビューだけ `capPeek` で字幕の場所に点線の枠と見本の文
+  - レイアウトごとの3段階：`cSize`/`kSize`/`tSize`（`LAYOUT_SIZES` の倍率。`SIZE_KEY`）、`cGrow`/`kGrow`（育つまで。`level()` と `echoScale` を回数で割る）、`cJump`（`JUMP_STEPS`。組版の `ratio()`）、`cVert`（`VERT_STEPS`。古い `vertical:false` は「なし」扱い）、`tSpeed`（`TICKER_SPEEDS`）
+  - 言葉の `baseSize`（34）・`ttl`（8秒）・`maxWords`（24）はコンソールでは変えない固定値。別窓の操作バーの「文字サイズ」（`?size=`）はその窓だけ `baseSize` を変える。以前の保存値は `console.js` の `migrateSettings()` が1回だけ新しい設定へ移す
+  - 表示タブは 1280×800 でスクロールなしに収めている（低い画面用の詰めは console.css の末尾 `max-height: 860px`）
 - 作業中：`fix/ticker-themes`（v1.5.1）新語の出かた「花火」（firework。光が昇る `FW_RISE` のあいだ字は出ない）。テロップは一定の速さで流れる（`display.js` の tickerPlace / tickerStep。1語ずつ translateX、画面から出たら消す、右の外にたまったら速める。時間では消さない）。書体は 墨・やわらか・夜・ポップ（無料）／透過・筆・ドット（お手軽）。透過が使えないときは OBS の URL に theme=clear を付けない
   - 別窓の操作バー（`display.js` の「別窓の操作バー」：renderBar / setWindowOpt / syncAll）：下中央に出て 2.6 秒で隠れる。レイアウト・文字サイズ・書体・色はその窓だけ（`LOCK` と URL の layout / size / theme / accent）。埋め込み（プレビュー）・OBS・`ui=0` では出さない。`applyTheme` は body の class を作り直すので、`ui-on` / `ui-idle` / `fz-focus` は残している
   - VJ モードでは左上・右上の計器の文字（1px の読み出し）と右下の KANPE（`#credit`）を出さない（ロゴと重なるため）
@@ -68,7 +73,7 @@ docs/            調査メモ
   - 「顔出しなし」は特徴の節の中のコンパクトな帯（`.nf-band#noface`。ヘッダーのメニューには入れない）。デモの台本 `script=talk`（`demo.js` の SCRIPTS）。「こんな場面で」の「ひとり雑談」・FAQ・meta description にも
   - LP のレスポンシブ：1024px 以下は見本（`.show`）を「画面｜説明」の横並び、760px 以下で縦積み。料金は 961px 以上で3枚並び。900px 以下で節の見出しのラベルを上に。見出しは `line-break: strict`（句読点を行頭に出さない。`word-break` を個別に上書きしない）。`:has()` は使わず `.uses li.link`。`overflow-x: clip` が無いブラウザは html で横のはみ出しを隠す
 - 本番：`main` = v1.5.0
-  - タブは「表示」（書体・色・レイアウト・5段階の文字サイズ／表示時間／同時に出す語）「機能」（ブレストモード・話者）「設定」（背景・ロゴ・辞書・OBS）。タブの id は `look` / `feat` / `set`（以前の `coin` / `more` は読み替える）
+  - タブは「表示」（書体・色・レイアウト・5段階の文字サイズ／表示時間／同時に出す語 ※v1.6.0 で字幕ライン専用とレイアウトごとの3段階に組み直し）「機能」（ブレストモード・話者）「設定」（背景・ロゴ・辞書・OBS）。タブの id は `look` / `feat` / `set`（以前の `coin` / `more` は読み替える）
   - 5段階の値は `settings.js` の `SIZE_STEPS` / `TTL_STEPS` / `WORD_STEPS`。保存値は `nearestStep` で近い段に寄せる。初めての人は墨・組版・中・8秒・24語
   - 新語の誕生（`display.js` の fzAnimate / fzStage / fzBirth）：予兆 → 誕生 → 余韻。演出の乱数は `fzRand(m)`（種から作る）なので、プレビューと別窓で同じ動きになる。長さを変えたら `fzDur` も合わせる（元の2語が退く時刻の計算に使う）
 - v1.4.0（カスタムロゴ・「+」の印・開発者モード）。開発者モード：ヘルプの一番下の「開発者」→ `/api/dev` が環境変数 `DEV_PASSWORD` と照らし合わせ、おトクプランの開発者ライセンス（`c: 'dev'`・30日・自動更新）を出す。ロゴは `logo:custom`＝お手軽プラン、`place()` はロゴを新語と同じく絶対に避ける

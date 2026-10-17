@@ -783,10 +783,7 @@ html[lang="en"] .slider { grid-template-columns: 104px minmax(0, 1fr) 72px; }
 .hp-dev-row input { flex: 1; min-width: 0; height: 36px; }
 .plan-actions:empty { display: none; }
 
-/* ---- 文字サイズ・表示時間・同時に出す語：5段階のボタン（見出しとボタンを1行に） ---- */
-.steps { display: flex; flex-direction: column; gap: 6px; }
-.step-row { display: grid; grid-template-columns: 84px minmax(0, 1fr); align-items: center; column-gap: 10px; }
-html[lang="en"] .step-row { grid-template-columns: 104px minmax(0, 1fr); }
+/* ---- 小さな段のボタン（レイアウトごとの設定・字幕ライン・VJ） ---- */
 .step-seg { padding: 2px; gap: 2px; border-radius: 9px; }
 .step-seg button { height: 26px; font-size: 12px; border-radius: 7px; padding: 0 2px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
@@ -836,8 +833,72 @@ html[lang="en"] .coin-inline { grid-template-columns: 56px minmax(0, 1fr); }
 /* 低い画面（ノート PC）では、ブレストモードの見本の絵を省いて、操作を1画面に収める */
 @media (min-width: 901px) and (max-height: 840px) {
   .coin-sec .coin-art { display: none; }
-  .steps { gap: 4px; }
   #paneLook { gap: 11px; }
 }
 /* タブの中身どうしには罫線を引かない（隠れているタブの「.sec」の次になっても線が出ないように） */
 .side-panes > .pane { border-top: 0; }
+
+/* ---- 表示タブ：レイアウトと、そのレイアウトだけに効く設定（3段階）----
+   レイアウトのボタンのすぐ下に、同じ地色のまとまりで出す。先頭の行は「組版：画面いっぱいに…」と、いまのレイアウトの名前と説明。
+   段を選ぶと、その段の説明が4秒だけこの行に出る */
+.lay-field { gap: 6px; }
+.lay-field > .lbl-row { align-items: center; }
+.lay-opts { display: flex; flex-direction: column; gap: 7px; padding: 7px 10px 10px; border-radius: 10px; background: var(--raise);
+  box-shadow: inset 0 0 0 1px var(--line); }
+.lay-note { margin: 0; font-size: 11.5px; line-height: 1.5; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .2s; }
+.lay-note.flash { color: var(--ink); }
+.opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 8px; }
+.opt-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.opt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.opt[hidden] { display: none; }
+.opt > .lbl { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.opt .step-seg button { height: 24px; font-size: 11.5px; padding: 0 1px; }
+.opt .step-seg.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* VJ：見出しを左、ボタンを右に（「VJ：…」の説明が上にあるので、見出しは短く） */
+.lay-opts .vj-opts { padding: 0; border: 0; background: none; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 5px 8px; }
+.lay-opts .vj-opts[hidden] { display: none; }
+.lay-opts .vj-opts .lbl { font-size: 11px; display: inline-flex; align-items: center; white-space: nowrap; }
+.lay-opts .vj-opts .step-seg button { height: 26px; font-size: 11.5px; }
+.lay-opts .vj-opts .vj-fonts button { font-size: 10.5px; letter-spacing: -.06em; padding: 0; }
+
+/* 動きを控えめに：レイアウトの見出しの右に、小さなスイッチで */
+.mini-switch { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--sub); cursor: pointer; white-space: nowrap; }
+.mini-switch:hover { color: var(--ink); }
+.mini-switch input, .cap-head input { -webkit-appearance: none; appearance: none; flex: none; position: relative; width: 28px; height: 16px; margin: 0;
+  border-radius: 999px; background: var(--line2); cursor: pointer; transition: background .18s; }
+.mini-switch input::before, .cap-head input::before { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--knob); box-shadow: 0 1px 2px var(--shade); transition: transform .18s, background .18s; }
+.mini-switch input:checked, .cap-head input:checked { background: var(--accent); }
+.mini-switch input:checked::before, .cap-head input:checked::before { transform: translateX(12px); background: var(--accent-ink); }
+.cap-head input { width: 32px; height: 18px; }
+.cap-head input::before { width: 14px; height: 14px; }
+.cap-head input:checked::before { transform: translateX(14px); }
+
+/* ---- 字幕ライン：画面の最下部に出る、聞き取った文の設定。
+   小さな画面の絵（最下部の帯だけ色が付く）で「下の行の設定」だと分かるように。オフのときは段を薄くする ---- */
+.cap-card { display: flex; flex-direction: column; gap: 8px; padding: 8px 10px 10px; border-radius: 10px; border: 1px solid var(--line); transition: border-color .2s; }
+.cap-card:not(.off):hover, .cap-card:not(.off):focus-within { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.cap-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 10px; cursor: pointer; }
+.cap-ic { position: relative; width: 28px; height: 18px; border-radius: 4px; box-shadow: inset 0 0 0 1.5px var(--sub); }
+.cap-ic::before, .cap-ic::after { content: ""; position: absolute; left: 6px; height: 2px; border-radius: 1px; background: var(--line2); }
+.cap-ic::before { top: 4px; width: 9px; }
+.cap-ic::after { top: 4px; left: 16px; width: 7px; height: 5px; }
+.cap-ic i { position: absolute; left: 4px; right: 4px; bottom: 3px; height: 3px; border-radius: 1.5px; background: var(--accent); }
+.cap-card.off .cap-ic i { background: var(--line2); }
+.cap-tt { display: flex; align-items: baseline; gap: 8px; min-width: 0; line-height: 1.35; }
+.cap-tt b { font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+.cap-tt small { font-size: 11px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cap-card.off #capOpts { opacity: .4; pointer-events: none; }
+#capOpts { transition: opacity .2s; }
+/* 字幕ラインは3列なので、段の文字を少し詰める（「10秒」が収まるように） */
+#capOpts .step-seg button { font-size: 11px; letter-spacing: -.02em; }
+/* 低い画面（ノート PC）では、表示タブを1画面に収めるために余白を詰める */
+@media (min-width: 901px) and (max-height: 860px) {
+  #paneLook { gap: 9px; padding-bottom: 12px; }
+  .lay-field { gap: 5px; }
+  .lay-opts { gap: 5px; padding: 5px 9px 8px; }
+  .opt-grid { row-gap: 5px; }
+  .opt { gap: 2px; }
+  .opt .step-seg button { height: 22px; }
+  .cap-card { gap: 6px; padding: 6px 9px 8px; }
+}

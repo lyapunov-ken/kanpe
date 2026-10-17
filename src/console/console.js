@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, SIZE_STEPS, TTL_STEPS, WORD_STEPS, nearestStep, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610180310';
-import { EN, L, tr } from '../core/i18n.js?v=202610180310';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610180310';
-import { createBus } from '../core/bus.js?v=202610180310';
-import { connectObs } from '../core/obs.js?v=202610180310';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610180310';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610180310';
-import { simulateSpeech } from './demo.js?v=202610180310';
-import { initHelp } from './help.js?v=202610180310';
-import { initNews } from './news.js?v=202610180310';
-import { createGuide, guideSeen } from './guide.js?v=202610180310';
-import { coinWord } from '../core/coin.js?v=202610180310';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610180310';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, TICKER_SPEEDS, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610180554';
+import { EN, L, tr } from '../core/i18n.js?v=202610180554';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610180554';
+import { createBus } from '../core/bus.js?v=202610180554';
+import { connectObs } from '../core/obs.js?v=202610180554';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610180554';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610180554';
+import { simulateSpeech } from './demo.js?v=202610180554';
+import { initHelp } from './help.js?v=202610180554';
+import { initNews } from './news.js?v=202610180554';
+import { createGuide, guideSeen } from './guide.js?v=202610180554';
+import { coinWord } from '../core/coin.js?v=202610180554';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610180554';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -44,7 +44,7 @@ const clock = () => { if (t0 === null) t0 = performance.now(); return (performan
 // - 最近送った言葉を覚えておき、あとから開いた窓には、それまでの流れをまとめて渡す（窓はそれをなぞって追いつく）
 const recent = []; // { at, m }
 let layoutAt = performance.now(), lastLayout = S.layout; // レイアウトを切り替えた時刻（その窓は画面が作り直される）
-let lastCap = null;
+let caps = []; // 最近の字幕（話している途中の文と、少し前の文。あとから開いた窓に渡す）
 const newSeed = () => (Math.random() * 4294967296) >>> 0;
 function logEvent(m) {
   const t = performance.now();
@@ -56,14 +56,19 @@ function logEvent(m) {
 function send(m) {
   if (m.t === 'word' || m.t === 'fuse') { m = { ...m, seed: newSeed(), ts: Date.now() }; logEvent(m); } // ts：言った時刻（どの窓も同じ時刻を使う）
   else if (m.t === 'clear') recent.length = 0;
-  else if (m.t === 'caption') lastCap = { at: performance.now(), m };
+  else if (m.t === 'caption') {
+    const last = caps[caps.length - 1];
+    if (last && !last.m.final) caps.pop();
+    caps.push({ at: performance.now(), m });
+    if (caps.length > 3) caps.shift();
+  }
   bus.send(m);
 }
 function sendSync(to) {
   if (!to) return;
   const t = performance.now();
   const events = recent.map((r) => ({ ...r.m, ago: Math.round(t - r.at) }));
-  if (lastCap && t - lastCap.at < 4000) events.push({ ...lastCap.m, ago: Math.round(t - lastCap.at) });
+  for (const c of caps) if (t - c.at < 12000) events.push({ ...c.m, ago: Math.round(t - c.at) }); // 字幕は最長10秒残る
   bus.send({ t: 'sync', to, events, since: Math.round(t - layoutAt) });
 }
 function pushSettings(save = true) {
@@ -429,12 +434,7 @@ function segButtons(container, entries, key) {
     b.addEventListener('click', () => pick(container, entries, key, id, def));
     box.appendChild(b);
   }
-  if (key === 'layout') {
-    $('#layoutNote').textContent = entries[S[key]] ? tr(entries[S[key]], 'note') : '';
-    $('#vjOpts').hidden = S.layout !== 'vj';
-    $('#kanpeOpts').hidden = S.layout !== 'kanpe'; // 同じ話の記憶はカンペのときだけ
-    document.body.classList.toggle('is-vj', S.layout === 'vj'); // VJ では効かない設定（文字サイズ・同時に出す語・縦組み）を隠す
-  }
+  if (key === 'layout') renderLayOpts();
 }
 function pick(container, entries, key, id, def) {
   if (key === 'theme' && def.pro && plusLocked('theme:premium')) {
@@ -455,14 +455,85 @@ function pick(container, entries, key, id, def) {
   }
   if (key === 'speakerCount') { S[key] = +id; renderSpeakers(); pushSettings(); return; }
   if (key === 'speakerMode') { S[key] = id; renderSpeakers(); updateTrial(); pushSettings(); return; }
-  S[key] = STEP_SETS[key] ? +id : id; // 5段階の値は数で持つ
+  S[key] = NUM_KEYS.has(key) ? +id : id; // 回数・秒数・行数は数で持つ
   if (key === 'theme') renderThemes(); else segButtons(container, entries, key);
-  if (key === 'vjStyle') $('#vjStyleNote').textContent = tr(VJ_STYLES[id], 'note');
+  if (LAY_KEYS.has(key)) layNote(entries[id], container); // 選んだ段の説明を、レイアウトの説明の場所に少しだけ出す
   if (key === 'fusionMotion') $('#fzMotionNote').textContent = tr(FUSION_MOTIONS[id], 'note');
-  if (key === 'echo') $('#echoNote').textContent = tr(ECHO_SPANS[id], 'note');
   if (key === 'fusionMotion' || key === 'fusionSpeed') setTimeout(() => fuse(false), 150); // 選んだ見た目をすぐ見せる（言葉が出ていれば）
   updateTrial();
   pushSettings();
+  if (CAP_KEYS.has(key)) send({ t: 'capPeek' }); // プレビューで、字幕ライン（最下部）の場所を示す
+}
+
+// ---- レイアウトごとの設定（3段階）と、字幕ライン（画面の最下部）の設定 ----
+const NUM_KEYS = new Set(['cGrow', 'kGrow', 'capTtl', 'capLines']);
+const LAY_KEYS = new Set(['cSize', 'kSize', 'tSize', 'cGrow', 'kGrow', 'cJump', 'cVert', 'tSpeed', 'echo', 'vjStyle', 'vjFont']);
+const CAP_KEYS = new Set(['capSize', 'capTtl', 'capLines']);
+// レイアウトの説明。いまのレイアウトだけに効く設定だと分かるように、名前を添える
+const COLON = L('：', ': ');
+function layNoteDefault() {
+  const d = LAYOUTS[S.layout];
+  return d ? `${tr(d)}${COLON}${tr(d, 'note')}` : '';
+}
+let layNoteTimer = 0;
+function layNote(def, container) {
+  const box = $('#layoutNote');
+  clearTimeout(layNoteTimer);
+  const lbl = container && $(container) && $(container).parentElement.querySelector('.lbl');
+  const head = lbl && !container.startsWith('#vj') ? lbl.textContent + COLON : '';
+  if (!def || !tr(def, 'note')) { box.textContent = layNoteDefault(); return; }
+  box.textContent = head + tr(def, 'note');
+  box.classList.add('flash');
+  layNoteTimer = setTimeout(() => { box.textContent = layNoteDefault(); box.classList.remove('flash'); }, 4000);
+}
+function renderLayOpts() {
+  const lay = S.layout;
+  $('#layoutNote').textContent = layNoteDefault();
+  $('#layoutNote').classList.remove('flash');
+  $('#vjOpts').hidden = lay !== 'vj';
+  for (const o of document.querySelectorAll('#layGrid .opt[data-lay]')) o.hidden = !o.dataset.lay.split(' ').includes(lay);
+  document.body.classList.toggle('is-vj', lay === 'vj'); // VJ では効かない設定を隠す
+  if (lay === 'vj') return;
+  segButtons('#optSize', LAYOUT_SIZES, SIZE_KEY[lay]);
+  if (lay === 'compose' || lay === 'kanpe') segButtons('#optGrow', GROW_STEPS, lay === 'kanpe' ? 'kGrow' : 'cGrow');
+  if (lay === 'compose') { segButtons('#optJump', JUMP_STEPS, 'cJump'); segButtons('#optVert', VERT_STEPS, 'cVert'); }
+  if (lay === 'kanpe') segButtons('#echoSpans', ECHO_SPANS, 'echo');
+  if (lay === 'ticker') segButtons('#optSpeed', TICKER_SPEEDS, 'tSpeed');
+}
+function renderCapOpts() {
+  segButtons('#capSizes', CAP_SIZES, 'capSize');
+  segButtons('#capTtls', CAP_TTLS, 'capTtl');
+  segButtons('#capLinesSeg', CAP_LINES, 'capLines');
+  $('#capCard').classList.toggle('off', !S.caption);
+}
+// 以前の設定を、新しい設定に移す（1回だけ）。
+// 以前の「文字サイズ」は言葉全体の大きさだったので、各レイアウトの文字の大きさへ。「表示時間」はテロップの流れる速さへ。
+// 言葉の基準の大きさ・表示時間・同時に出す語は、コンソールからは変えない（固定の値に戻す）
+let migrated = false;
+function migrateSettings() {
+  const fromOld = !migrated && !('cSize' in saved0) && Object.keys(saved0).length > 0; // 以前の版で保存した設定がある人だけ
+  migrated = true;
+  if (fromOld) {
+    const old = +S.baseSize || DEFAULTS.baseSize;
+    const sz = old <= 30 ? 's' : old >= 42 ? 'l' : 'm';
+    S.cSize = S.kSize = S.tSize = sz;
+    const ttl = +S.ttl || DEFAULTS.ttl;
+    S.tSpeed = ttl <= 6 ? 'fast' : ttl >= 15 ? 'slow' : 'mid';
+    S.cVert = S.vertical === false ? 'off' : 'mid';
+  }
+  S.baseSize = DEFAULTS.baseSize;
+  S.ttl = DEFAULTS.ttl;
+  S.maxWords = DEFAULTS.maxWords;
+  for (const k of ['cSize', 'kSize', 'tSize']) if (!LAYOUT_SIZES[S[k]]) S[k] = 'm';
+  for (const k of ['cGrow', 'kGrow']) S[k] = GROW_STEPS[S[k]] ? +S[k] : 1;
+  if (!JUMP_STEPS[S.cJump]) S.cJump = 'mid';
+  if (!VERT_STEPS[S.cVert]) S.cVert = 'mid';
+  S.vertical = S.cVert !== 'off'; // 古い窓（vertical を見る）とも合わせる
+  if (!TICKER_SPEEDS[S.tSpeed]) S.tSpeed = 'mid';
+  if (!CAP_SIZES[S.capSize]) S.capSize = 'm';
+  S.capTtl = CAP_TTLS[S.capTtl] ? +S.capTtl : 5;
+  S.capLines = CAP_LINES[S.capLines] ? +S.capLines : 1;
+  if (fromOld) saveSettings(S); // 別窓が読む保存値も新しい形に
 }
 
 // ---- 書体テーマ（標準 / プレミアム）と、無料プランの1日お試し ----
@@ -737,10 +808,6 @@ function bindRange(id, label, fmt) {
   show();
   input.addEventListener('input', () => { S[id] = +input.value; show(); pushSettings(); });
 }
-// 文字サイズ・表示時間・同時に出す語：5段階のボタン。保存されている値は近い段に寄せる
-const STEP_SETS = { baseSize: ['#sizeSteps', SIZE_STEPS], ttl: ['#ttlSteps', TTL_STEPS], maxWords: ['#wordSteps', WORD_STEPS] };
-for (const [key, [, steps]] of Object.entries(STEP_SETS)) S[key] = nearestStep(steps, S[key]);
-function renderSteps() { for (const [key, [box, steps]] of Object.entries(STEP_SETS)) segButtons(box, steps, key); }
 function bindCheck(id) {
   const input = $('#' + id);
   input.checked = !!S[id];
@@ -756,6 +823,7 @@ function bindText(id, after) {
   });
 }
 
+migrateSettings();
 if (!THEMES[S.theme] || (THEMES[S.theme].pro && !canUse('theme:premium') && trialRemainingMs() <= 0)) S.theme = DEFAULT_THEME;
 if (S.accent && accentLocked()) S.accent = '';
 if (S.bgImage && accentLocked()) S.bgImage = '';
@@ -773,16 +841,18 @@ S.vjFx = 'mid';
 renderThemes();
 segButtons('#layouts', LAYOUTS, 'layout');
 segButtons('#vjStyles', VJ_STYLES, 'vjStyle');
-$('#vjStyleNote').textContent = tr(VJ_STYLES[S.vjStyle], 'note');
 segButtons('#vjFonts', VJ_FONTS, 'vjFont');
-renderSteps();
+renderCapOpts();
 bindRange('bgDim', 'vBgDim', (v) => `${Math.round(v * 100)}%`);
 renderBg();
 renderCam();
 renderLogo();
 if (S.bgCamera) listCameras();
-bindCheck('vertical');
 bindCheck('caption');
+$('#caption').addEventListener('change', () => { renderCapOpts(); send({ t: 'capPeek' }); });
+// 字幕ラインの設定に近づいたら、プレビューの最下部（字幕の出る場所）を示す
+$('#capCard').addEventListener('pointerenter', () => send({ t: 'capPeek' }));
+$('#capCard').addEventListener('focusin', (e) => { if (e.target.matches(':focus-visible')) send({ t: 'capPeek' }); });
 bindCheck('reduceMotion');
 bindCheck('fusion');
 $('#fusion').addEventListener('change', () => { if (S.fusion) { fuseAt = performance.now() - FUSE_GAP + 2500; toast(L('新語ミックスをオンにしました。画面に言葉が2つ以上出ると、ときどき掛け合わさって新しい言葉が生まれます', 'Word mix is on. Once two or more words are on screen, they’ll now and then combine into a new word.')); } });
@@ -796,10 +866,10 @@ function applyPreset(p) {
   // お手軽プランの書体（透過など）で、お試しも終わっているときは、いまの書体のまま
   if (THEMES[S.theme] && THEMES[S.theme].pro && plusLocked('theme:premium')) S.theme = theme0;
   renderThemes();
+  migrateSettings();
   segButtons('#layouts', LAYOUTS, 'layout');
-  for (const [key, [, steps]] of Object.entries(STEP_SETS)) S[key] = nearestStep(steps, S[key]);
-  renderSteps();
-  for (const id of ['vertical', 'caption', 'fusion']) $('#' + id).checked = !!S[id];
+  renderCapOpts();
+  for (const id of ['caption', 'fusion']) $('#' + id).checked = !!S[id];
   updateTrial();
   pushSettings();
   showTab(S.fusion ? 'feat' : 'look'); // 選んだ設定が見えるタブへ（ブレスト会議なら機能タブのブレストモード）
@@ -1086,8 +1156,6 @@ renderFzColors();
 segButtons('#fzMotions', FUSION_MOTIONS, 'fusionMotion');
 segButtons('#fzSpeeds', FUSION_SPEEDS, 'fusionSpeed');
 if (!ECHO_SPANS[S.echo]) S.echo = DEFAULTS.echo;
-segButtons('#echoSpans', ECHO_SPANS, 'echo');
-$('#echoNote').textContent = tr(ECHO_SPANS[S.echo], 'note');
 $('#fzMotionNote').textContent = tr(FUSION_MOTIONS[S.fusionMotion], 'note');
 setInterval(() => { // 話している間だけ、ときどき自動で混ぜる
   const t = performance.now();

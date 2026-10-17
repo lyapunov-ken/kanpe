@@ -1,8 +1,8 @@
 // 更新情報（バージョンの更新履歴）。ヘッダーの「更新情報」とスマホのメニューから開く。
 // 新しいバージョンをこのブラウザで初めて見てから 1 時間は、ボタンに「NEW」を付けて目立たせる（開いて読んだら消す）。
 // 初めて KANPE を使う人には目立たせない（初回のガイドと重ならないように）。記録はこの端末の localStorage だけ。
-import { L } from '../core/i18n.js?v=202610180310';
-import { CHANGELOG, APP_VERSION } from '../core/changelog.js?v=202610180310';
+import { L } from '../core/i18n.js?v=202610180554';
+import { CHANGELOG, APP_VERSION } from '../core/changelog.js?v=202610180554';
 
 const KEY = 'kanpe.version.v1';
 const HOT_MS = 60 * 60 * 1000; // 目立たせる時間（1時間）

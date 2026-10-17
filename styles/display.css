@@ -69,30 +69,34 @@ body {
   padding: calc(6vh - 3.5vh * var(--fill)) calc(6vw - 3.5vw * var(--fill));
   transition: gap 1.2s ease, padding 1.2s ease;
 }
-.layout-kanpe.has-cap .flow { padding-bottom: calc(var(--base) * 2.2); }
+.layout-kanpe.has-cap .flow { padding-bottom: max(calc(6vh - 3.5vh * var(--fill)), var(--cap-res, 15vh)); } /* 字幕ラインのぶん空ける */
 .calm.layout-kanpe .flow { transition: none; }
 .layout-kanpe .w { position: relative; transform-origin: 50% 50%; }
 
 /* ---- テロップ：下部を横に流れる ---- */
 .ticker { position: absolute; left: 0; right: 0; bottom: 7vh; height: calc(var(--base) * 2.2); }
-.layout-ticker.has-cap .ticker { bottom: calc(var(--base) * 2.2); }
+.layout-ticker.has-cap .ticker { bottom: max(7vh, var(--cap-res, 15vh)); }
 .track { position: absolute; inset: 0; }
 /* 1語ずつ横位置（translateX）を display.js が毎フレーム動かす。下端でそろえる */
 .layout-ticker .w { position: absolute; left: 0; top: auto; bottom: 0; will-change: transform; }
 
-/* ---- 字幕ライン（最新の発話） ---- */
+/* ---- 字幕ライン（画面の最下部：聞き取った文を1文1行で。大きさ・行数・表示時間はコンソールの「字幕ライン」） ---- */
 #caption {
   position: fixed; left: 6vw; right: 6vw; bottom: 4.5vh;
-  font-size: calc(var(--base) * .5); line-height: 1.55; font-weight: var(--w-light);
+  display: flex; flex-direction: column; align-items: center;
+  font-size: var(--cap, calc(var(--base) * .5)); line-height: 1.55; font-weight: var(--w-light);
   color: var(--sub); text-align: center;
-  word-break: auto-phrase; text-wrap: balance;   /* 文節で折り返す（Chrome） */
   opacity: 0; transform: translateY(.3em);
-  transition: opacity .5s ease, transform .5s ease, color .4s ease;
+  transition: opacity .5s ease, transform .5s ease, outline-color .3s ease;
   pointer-events: none;
 }
 #caption.on { opacity: 1; transform: none; }
-#caption.final { color: var(--ink); }
+.cap-l { max-width: 100%; white-space: nowrap; overflow: hidden; transition: color .4s ease, opacity .4s ease; }
+.cap-l.final { color: var(--ink); }
+.cap-l.old { opacity: .55; font-size: .9em; } /* 少し前の文は控えめに */
 .layout-ticker #caption { bottom: 3vh; }
+/* プレビューで字幕ラインの設定にふれたとき：最下部の字幕の場所を枠で示す */
+#caption.peek { outline: 2px dashed var(--accent); outline-offset: .35em; border-radius: .3em; transition: none; }
 
 #hint {
   position: fixed; inset: 0; display: grid; place-items: center;
@@ -246,7 +250,7 @@ body {
 .layout-vj { background: #040506; }
 .layout-vj.theme-clear, .layout-vj.has-bgimg { background: transparent; }
 .layout-vj #caption { font-family: var(--vj-font, "DotGothic16"), var(--font); font-weight: var(--vj-weight, 400); font-synthesis: none; letter-spacing: .06em; color: rgba(255,255,255,.7); }
-.layout-vj #caption.final { color: #fff; }
+.layout-vj #caption .cap-l.final { color: #fff; }
 .layout-vj #hint { font-family: var(--vj-font, "DotGothic16"), var(--font); color: rgba(255,255,255,.5); }
 
 /* ---- 新語ミックス（新語誕生）：輪郭で生まれて、色が満ちる ----
@@ -295,12 +299,12 @@ body {
 .vj-micro #stage::after { display: none; }
 .layout-vj.vj-micro { background: #000; }
 .layout-vj.vj-micro.theme-clear, .layout-vj.vj-micro.has-bgimg { background: transparent; }
-.vj-micro #caption, .vj-micro #caption.final {
-  font-family: ui-monospace, "SFMono-Regular", Menlo, "DotGothic16", var(--font); font-size: calc(var(--base) * .36);
+.vj-micro #caption {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, "DotGothic16", var(--font); font-size: calc(var(--cap, calc(var(--base) * .5)) * .72);
   letter-spacing: .14em; color: rgba(255, 255, 255, .62);
 }
-.vj-micro #caption.final { color: #fff; }
-.vj-micro #caption::before { content: "> "; opacity: .5; }
+.vj-micro #caption .cap-l.final { color: #fff; }
+.vj-micro #caption .cap-l::before { content: "> "; opacity: .5; }
 
 /* ---- 新語の誕生：モーションタイポグラフィの演出（display.js の fzStage） ---- */
 /* ピント送り：誕生のあいだ、ほかの言葉を沈めて新語に視線を集める（外側の不透明度は退場の演出が使うので、内側だけ） */

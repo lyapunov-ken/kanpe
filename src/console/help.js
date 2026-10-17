@@ -1,13 +1,13 @@
 // 使い方ガイド（アプリ内ヘルプ）。右上の「ヘルプ」、? キー、または app.html#help（#help-scenes など）で開く。
 // 文言は L('日本語', 'English') で持つので、英語版のコンソールでもそのまま使える。
-import { L } from '../core/i18n.js?v=202610180310';
+import { L } from '../core/i18n.js?v=202610180554';
 
 // シーン別のおすすめ設定（無料プランの機能だけで組む。アクセントカラーや背景などの好みは触らない）
 export const PRESETS = {
-  stream: { label: L('ひとり雑談', 'Solo chat stream'), s: { theme: 'yoru', layout: 'compose', baseSize: 42, ttl: 8, maxWords: 24, vertical: true, caption: true, fusion: false } },
-  game: { label: L('ゲーム実況', 'Gameplay commentary'), s: { theme: 'clear', layout: 'ticker', baseSize: 34, ttl: 6, maxWords: 10, vertical: false, caption: false, fusion: false } },
-  brainstorm: { label: L('ブレスト会議', 'Brainstorming meeting'), s: { theme: 'sumi', layout: 'compose', baseSize: 34, ttl: 30, maxWords: 40, vertical: false, caption: false, fusion: true } },
-  speech: { label: L('スピーチ・講演', 'Speech or talk'), s: { theme: 'yoru', layout: 'kanpe', baseSize: 56, ttl: 15, maxWords: 10, vertical: false, caption: true, fusion: false } },
+  stream: { label: L('ひとり雑談', 'Solo chat stream'), s: { theme: 'yoru', layout: 'compose', cSize: 'l', cGrow: 1, cJump: 'mid', cVert: 'mid', caption: true, capSize: 'm', capTtl: 5, capLines: 1, fusion: false } },
+  game: { label: L('ゲーム実況', 'Gameplay commentary'), s: { theme: 'clear', layout: 'ticker', tSize: 'm', tSpeed: 'fast', caption: false, fusion: false } },
+  brainstorm: { label: L('ブレスト会議', 'Brainstorming meeting'), s: { theme: 'sumi', layout: 'compose', cSize: 'm', cGrow: 1, cJump: 'high', cVert: 'off', caption: false, fusion: true } },
+  speech: { label: L('スピーチ・講演', 'Speech or talk'), s: { theme: 'yoru', layout: 'kanpe', kSize: 'l', kGrow: 1, caption: true, capSize: 'l', capTtl: 10, capLines: 2, fusion: false } },
 };
 
 const TOC = [
@@ -76,12 +76,12 @@ function html() {
           'Start / stop, the language to listen for, and the recognition engine. High-accuracy recognition is part of the Pro plan (coming soon).')}</dd>
         <dt>${L('設定の3つのタブ', 'The three settings tabs')}</dt>
         <dd>${L(
-          'マイクの下の設定は3つのタブに分かれています。<b>表示</b>＝書体・色・レイアウト・文字の大きさや出かた／<b>機能</b>＝配信中に使うブレストモード（新語ミックス）と話者／<b>設定</b>＝前もって整える背景・ロゴ・辞書・OBS。最後に開いていたタブを覚えておきます。キーボードでは ← → で切り替えられます。',
-          'The settings below the mic are split into three tabs: <b>Display</b> (typefaces, colors, layout, text size and timing), <b>Features</b> (Brainstorm mode and speakers, used while live) and <b>Settings</b> (background, logo, dictionary and OBS, set up in advance). The last tab you opened is remembered; use ← → to switch with the keyboard.')}</dd>
+          'マイクの下の設定は3つのタブに分かれています。<b>表示</b>＝書体・色・レイアウトごとの設定・字幕ライン／<b>機能</b>＝配信中に使うブレストモード（新語ミックス）と話者／<b>設定</b>＝前もって整える背景・ロゴ・辞書・OBS。最後に開いていたタブを覚えておきます。キーボードでは ← → で切り替えられます。',
+          'The settings below the mic are split into three tabs: <b>Display</b> (typefaces, colors, layout options and the caption line), <b>Features</b> (Brainstorm mode and speakers, used while live) and <b>Settings</b> (background, logo, dictionary and OBS, set up in advance). The last tab you opened is remembered; use ← → to switch with the keyboard.')}</dd>
         <dt>${L('表示', 'Display')}</dt>
         <dd>${L(
-          '<b>書体テーマ</b>は文字と背景の雰囲気、<b>レイアウト</b>は言葉の置き方です。組版＝画面いっぱいに組む／カンペ＝下から大きく積み上がる／テロップ＝下部を横に流れる／VJ＝ドット絵で光らせる。<b>文字サイズ</b>・<b>表示時間</b>（言葉が消えるまでの秒数）・<b>同時に出す語</b>（画面に残す最大の語数）は、それぞれ5段階から選べます。<br>カンペでは<b>同じ話の記憶</b>（5分・10分・オフ）を選べます。その時間内にくり返した言葉ほど大きく、長く残り、同じ話を続けるほど画面が言葉で埋まっていきます。<br>アクセントカラーは無料プランでも自由に変えられます。プレミアム書体・背景（画像・カメラ）・カスタムロゴ・VJ はお手軽プラン以上の機能で、無料プランでも1日お試しできます。<br>「設定」タブの<b>ロゴ</b>で画像を選ぶと、真ん中を正方形に切り抜いて画面の左上に出します（大きさは小・中・大）。組版では言葉がロゴを避けて並び、別窓や OBS にも同じように出ます。<br>VJ ではスタイル（1px・LED・ネオン・ピクセル）と書体（5種）を選べます。1px は白黒の点と線だけで組む繊細な表示です。文字が読みにくいときは、書体を「ゴシック」か「明朝」にしてください。動きは「動きを控えめに」で止められます。<br>ブレストモードの<b>新語ミックス</b>をオンにすると、画面に出た言葉どうしが掛け合わさって新しい言葉が生まれます。「いま混ぜる」か <kbd>M</kbd> キーで好きなときにも混ぜられ、生まれた言葉は文字起こしの上に残ります。画面に出る新語は5つまでで、続けて混ぜると古い新語から早めに消えます。新語の色（虹・ランダムも）、出かた（衝突・デコード・シャッター・集束・スキャン・ランダム）、速さも選べます。',
-          '<b>Typeface theme</b> sets the look of the letters and background; <b>Layout</b> sets where words go: Compose fills the screen, Cue stacks big words from the bottom, Ticker scrolls along the bottom, VJ draws words in glowing dots. <b>Text size</b>, <b>Display time</b> (how long words stay) and <b>Words on screen</b> (the most shown at once) each have five steps.<br>In Cue layout, <b>Topic memory</b> (5 min, 10 min or off) makes words you repeat within that time grow bigger and stay longer, so the more you stay on one topic, the more the screen fills with words.<br>Accent colors are free to change on any plan. Premium typefaces, backgrounds (image / camera), a custom logo and VJ are Plus features you can try free for one day.<br>Choose an image under <b>Logo</b> in the Settings tab and its center is cropped to a square and shown in the top-left corner (small, medium or large). In Compose layout words are placed around it, and it appears the same in pop-out windows and OBS.<br>In VJ mode you pick a style (1px, LED, Neon, Pixel) and a typeface (5 kinds). 1px is a delicate monochrome look built only from dots and lines. If letters are hard to read, choose Gothic or Mincho. “Reduce motion” stops the movement.<br>Turn on <b>Word mix</b> in Brainstorm mode and words on screen combine into brand-new words. Press “Mix now” or <kbd>M</kbd> any time; new words are kept above the transcript. Up to five new words stay on screen; keep mixing and the oldest fade out early. You can also pick the new word’s color (including rainbow and random), entrance (Collide, Decode, Shutter, Converge, Scan, Random) and speed.')}</dd>
+          '<b>書体テーマ</b>は文字と背景の雰囲気、<b>レイアウト</b>は言葉の置き方です。組版＝画面いっぱいに組む／カンペ＝下から大きく積み上がる／テロップ＝下部を横に流れる／VJ＝ドット絵で光らせる。レイアウトの下には、そのレイアウトだけに効く設定が出ます（どれも3段階）：<b>文字の大きさ</b>（組版・カンペ・テロップそれぞれ）、<b>育つまで</b>（同じ言葉を何回くり返したら、ひと回り大きくなるか。組版・カンペ）、<b>大小の差</b>と<b>縦組み</b>の量（組版）、<b>流れる速さ</b>（テロップ）。<br>カンペでは<b>同じ話の記憶</b>（5分・10分・オフ）を選べます。その時間内にくり返した言葉ほど大きく、長く残り、同じ話を続けるほど画面が言葉で埋まっていきます。<br><b>字幕ライン</b>は、画面の最下部に聞き取った文をそのまま出す行です。<b>文字サイズ</b>・<b>表示時間</b>（話し終えてから消えるまで）・<b>同時に出す行</b>（少し前の文を何行まで残すか）を選べます。設定にふれると、プレビューで字幕の出る場所に枠が出ます。<br>アクセントカラーは無料プランでも自由に変えられます。プレミアム書体・背景（画像・カメラ）・カスタムロゴ・VJ はお手軽プラン以上の機能で、無料プランでも1日お試しできます。<br>「設定」タブの<b>ロゴ</b>で画像を選ぶと、真ん中を正方形に切り抜いて画面の左上に出します（大きさは小・中・大）。組版では言葉がロゴを避けて並び、別窓や OBS にも同じように出ます。<br>VJ ではスタイル（1px・LED・ネオン・ピクセル）と書体（5種）を選べます。1px は白黒の点と線だけで組む繊細な表示です。文字が読みにくいときは、書体を「ゴシック」か「明朝」にしてください。動きは「動きを控えめに」で止められます。<br>ブレストモードの<b>新語ミックス</b>をオンにすると、画面に出た言葉どうしが掛け合わさって新しい言葉が生まれます。「いま混ぜる」か <kbd>M</kbd> キーで好きなときにも混ぜられ、生まれた言葉は文字起こしの上に残ります。画面に出る新語は5つまでで、続けて混ぜると古い新語から早めに消えます。新語の色（虹・ランダムも）、出かた（衝突・デコード・シャッター・集束・スキャン・ランダム）、速さも選べます。',
+          '<b>Typeface theme</b> sets the look of the letters and background; <b>Layout</b> sets where words go: Compose fills the screen, Cue stacks big words from the bottom, Ticker scrolls along the bottom, VJ draws words in glowing dots. Under the layout you’ll find settings for that layout only, each in three steps: <b>Text size</b> (separately for Compose, Cue and Ticker), <b>Grow after</b> (how many repeats before a word gets bigger; Compose and Cue), <b>Size contrast</b> and <b>Vertical</b> text (Compose) and <b>Speed</b> (Ticker).<br>The <b>Caption line</b> shows what you say, word for word, at the very bottom of the screen. Choose its <b>Text size</b>, <b>Display time</b> (how long it stays after you finish) and <b>Lines</b> (how many earlier sentences stay). Touch these settings and the preview outlines where the caption appears.<br>In Cue layout, <b>Topic memory</b> (5 min, 10 min or off) makes words you repeat within that time grow bigger and stay longer, so the more you stay on one topic, the more the screen fills with words.<br>Accent colors are free to change on any plan. Premium typefaces, backgrounds (image / camera), a custom logo and VJ are Plus features you can try free for one day.<br>Choose an image under <b>Logo</b> in the Settings tab and its center is cropped to a square and shown in the top-left corner (small, medium or large). In Compose layout words are placed around it, and it appears the same in pop-out windows and OBS.<br>In VJ mode you pick a style (1px, LED, Neon, Pixel) and a typeface (5 kinds). 1px is a delicate monochrome look built only from dots and lines. If letters are hard to read, choose Gothic or Mincho. “Reduce motion” stops the movement.<br>Turn on <b>Word mix</b> in Brainstorm mode and words on screen combine into brand-new words. Press “Mix now” or <kbd>M</kbd> any time; new words are kept above the transcript. Up to five new words stay on screen; keep mixing and the oldest fade out early. You can also pick the new word’s color (including rainbow and random), entrance (Collide, Decode, Shutter, Converge, Scan, Random) and speed.')}</dd>
         <dt>${L('話者（機能タブ）', 'Speakers (Features tab)')}</dt>
         <dd>${L(
           '話している人ごとに名前と色を付けます（最大4人）。切り替えはボタンかキーボードの <kbd>1</kbd>〜<kbd>4</kbd>。PC では声の高さで自動切り替えもできます。お手軽プラン以上の機能です。',
@@ -104,21 +104,21 @@ function html() {
     <section id="help-scenes">
       <h3 class="hp-h">${L('シーン別のおすすめ設定', 'Recommended settings by scene')}</h3>
       <p>${L(
-        'ボタンを押すと、書体・レイアウト・表示時間などをまとめて切り替えます。あとから個別に調整できます。',
-        'Each button switches typeface, layout, display time and more in one go. You can fine-tune afterwards.')}</p>
+        'ボタンを押すと、書体・レイアウト・字幕ラインなどをまとめて切り替えます。あとから個別に調整できます。',
+        'Each button switches typeface, layout, caption line and more in one go. You can fine-tune afterwards.')}</p>
       <div class="hp-scenes">
         ${scene('stream', L('配信', 'STREAMING'), false, L('ひとり雑談', 'Solo chat stream'),
           L('話題になった言葉が画面いっぱいに組まれ、話が続くきっかけになります。', 'Topics fill the screen as you talk, giving you something to riff on.'),
-          [L('夜 × 組版', 'Night × Compose'), L('表示 8 秒・24 語', '8 s · 24 words'), L('縦組み・字幕ライン あり', 'Vertical text and caption line on')])}
+          [L('夜 × 組版・大きめの文字', 'Night × Compose, larger text'), L('縦組みを混ぜる', 'Mix in vertical text'), L('字幕ライン あり（1行）', 'Caption line on (1 line)')])}
         ${scene('game', L('配信', 'STREAMING'), false, L('ゲーム実況', 'Gameplay commentary'),
           L('OBS に透過で重ね、画面下に細く流してゲーム画面の邪魔をしません。', 'Overlay it in OBS as a slim ticker that stays out of the gameplay.'),
-          [L('透過 × テロップ', 'Clear × Ticker'), L('表示 6 秒・10 語', '6 s · 10 words'), L('字幕ライン なし', 'Caption line off')])}
+          [L('透過 × テロップ', 'Clear × Ticker'), L('速く流す', 'Fast scrolling'), L('字幕ライン なし', 'Caption line off')])}
         ${scene('brainstorm', L('ビジネス', 'BUSINESS'), true, L('ブレスト会議', 'Brainstorming meeting'),
           L('会議室のディスプレイに映して、出た言葉を全員で眺めます。何度も出た言葉ほど大きく残るので、議論の中心が見えてきます。', 'Put it on the meeting-room display so everyone sees the ideas. Words that keep coming up grow bigger, so the heart of the discussion stands out.'),
-          [L('墨 × 組版（明るい画面で見やすい）', 'Sumi × Compose (easy to read on a bright screen)'), L('表示 30 秒・40 語で長く残す', '30 s · 40 words, so ideas linger'), L('新語ミックス あり（出た言葉を掛け合わせて新しい言葉を生む）', 'Word mix on (combines words into new ones)'), L('字幕ライン なし', 'Caption line off')])}
+          [L('墨 × 組版（明るい画面で見やすい）', 'Sumi × Compose (easy to read on a bright screen)'), L('大小の差を大胆に（何度も出た言葉が目立つ）', 'High size contrast, so recurring words stand out'), L('新語ミックス あり（出た言葉を掛け合わせて新しい言葉を生む）', 'Word mix on (combines words into new ones)'), L('字幕ライン なし', 'Caption line off')])}
         ${scene('speech', L('ビジネス', 'BUSINESS'), true, L('スピーチ・講演', 'Speech or talk'),
           L('演台や手元のモニターに、話し終えた要点を大きく積み上げます。いまどこまで話したかが一目で分かります。', 'Stack the points you’ve covered in big type on the lectern or confidence monitor, so you always know where you are.'),
-          [L('夜 × カンペ・大きめの文字', 'Night × Cue, larger text'), L('表示 15 秒・10 語', '15 s · 10 words'), L('字幕ライン あり', 'Caption line on')])}
+          [L('夜 × カンペ・大きめの文字', 'Night × Cue, larger text'), L('字幕ライン 大きめ・2行・10秒', 'Large caption line, 2 lines, 10 s')])}
       </div>
       <div class="hp-cols">
         <div>

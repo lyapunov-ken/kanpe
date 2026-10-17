@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97%20BGMPRcdefhilnotux%E3%82%AF%E3%82%B4%E3%82%B7%E3%83%83%E3%83%88%E3%83%89%E4%B8%B8%E5%A4%AA%E6%98%8E%E6%9C%9D%E6%A5%B5&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="../styles/console.css?v=202610180310">
+<link rel="stylesheet" href="../styles/console.css?v=202610180554">
 </head>
 <body>
 <header class="top">
@@ -113,29 +113,39 @@
           <div class="lbl-row"><span class="lbl">Accent color</span><span class="hint">For words heard the first time</span></div>
           <div id="accents" class="accents" role="radiogroup" aria-label="Accent color"></div>
         </div>
-        <div class="field"><span class="lbl">Layout</span><div id="layouts" class="segmented four" role="radiogroup" aria-label="Layout"></div><p id="layoutNote" class="hint"></p></div>
-        <div id="vjOpts" class="field vj-opts" hidden>
-          <span class="lbl">VJ style<em class="plus-mark" title="Plus plan feature"><b aria-hidden="true">+</b><span class="vh">(Plus plan feature)</span></em></span>
-          <div id="vjStyles" class="segmented four" role="radiogroup" aria-label="VJ style"></div>
-          <p id="vjStyleNote" class="hint"></p>
-          <span class="lbl vj-sub">VJ typeface</span>
-          <div id="vjFonts" class="segmented five vj-fonts" role="radiogroup" aria-label="VJ typeface"></div>
+        <div class="field lay-field">
+          <div class="lbl-row"><span class="lbl">Layout</span><label class="mini-switch" title="Tones down how words enter, leave and animate"><span>Reduce motion</span><input id="reduceMotion" type="checkbox" role="switch"></label></div>
+          <div id="layouts" class="segmented four" role="radiogroup" aria-label="Layout"></div>
+          <div class="lay-opts" role="group" aria-labelledby="layoutNote">
+            <p id="layoutNote" class="lay-note"></p>
+            <div id="layGrid" class="opt-grid" data-novj>
+              <div class="opt"><span class="lbl">Text size</span><div id="optSize" class="segmented step-seg" role="radiogroup" aria-label="Text size"></div></div>
+              <div class="opt" data-lay="compose kanpe"><span class="lbl" title="How many repeats before a word gets bigger">Grow after</span><div id="optGrow" class="segmented step-seg" role="radiogroup" aria-label="Repeats before a word grows"></div></div>
+              <div class="opt" data-lay="compose"><span class="lbl">Size contrast</span><div id="optJump" class="segmented step-seg" role="radiogroup" aria-label="Size contrast"></div></div>
+              <div class="opt" data-lay="compose"><span class="lbl">Vertical</span><div id="optVert" class="segmented step-seg four" role="radiogroup" aria-label="Amount of vertical text"></div></div>
+              <div class="opt" data-lay="kanpe" id="kanpeOpts"><span class="lbl" title="Words repeated within this time grow bigger and stay longer">Topic memory</span><div id="echoSpans" class="segmented step-seg" role="radiogroup" aria-label="Topic memory"></div></div>
+              <div class="opt" data-lay="ticker"><span class="lbl">Speed</span><div id="optSpeed" class="segmented step-seg" role="radiogroup" aria-label="Scrolling speed"></div></div>
+            </div>
+            <div id="vjOpts" class="vj-opts" hidden>
+              <span class="lbl">Style<em class="plus-mark" title="Plus plan feature"><b aria-hidden="true">+</b><span class="vh">(Plus plan feature)</span></em></span>
+              <div id="vjStyles" class="segmented four step-seg" role="radiogroup" aria-label="VJ style"></div>
+              <span class="lbl">Typeface</span>
+              <div id="vjFonts" class="segmented five vj-fonts step-seg" role="radiogroup" aria-label="VJ typeface"></div>
+            </div>
+          </div>
         </div>
-        <div id="kanpeOpts" class="field" hidden>
-          <span class="lbl">Topic memory</span>
-          <div id="echoSpans" class="segmented" role="radiogroup" aria-label="Topic memory"></div>
-          <p id="echoNote" class="hint"></p>
-        </div>
-        <div class="steps">
-          <div class="step-row" data-novj><span class="lbl">Text size</span><div id="sizeSteps" class="segmented five step-seg" role="radiogroup" aria-label="Text size"></div></div>
-          <div class="step-row"><span class="lbl">Display time</span><div id="ttlSteps" class="segmented five step-seg" role="radiogroup" aria-label="Display time"></div></div>
-          <div class="step-row" data-novj><span class="lbl">Words on screen</span><div id="wordSteps" class="segmented five step-seg" role="radiogroup" aria-label="Words on screen"></div></div>
-        </div>
-        <div class="switches">
-          <label class="switch" data-novj><span>Mix in vertical text</span><input id="vertical" type="checkbox" role="switch"></label>
-          <label class="switch"><span>Caption line</span><input id="caption" type="checkbox" role="switch"></label>
-          <label class="switch"><span>Reduce motion</span><input id="reduceMotion" type="checkbox" role="switch"></label>
-        </div>
+        <section id="capCard" class="cap-card" aria-labelledby="capH">
+          <label class="cap-head">
+            <span class="cap-ic" aria-hidden="true"><i></i></span>
+            <span class="cap-tt"><b id="capH">Caption line</b><small>Your words, at the bottom</small></span>
+            <input id="caption" type="checkbox" role="switch" aria-describedby="capH">
+          </label>
+          <div id="capOpts" class="opt-grid three">
+            <div class="opt"><span class="lbl">Text size</span><div id="capSizes" class="segmented step-seg" role="radiogroup" aria-label="Caption text size"></div></div>
+            <div class="opt"><span class="lbl">Display time</span><div id="capTtls" class="segmented step-seg" role="radiogroup" aria-label="Caption display time"></div></div>
+            <div class="opt"><span class="lbl">Lines</span><div id="capLinesSeg" class="segmented step-seg" role="radiogroup" aria-label="Caption lines on screen"></div></div>
+          </div>
+        </section>
       </div>
 
       <div id="paneFeat" class="sec pane feat-pane" role="tabpanel" aria-labelledby="tabFeat" hidden>
@@ -265,9 +275,9 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="../src/ui/lang.js?v=202610180310" defer></script>
-<script src="../src/ui/menu.js?v=202610180310" defer></script>
-<script src="../src/ui/mode.js?v=202610180310" defer></script>
-<script type="module" src="../src/console/console.js?v=202610180310"></script>
+<script src="../src/ui/lang.js?v=202610180554" defer></script>
+<script src="../src/ui/menu.js?v=202610180554" defer></script>
+<script src="../src/ui/mode.js?v=202610180554" defer></script>
+<script type="module" src="../src/console/console.js?v=202610180554"></script>
 </body>
 </html>
