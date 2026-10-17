@@ -2,6 +2,16 @@
 // type：new＝新機能 / improve＝改善 / fix＝修正。文言は短く、利用者向けのやさしい言葉で（日本語と英語）。
 export const CHANGELOG = [
   {
+    v: '1.5.0', date: '2026-10-17',
+    items: [
+      { type: 'improve', ja: 'ブレストモードの新語の出かたを一新。予兆 → 誕生 → 余韻の3幕で、閃光・衝撃波・画面の揺れ・粒子・残像・光の柱などが加わり、生まれる瞬間ほかの言葉が沈んで新語に視線が集まります', en: 'Brainstorm mode’s entrances, rebuilt as three acts (build-up, birth, afterglow) with flashes, shockwaves, screen shake, particles, afterimages and light pillars, while other words dim to put the new word in focus' },
+      { type: 'new', ja: '新語の出かたに「墨」：墨がにじむように字が浮かび、しぶきが散ります', en: 'New “Ink” entrance: letters bleed in like ink, with splashes' },
+      { type: 'improve', ja: '文字サイズ・表示時間・同時に出す語を、5段階のボタンで切り替えられるように', en: 'Text size, display time and words on screen now switch in five steps' },
+      { type: 'improve', ja: '設定のタブを「表示」「機能」「設定」に。ブレストモードと話者は「機能」、背景・ロゴ・辞書・OBS は「設定」にまとめました', en: 'Settings tabs are now Display, Features and Settings: Brainstorm mode and speakers live in Features; background, logo, dictionary and OBS in Settings' },
+      { type: 'fix', ja: '新語の出かた「シャッター」で、帯が見えず画面の端まで線が伸びていた不具合', en: 'The Shutter entrance showed screen-wide lines instead of its sliding strips' },
+    ],
+  },
+  {
     v: '1.4.0', date: '2026-10-17',
     items: [
       { type: 'new', ja: 'カスタムロゴ：番組や会社のロゴを、画面の左上に正方形（1:1）で出せます。大きさは小・中・大。組版では言葉がロゴを避けて並び、別窓・OBS にも同じように出ます（お手軽プラン。無料プランでも1日お試しできます）', en: 'Custom logo: show your show’s or company’s logo as a square (1:1) in the top-left corner, in small, medium or large. In Compose layout words are placed around it, and it appears the same in pop-out windows and OBS (Plus plan; try it free for a day)' },

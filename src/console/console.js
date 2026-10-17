@@ -1,5 +1,5 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610171959';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, SIZE_STEPS, TTL_STEPS, WORD_STEPS, nearestStep, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610171959';
 import { EN, L, tr } from '../core/i18n.js?v=202610171959';
 import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610171959';
 import { createBus } from '../core/bus.js?v=202610171959';
@@ -455,7 +455,7 @@ function pick(container, entries, key, id, def) {
   }
   if (key === 'speakerCount') { S[key] = +id; renderSpeakers(); pushSettings(); return; }
   if (key === 'speakerMode') { S[key] = id; renderSpeakers(); updateTrial(); pushSettings(); return; }
-  S[key] = id;
+  S[key] = STEP_SETS[key] ? +id : id; // 5段階の値は数で持つ
   if (key === 'theme') renderThemes(); else segButtons(container, entries, key);
   if (key === 'vjStyle') $('#vjStyleNote').textContent = tr(VJ_STYLES[id], 'note');
   if (key === 'fusionMotion') $('#fzMotionNote').textContent = tr(FUSION_MOTIONS[id], 'note');
@@ -493,9 +493,8 @@ function renderAccents() {
   const radio = (el, on, label) => { el.setAttribute('role', 'radio'); el.setAttribute('aria-checked', String(on)); el.setAttribute('aria-label', label); el.title = label; };
   const auto = document.createElement('button');
   auto.type = 'button';
-  auto.className = 'acc-auto';
+  auto.className = 'acc fz-auto'; // 1列に収まるよう丸い見本に（名前はマウスを重ねると出る）
   auto.style.setProperty('--c', (THEMES[S.theme] || THEMES[DEFAULT_THEME]).accent);
-  auto.innerHTML = `<i></i>${L('標準', 'Default')}`;
   radio(auto, !S.accent, L('書体テーマ標準の色', 'The typeface theme’s own color'));
   auto.addEventListener('click', () => pickAccent(''));
   box.appendChild(auto);
@@ -738,6 +737,10 @@ function bindRange(id, label, fmt) {
   show();
   input.addEventListener('input', () => { S[id] = +input.value; show(); pushSettings(); });
 }
+// 文字サイズ・表示時間・同時に出す語：5段階のボタン。保存されている値は近い段に寄せる
+const STEP_SETS = { baseSize: ['#sizeSteps', SIZE_STEPS], ttl: ['#ttlSteps', TTL_STEPS], maxWords: ['#wordSteps', WORD_STEPS] };
+for (const [key, [, steps]] of Object.entries(STEP_SETS)) S[key] = nearestStep(steps, S[key]);
+function renderSteps() { for (const [key, [box, steps]] of Object.entries(STEP_SETS)) segButtons(box, steps, key); }
 function bindCheck(id) {
   const input = $('#' + id);
   input.checked = !!S[id];
@@ -772,9 +775,7 @@ segButtons('#layouts', LAYOUTS, 'layout');
 segButtons('#vjStyles', VJ_STYLES, 'vjStyle');
 $('#vjStyleNote').textContent = tr(VJ_STYLES[S.vjStyle], 'note');
 segButtons('#vjFonts', VJ_FONTS, 'vjFont');
-bindRange('baseSize', 'vSize', (v) => `${v}`);
-bindRange('ttl', 'vTtl', (v) => L(`${v}秒`, `${v}s`));
-bindRange('maxWords', 'vMax', (v) => L(`${v}語`, `${v} words`));
+renderSteps();
 bindRange('bgDim', 'vBgDim', (v) => `${Math.round(v * 100)}%`);
 renderBg();
 renderCam();
@@ -793,11 +794,12 @@ function applyPreset(p) {
   Object.assign(S, p.s);
   renderThemes();
   segButtons('#layouts', LAYOUTS, 'layout');
-  for (const id of ['baseSize', 'ttl', 'maxWords']) { const r = $('#' + id); r.value = S[id]; r.dispatchEvent(new Event('input')); }
+  for (const [key, [, steps]] of Object.entries(STEP_SETS)) S[key] = nearestStep(steps, S[key]);
+  renderSteps();
   for (const id of ['vertical', 'caption', 'fusion']) $('#' + id).checked = !!S[id];
   updateTrial();
   pushSettings();
-  showTab(S.fusion ? 'coin' : 'look'); // 選んだ設定が見えるタブへ（ブレスト会議ならブレストモード）
+  showTab(S.fusion ? 'feat' : 'look'); // 選んだ設定が見えるタブへ（ブレスト会議なら機能タブのブレストモード）
   toast(L(`「${p.label}」向けの設定にしました`, `Switched to settings for: ${p.label}`));
 }
 const help = initHelp({ onPreset: applyPreset, onGuide: () => guide.start(), onDev: devUnlock });
@@ -815,9 +817,11 @@ async function devUnlock(password) {
   }
 }
 
-// ------------------------------------------------------------ サイドメニューのタブ（表示・ブレストモード・詳細）
+// ------------------------------------------------------------ サイドメニューのタブ（表示・機能・設定）
+// 表示：見た目と文字の出かた ／ 機能：ブレストモード・話者（配信中に使うもの）／ 設定：背景・ロゴ・辞書・OBS（前もって整えるもの）
 // 最後に開いていたタブはこの端末に覚えておく。← → で隣のタブへ（Home / End で端へ）
 const TABKEY = 'kanpe.tab.v1';
+const OLD_TABS = { coin: 'feat', more: 'set' }; // 以前のタブの名前（ブレストモード・詳細）
 const sideTabs = [...document.querySelectorAll('.side-tab')];
 function showTab(id, focus = false) {
   const cur = document.querySelector('.side-tab[aria-selected="true"]');
@@ -847,6 +851,7 @@ sideTabs.forEach((t, i) => {
 {
   let t0 = 'look';
   try { t0 = localStorage.getItem(TABKEY) || t0; } catch { /* noop */ }
+  t0 = OLD_TABS[t0] || t0;
   showTab(sideTabs.some((t) => t.dataset.tab === t0) ? t0 : 'look');
 }
 // 「詳細」タブの見出しに、いまの状態を小さく出す（閉じたままでも、何が効いているかわかるように）
@@ -854,7 +859,6 @@ function updateMore() {
   const st = (id, text) => { const e = document.getElementById(id); if (e) { e.textContent = text; e.hidden = !text; } };
   st('stBg', S.bgCamera ? L('カメラ', 'Camera') : S.bgImage ? L('画像', 'Image') : '');
   st('stLogo', S.logo ? L('オン', 'On') : '');
-  st('stSp', S.speakerMode && S.speakerMode !== 'off' ? L('オン', 'On') : '');
   const words = (S.registered || '').split(/[、,，\n]/).map((w) => w.trim()).filter(Boolean).length;
   st('stDict', words ? L(`${words}語`, `${words} words`) : '');
   st('stObs', obs ? L('接続', 'On') : '');
@@ -1062,9 +1066,10 @@ function renderFzColors() {
     b.setAttribute('aria-checked', String(on));
     b.setAttribute('aria-label', tr(x));
     b.title = tr(x);
-    if (!x.c) { b.className = 'acc-auto'; b.innerHTML = `<i></i>${L('標準', 'Default')}`; b.style.setProperty('--c', (THEMES[S.theme] || THEMES[DEFAULT_THEME]).accent2); }
+    // 1列に収まるよう、「標準」と「ランダム」も丸い見本にする（名前はマウスを重ねると出る）
+    if (!x.c) { b.className = 'acc fz-auto'; b.style.setProperty('--c', (THEMES[S.theme] || THEMES[DEFAULT_THEME]).accent2); }
     else if (x.c === 'rainbow') { b.className = 'acc fz-rainbow'; }
-    else if (x.c === 'random') { b.className = 'acc-auto fz-random'; b.textContent = L('ランダム', 'Random'); }
+    else if (x.c === 'random') { b.className = 'acc fz-random'; b.innerHTML = '<b aria-hidden="true">?</b>'; }
     else { b.className = 'acc'; b.style.setProperty('--c', x.c); }
     b.addEventListener('click', () => { S.fusionColor = x.c; renderFzColors(); pushSettings(); setTimeout(() => fuse(false), 150); });
     box.appendChild(b);

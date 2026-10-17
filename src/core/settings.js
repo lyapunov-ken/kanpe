@@ -117,11 +117,12 @@ export const FUSION_COLORS = [
   { c: 'random', label: 'ランダム', labelEn: 'Random' }, // 生まれるたびに上の色から選ぶ
 ];
 export const FUSION_MOTIONS = {
-  collide: { label: '衝突', labelEn: 'Collide', note: '元の2語が引き寄せられてぶつかり、閃光の中から生まれる', noteEn: 'The two words are pulled together and the new one bursts out of the flash' },
-  decode: { label: 'デコード', labelEn: 'Decode', note: '別の字がめまぐるしく入れ替わり、左から順に正しい字に確定する', noteEn: 'Random glyphs flicker and lock into place letter by letter' },
-  shutter: { label: 'シャッター', labelEn: 'Shutter', note: '横に裂けた字の帯が左右から滑り込み、1字ずつ組み上がる', noteEn: 'Each letter slides in as horizontal strips from both sides' },
-  converge: { label: '集束', labelEn: 'Converge', note: '散らばった字が回りながら一点へ吸い込まれるように集まる', noteEn: 'Scattered letters spin and get pulled together into place' },
-  scan: { label: 'スキャン', labelEn: 'Scan', note: '光の線が走り、通ったところから字が実体化する', noteEn: 'A beam of light sweeps across and the letters materialize behind it' },
+  collide: { label: '衝突', labelEn: 'Collide', note: '2語が引き寄せられて激突し、衝撃波の中から生まれる', noteEn: 'Two words crash together and the new one bursts out of the shockwave' },
+  decode: { label: 'デコード', labelEn: 'Decode', note: '字が高速で入れ替わり、光の柱とともに1字ずつ確定する', noteEn: 'Glyphs flicker at speed and lock in one by one under pillars of light' },
+  shutter: { label: 'シャッター', labelEn: 'Shutter', note: '裂けた帯が残像を引いて走り抜け、一気に組み上がる', noteEn: 'Sliced strips streak in with motion blur and snap together' },
+  converge: { label: '集束', labelEn: 'Converge', note: '散った字が残像を引きながら、らせんを描いて集まる', noteEn: 'Scattered letters spiral in, trailing afterimages' },
+  scan: { label: 'スキャン', labelEn: 'Scan', note: '光が走り抜け、字が奥から立ち上がって実体化する', noteEn: 'A beam sweeps across and letters rise up out of the screen' },
+  ink: { label: '墨', labelEn: 'Ink', note: '墨がにじむように字が浮かび、しぶきが散る', noteEn: 'Letters bleed in like ink, with splashes' },
   random: { label: 'ランダム', labelEn: 'Random', note: '生まれるたびに出かたを選び直す', noteEn: 'Picks a different motion every time' },
 };
 export const FUSION_SPEEDS = {
@@ -146,6 +147,35 @@ export const DEFAULT_SPEAKERS = [
   { name: 'ゲスト2', nameEn: 'Guest 2', color: '#ff5c8a', f0: 0 },
   { name: 'ゲスト3', nameEn: 'Guest 3', color: '#4cd97b', f0: 0 },
 ];
+
+// 文字サイズ・表示時間・同時に出す語は5段階から選ぶ（まん中が初めの値）。保存された値は近い段に寄せる
+export const SIZE_STEPS = {
+  26: { label: '極小', labelEn: 'XS', note: 'とても小さく（画面の隅で控えめに）', noteEn: 'Extra small' },
+  30: { label: '小', labelEn: 'S', note: '小さめ', noteEn: 'Small' },
+  34: { label: '中', labelEn: 'M', note: 'ふつう（初めの値）', noteEn: 'Medium (default)' },
+  42: { label: '大', labelEn: 'L', note: '大きめ（配信の画面でも読みやすく）', noteEn: 'Large' },
+  56: { label: '特大', labelEn: 'XL', note: 'とても大きく（講演・会場のスクリーン向け）', noteEn: 'Extra large, for stages and big screens' },
+};
+export const TTL_STEPS = {
+  4: { label: '4秒', labelEn: '4s', note: 'すぐ消える（テンポの速い話に）', noteEn: 'Gone quickly, for fast talk' },
+  6: { label: '6秒', labelEn: '6s', note: '短め', noteEn: 'Short' },
+  8: { label: '8秒', labelEn: '8s', note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
+  15: { label: '15秒', labelEn: '15s', note: '長め（ゆっくり話すとき）', noteEn: 'Long, for slower talk' },
+  30: { label: '30秒', labelEn: '30s', note: 'とても長く（ブレストや講演で言葉を残したいとき）', noteEn: 'Very long, to keep words up during brainstorms and talks' },
+};
+export const WORD_STEPS = {
+  10: { label: '10語', labelEn: '10', note: '少なく、大きく見せる', noteEn: 'Few words, shown big' },
+  16: { label: '16語', labelEn: '16', note: '少なめ', noteEn: 'Fewer' },
+  24: { label: '24語', labelEn: '24', note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
+  32: { label: '32語', labelEn: '32', note: '多め', noteEn: 'More' },
+  40: { label: '40語', labelEn: '40', note: 'とても多く（画面を言葉で埋める）', noteEn: 'Lots — fill the screen' },
+};
+export function nearestStep(steps, v) {
+  const keys = Object.keys(steps).map(Number);
+  const n = Number(v);
+  if (!Number.isFinite(n)) return keys[Math.floor(keys.length / 2)];
+  return keys.reduce((a, b) => (Math.abs(b - n) < Math.abs(a - n) ? b : a));
+}
 
 // カスタムロゴの大きさ。ref は 1280×720 の画面での一辺（px）。表示ビューは窓の大きさに合わせて拡縮する
 export const LOGO_SIZES = {
