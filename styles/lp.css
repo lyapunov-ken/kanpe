@@ -587,3 +587,17 @@ i { font-style: normal; }
   .nav .links.open .menu-extra { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--rule-2); }
 }
 @media (prefers-reduced-motion: reduce) { .nav .links.open { animation: none; } }
+
+/* ---------------------------------------------------------------- 顔出しなしの配信 */
+.nf { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
+.nf-screen { box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 30px 60px -30px rgba(0,0,0,.55); }
+.nf-live, .nf-cam { position: absolute; z-index: 1; display: inline-flex; align-items: center; gap: 6px; pointer-events: none;
+  font-size: 11px; line-height: 1; color: #fff; background: rgba(0,0,0,.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border-radius: 999px; padding: 6px 10px; }
+.nf-live { top: 12px; left: 12px; letter-spacing: .14em; font-weight: 700; }
+.nf-live i { width: 7px; height: 7px; border-radius: 50%; background: #e0352b; animation: nf-blink 1.6s ease-in-out infinite; }
+.nf-cam { top: 12px; right: 12px; color: rgba(255,255,255,.85); }
+.nf-cam svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes nf-blink { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .nf-live i { animation: none; } }
+@media (max-width: 900px) { .nf { grid-template-columns: minmax(0, 1fr); max-width: 680px; } }

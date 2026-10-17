@@ -4,7 +4,7 @@
 //  - カタカナどうし：拍の切れ目で前半と後半をつなぐ（サブスク × オンボーディング → サブディング）
 //  - 英語どうし：母音のあたりで切ってつなぐ（Typography × Browser → Typowser）
 //  - 文字種が違う：短ければそのまま連結（紹介 × サブスク → 紹介サブスク）、長ければ半分ずつ
-import { runs } from './extract.js?v=202610172339';
+import { runs } from './extract.js?v=202610180020';
 
 const SMALL = /^[ァィゥェォャュョッヮヵヶーぁぃぅぇぉゃゅょっゎ]/;
 const VOWEL = /[aeiouy]/i;

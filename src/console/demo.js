@@ -1,5 +1,5 @@
 // マイクなしで試すためのデモ。音声認識の途中結果が少しずつ伸びる様子を再現する。
-import { Extractor, cleanCaption } from '../core/extract.js?v=202610172339';
+import { Extractor, cleanCaption } from '../core/extract.js?v=202610180020';
 
 export const DEMO_LINES = {
   ja: [
@@ -24,8 +24,28 @@ export const DEMO_LINES = {
   ],
 };
 
-// ランディングページのビジネス利用の見本（display.html?demo=1&script=meeting / speech）
+// ランディングページの見本（display.html?demo=1&script=meeting / speech / talk）
 export const SCRIPTS = {
+  talk: { // 顔出しなしの雑談配信
+    ja: [
+      'こんばんは、今日もカメラなしでゆるっと雑談配信をしていきます',
+      '最近はまっているのは、朝のコーヒーと古い映画です',
+      '週末は近所の喫茶店で、ずっと読書をしていました',
+      'そうそう、コメントで教えてもらったパン屋さんにも行ってきました',
+      'カメラがなくても、話した言葉が画面に出るので話しやすいんです',
+      '次の配信では、みんなのおすすめの映画を聞きたいな',
+      'それじゃあ今日の雑談はこのへんで、また来週の配信で会いましょう',
+    ],
+    en: [
+      'a cozy Chat Stream tonight, no Camera',
+      'into Morning Coffee and Old Movies lately',
+      'a weekend of Reading at a little Cafe',
+      'tried the Bakery you recommended in Chat',
+      'no Camera needed, my Words show up on screen',
+      'next time, share your favorite Movies',
+      'thanks for tonight, see you Next Week',
+    ],
+  },
   meeting: {
     ja: [
       'じゃあ、新規顧客を増やす方法をブレストしていきましょう',
