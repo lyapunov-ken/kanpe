@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>KANPE — Real-time cue cards for live streams</title>
-<meta name="description" content="Turn what you say on stream into beautiful live typography. A free real-time cue card that runs in your browser with just a mic.">
+<meta name="description" content="Turn what you say on stream into beautiful live typography — a screen that moves even when you stream without a camera. A free real-time cue card that runs in your browser with just a mic.">
 <link rel="canonical" href="https://kanpe.yoneken.xyz/en/">
 <link rel="alternate" hreflang="ja" href="https://kanpe.yoneken.xyz/">
 <link rel="alternate" hreflang="en" href="https://kanpe.yoneken.xyz/en/">
@@ -32,7 +32,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700&family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../styles/lp.css?v=202610172339">
+<link rel="stylesheet" href="../styles/lp.css?v=202610180310">
 <script>document.documentElement.classList.add('js');</script>
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://kanpe.yoneken.xyz/#website","url":"https://kanpe.yoneken.xyz/","name":"KANPE","alternateName":"KANPE リアルタイムカンペ","inLanguage":["ja","en"]},{"@type":"WebApplication","@id":"https://kanpe.yoneken.xyz/en/#app","name":"KANPE","url":"https://kanpe.yoneken.xyz/en/","description":"Real-time cue cards that turn what you say on stream into live Japanese typography. Runs in the browser with just a mic — free, no sign-up.","applicationCategory":"MultimediaApplication","operatingSystem":"Web browser","browserRequirements":"A browser with a microphone and speech recognition (Web Speech API): Chrome, Edge or Safari","inLanguage":"en","isAccessibleForFree":true,"image":"https://kanpe.yoneken.xyz/assets/og-en.png?v=1","isPartOf":{"@id":"https://kanpe.yoneken.xyz/#website"},"offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"JPY","url":"https://kanpe.yoneken.xyz/en/#pricing"},{"@type":"Offer","name":"Plus (monthly)","price":"480","priceCurrency":"JPY","url":"https://kanpe.yoneken.xyz/en/#pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"480","priceCurrency":"JPY","billingDuration":"P1M","unitCode":"MON"}},{"@type":"Offer","name":"Plus (yearly)","price":"4800","priceCurrency":"JPY","url":"https://kanpe.yoneken.xyz/en/#pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"4800","priceCurrency":"JPY","billingDuration":"P1Y","unitCode":"ANN"}}]}]}</script>
@@ -198,6 +198,21 @@
       </article>
     </div>
     <p class="swipe-hint mono" aria-hidden="true"><span id="specCount">01 / 06</span><span>Swipe for more →</span></p>
+
+    <!-- Faceless streaming (compact band inside Features) -->
+    <aside class="nf-band reveal" id="noface" aria-labelledby="noface-title">
+      <div class="show-screen nf-screen">
+        <iframe data-src="../display.html?demo=1&amp;ui=0&amp;layout=compose&amp;theme=yoru&amp;script=talk&amp;cap=1&amp;hl=en" title="Faceless chat stream demo" tabindex="-1"></iframe>
+        <span class="nf-live mono" aria-hidden="true"><i></i>LIVE</span>
+        <span class="nf-cam" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 14 18H4.5A1.5 1.5 0 0 1 3 16.5z"/><path d="M15.5 10.5 21 7.5v9l-5.5-3"/><path d="M2.5 3.5l19 17"/></svg>Camera off</span>
+      </div>
+      <div class="nf-copy">
+        <p class="label mono">NO CAMERA</p>
+        <h3 id="noface-title">No face on camera. <wbr>Still a screen that moves.</h3>
+        <p>All you need is a mic. Your words are typeset across the screen as you speak, so camera-off chats and radio-style streams never look frozen. Viewers see your words, not your face.</p>
+        <ul class="chips-row" aria-label="Great for"><li>No camera needed</li><li>Face and room stay private</li><li>Chat &amp; radio streams</li><li>Work-along streams</li><li>With a VTuber avatar</li></ul>
+      </div>
+    </aside>
   </section>
 
   <!-- ============ Paid effects ============ -->
@@ -312,10 +327,10 @@
         </li>
       </ol>
       <ul class="uses" aria-label="Great for">
-        <li class="reveal"><b>Solo chat streams</b><span>Topics you can see keep the talk going</span></li>
+        <li class="reveal link"><a href="#noface"><b>Solo chat streams</b><span>Even camera-off, your topics stay visible</span></a></li>
         <li class="reveal"><b>Game streams</b><span>A ticker band that stays out of the way</span></li>
-        <li class="reveal"><a href="#business"><b>Brainstorming meetings</b><span>Everyone sees the ideas as they come</span></a></li>
-        <li class="reveal"><a href="#business"><b>Speeches &amp; talks</b><span>Your points stack up in front of you</span></a></li>
+        <li class="reveal link"><a href="#business"><b>Brainstorming meetings</b><span>Everyone sees the ideas as they come</span></a></li>
+        <li class="reveal link"><a href="#business"><b>Speeches &amp; talks</b><span>Your points stack up in front of you</span></a></li>
       </ul>
     </div>
   </section>
@@ -443,6 +458,10 @@
           <p>Recognition runs in the console in Chrome and the results are sent to OBS. With OBS’s built-in WebSocket server (OBS 28 and later) you can overlay it with a transparent background. For a quick start, you can also capture the display window with OBS’s Window Capture.</p>
         </details>
         <details>
+          <summary>Can I use it for a faceless stream?</summary>
+          <p>Yes — it’s one of the best ways to use it. KANPE never uses your camera; it runs on your microphone alone. Bring the display view into OBS and the full-screen typography becomes your stream screen. Add a background image or custom logo to make it feel like your channel (Plus plan). To layer it over a VTuber avatar or gameplay, the Ticker layout or the Clear typeface works well (Clear is a Plus typeface).</p>
+        </details>
+        <details>
           <summary>Is what I say stored anywhere?</summary>
           <p>Nothing is stored on KANPE’s servers. Transcripts, settings and background images live only in your own browser on this device, and you can delete them with the Clear button or by clearing site data. Only the step that turns audio into text is handled by your browser vendor’s service (Google in Chrome, Microsoft in Edge, Apple in Safari). For confidential topics, blocked words keep chosen terms off the screen and out of captions.</p>
         </details>
@@ -499,10 +518,10 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html?welcome=1" tabindex="-1">Start free in your browser<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="../src/ui/lang.js?v=202610172339" defer></script>
-<script src="../src/ui/menu.js?v=202610172339" defer></script>
-<script src="../src/ui/mode.js?v=202610172339" defer></script>
-<script src="../src/lp/lp.js?v=202610172339" defer></script>
-<script type="module" src="../src/lp/analytics.js?v=202610172339"></script>
+<script src="../src/ui/lang.js?v=202610180310" defer></script>
+<script src="../src/ui/menu.js?v=202610180310" defer></script>
+<script src="../src/ui/mode.js?v=202610180310" defer></script>
+<script src="../src/lp/lp.js?v=202610180310" defer></script>
+<script type="module" src="../src/lp/analytics.js?v=202610180310"></script>
 </body>
 </html>
