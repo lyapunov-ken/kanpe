@@ -41,7 +41,6 @@ const hint = document.getElementById('hint');
 if (EN && hint) { hint.textContent = 'Start talking and your words appear here'; document.documentElement.lang = 'en'; }
 const items = new Map();
 let host = stage;
-let trackX = 0;
 let lastWordAt = performance.now();
 let vj = null; // VJ モードの描画エンジン
 let lastSp = null; // 直前に表示した話者（話者が替わった最初の語にだけラベルを付ける）
@@ -237,8 +236,6 @@ function setupLayout() {
     host = el('track');
     t.appendChild(host);
     stage.appendChild(t);
-    trackX = stage.clientWidth;
-    host.style.transform = `translateX(${trackX}px)`;
   } else {
     host = stage;
   }
@@ -429,7 +426,11 @@ async function addWordAt(m, text, t0) {
   const rand = rngFor(m);
   if (m.kind !== 'fusion') hear(key, t0);
   const prev = items.get(key);
-  if (prev && !prev.leaving) { bump(prev, m.count, rand, t0); return; }
+  if (prev && !prev.leaving) {
+    // テロップ：もう流れ去りかけている語は、右から出し直す（まだ入ってくるところなら、その場で大きく）
+    if (prev.tx != null && prev.tx < stage.clientWidth * 0.6) dropTicker(prev);
+    else { bump(prev, m.count, rand, t0); return; }
+  }
 
   const kind = m.kind || 'normal';
   const lv = level(kind, text, m.count);
@@ -455,10 +456,11 @@ async function addWordAt(m, text, t0) {
   const it = { key, text, kind, count: m.count || 1, lv, el: node, inner, parts, vertical,
     born: t0, ttl0, ttl, echo, expires: t0 + ttl, rect: null, leaving: false, aging: false, fz: m.fz, fzr: fzRand(m) };
 
-  // 同時に出す語の上限。カンペで同じ話が続くときは、埋まりぐあいに合わせて上限を広げる
+  // 同時に出す語の上限。カンペで同じ話が続くときは、埋まりぐあいに合わせて上限を広げる。
+  // テロップは画面から流れ出た語が消えるので、上限で消さない
   const max = Math.min(S.maxWords, MAXW[S.layout]) + (S.layout === 'kanpe' ? Math.round(fill * 26) : 0);
   let live = liveItems();
-  while (live.length >= max) { expire(evictee(live)); live = liveItems(); } // 新語は最後まで残す
+  while (S.layout !== 'ticker' && live.length >= max) { expire(evictee(live)); live = liveItems(); } // 新語は最後まで残す
 
   if (S.layout === 'compose') {
     node.style.visibility = 'hidden';
@@ -474,7 +476,7 @@ async function addWordAt(m, text, t0) {
     flip(() => { host.appendChild(node); if (echo > 1) fit(node, px); });
   } else {
     host.appendChild(node);
-    shiftTrack(true);
+    tickerPlace(it);
   }
   items.set(key, it);
   if (kind === 'fusion') capFusion(it);
@@ -643,14 +645,12 @@ function expire(it, at = clockAt()) {
 function removeItem(it) {
   if (it.removed) return;
   it.removed = true;
-  const first = host.firstElementChild === it.el;
   const doRemove = () => {
     it.el.remove();
     if (items.get(it.key) === it) items.delete(it.key);
   };
   if (S.layout === 'kanpe') flip(doRemove);
   else doRemove();
-  if (S.layout === 'ticker') shiftTrack(!first);
   updateHint();
 }
 
@@ -679,12 +679,44 @@ function flip(mutate) {
   }
 }
 
-// テロップ：最新の語が右端に来るよう帯全体をずらす
-function shiftTrack(animate) {
-  const W = stage.clientWidth;
-  trackX = W * 0.96 - host.scrollWidth;
-  host.style.transition = animate && !S.reduceMotion ? 'transform .8s cubic-bezier(.2,.75,.15,1)' : 'none';
-  host.style.transform = `translateX(${trackX}px)`;
+// ---------------------------------------------------------------- テロップ：ニュースのように一定の速さで流れる
+// 言葉は画面の右の外から入り、左へ流れて、画面から出たら消える。「表示時間」は、1語が画面を横切る秒数。
+// 話すのが速くて右の外に言葉がたまったら、そのぶん速く流して追いつく。動かすのは translateX だけ
+let tickerRaf = 0, tickerLast = 0;
+const tickerItems = () => [...items.values()].filter((it) => it.tx != null);
+function tickerPlace(it) {
+  const W = stage.clientWidth, gap = basePx() * 0.8;
+  let right = -Infinity;
+  for (const o of tickerItems()) right = Math.max(right, o.tx + o.tw);
+  it.tw = it.el.offsetWidth;
+  it.tx = Math.max(W, right + gap); // 前の語のすぐ後ろ。前の語がもう入りきっていれば、画面の右の外から
+  it.expires = Infinity; // 時間では消さない（流れ出たら消える）
+  it.el.style.transform = `translateX(${it.tx}px)`;
+  if (!tickerRaf) { tickerLast = performance.now(); tickerRaf = requestAnimationFrame(tickerStep); }
+}
+function tickerStep(t) {
+  tickerRaf = 0;
+  const list = S.layout === 'ticker' ? tickerItems() : [];
+  if (!list.length) return;
+  const W = stage.clientWidth, dt = Math.min(0.1, Math.max(0, (t - tickerLast) / 1000));
+  tickerLast = t;
+  let right = 0;
+  for (const it of list) right = Math.max(right, it.tx + it.tw);
+  const backlog = Math.max(0, right - W);
+  const v = (W * 0.9 / Math.max(3, S.ttl)) * (1 + (backlog / W) * 1.5);
+  for (const it of list) {
+    it.tx -= v * dt;
+    it.el.style.transform = `translateX(${it.tx.toFixed(1)}px)`;
+    if (it.tx + it.tw < 0) dropTicker(it);
+  }
+  tickerRaf = requestAnimationFrame(tickerStep);
+}
+function dropTicker(it) {
+  it.leaving = true;
+  it.removed = true;
+  it.el.remove();
+  if (items.get(it.key) === it) items.delete(it.key);
+  updateHint();
 }
 
 // ---------------------------------------------------------------- 新語ミックス（新語誕生）
@@ -1245,7 +1277,7 @@ function tick(t) {
   const quiet = t - Math.max(tickedAt, lastWordAt + 3000);
   tickedAt = Math.max(tickedAt, t);
   for (const it of items.values()) {
-    if (it.leaving) continue;
+    if (it.leaving || it.tx != null) continue; // テロップの語は時間では消えない（流れ出たら消える）
     if (it.stepAside && t >= it.stepAside.at) { // 新語の誕生を見届けた元の語：まだ新語に重なっていれば退く
       const r = it.stepAside.r, g = basePx() * 0.3, at0 = it.stepAside.at;
       it.stepAside = null;
@@ -1270,7 +1302,7 @@ function sweepGone(t = now()) {
   for (const it of [...items.values()]) if (it.leaving && it.goneAt && it.goneAt <= t) removeItem(it);
 }
 async function replay(msg, recvAt) {
-  if (vj) return; // VJ は流れの演出なので、途中からでも困らない
+  if (vj || S.layout === 'ticker') return; // VJ・テロップは流れの演出なので、途中からでも困らない
   let evs = (Array.isArray(msg.events) ? msg.events : []).filter((e) => e && Number.isFinite(e.ago));
   // コンソールの設定に連動する窓は、レイアウトを切り替えたときに画面が作り直されるので、それ以降だけ
   if (!LOCK.layout && Number.isFinite(msg.since)) evs = evs.filter((e) => e.ago <= msg.since);

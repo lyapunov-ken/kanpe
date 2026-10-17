@@ -2,6 +2,13 @@
 // type：new＝新機能 / improve＝改善 / fix＝修正。文言は短く、利用者向けのやさしい言葉で（日本語と英語）。
 export const CHANGELOG = [
   {
+    v: '1.5.1', date: '2026-10-17',
+    items: [
+      { type: 'fix', ja: 'テロップを、ニュースのように一定の速さで流れるように。言葉は右の外から入って左へ流れ、画面から出たら消えます。言葉が続くときは少し速く流して追いつきます（「表示時間」は1語が画面を横切る秒数）', en: 'The Ticker now scrolls smoothly at a steady speed like a news crawl: words enter from the right, flow left and disappear off-screen, speeding up a little to catch up when words pile up (Display time is how long a word takes to cross the screen)' },
+      { type: 'improve', ja: '書体テーマの並びを「墨・やわらか・夜・ポップ」に。「透過」は「筆」「ドット」と同じお手軽プランの書体になりました（無料プランでも1日お試しできます）', en: 'Typeface themes are now ordered Sumi, Soft, Night, Pop. “Clear” joins “Brush” and “Dot” as a Plus typeface (free users can try it for a day)' },
+    ],
+  },
+  {
     v: '1.5.0', date: '2026-10-17',
     items: [
       { type: 'improve', ja: 'ブレストモードの新語の出かたを一新。予兆 → 誕生 → 余韻の3幕で、閃光・衝撃波・画面の揺れ・粒子・残像・光の柱などが加わり、生まれる瞬間ほかの言葉が沈んで新語に視線が集まります', en: 'Brainstorm mode’s entrances, rebuilt as three acts (build-up, birth, afterglow) with flashes, shockwaves, screen shake, particles, afterimages and light pillars, while other words dim to put the new word in focus' },

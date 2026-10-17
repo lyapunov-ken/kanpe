@@ -76,8 +76,9 @@ body {
 /* ---- テロップ：下部を横に流れる ---- */
 .ticker { position: absolute; left: 0; right: 0; bottom: 7vh; height: calc(var(--base) * 2.2); }
 .layout-ticker.has-cap .ticker { bottom: calc(var(--base) * 2.2); }
-.track { position: absolute; left: 0; bottom: 0; display: flex; align-items: baseline; gap: calc(var(--base) * .8); white-space: nowrap; will-change: transform; }
-.layout-ticker .w { position: relative; }
+.track { position: absolute; inset: 0; }
+/* 1語ずつ横位置（translateX）を display.js が毎フレーム動かす。下端でそろえる */
+.layout-ticker .w { position: absolute; left: 0; top: auto; bottom: 0; will-change: transform; }
 
 /* ---- 字幕ライン（最新の発話） ---- */
 #caption {
