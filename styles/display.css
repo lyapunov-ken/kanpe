@@ -121,6 +121,7 @@ body {
 }
 #credit i { width: .55em; height: .55em; border-radius: 50%; background: #e0352b; }
 .has-credit #credit { display: flex; }
+.layout-vj.has-credit #credit { display: none; }  /* VJ では右下の KANPE も出さない */
 .theme-clear #credit { color: #fff; text-shadow: 0 0 .2em rgba(0,0,0,.8); }
 
 /* 別窓の操作バー（マウスを動かすと下に出る。動画プレーヤーのように、しばらくすると隠れる） */

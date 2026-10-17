@@ -5,8 +5,8 @@
 //   1px＝白黒の 1px の点と線だけで組む（方眼・目盛り・座標の読み出し・書き込みヘッド）
 // - 繰り返した言葉はコンボ（×2, ×3 …）、初めて出た目立つ言葉はインパクト（閃光・揺れ・グリッチ）
 // - 背景もスタイルごと：ステージの光線／シンセウェーブの床／星空。声の大きさで強まる
-import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610172315';
-import { tuneColor, rainbowColor } from '../core/color.js?v=202610172315';
+import { VJ_FONTS, VJ_DETAILS, VJ_FX } from '../core/settings.js?v=202610172339';
+import { tuneColor, rainbowColor } from '../core/color.js?v=202610172339';
 
 const FALLBACK = '"Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif';
 const PIXEL_PALETTE = ['#ff004d', '#ffa300', '#ffec27', '#00e436', '#29adff', '#ff77a8', '#ffccaa', '#83f3ff'];
@@ -162,8 +162,7 @@ export function createVJ(stage, { localFonts = false } = {}) {
   let stars = [];
   let lvl = 0, lvlAt = 0, wordSeq = 0, raf = 0, last = performance.now(), lastSp = null, lastHeroAt = 0;
   let shake = { t0: -1e9, amp: 0 }, flash = { t0: -1e9, a: 0 }, glitchUntil = 0, glitchAmt = 0;
-  let frameNo = 0, glitchAt = 0;
-  const bornAt = performance.now();
+  let glitchAt = 0;
   const labelSpec = fontSpec({ font: 'dot', detail: 'mid' }); // 1px の小さなラベル（新語の元の語・話者名）
   let dtAvg = 16, lite = false; // 1コマの時間の平均。遅い端末では lite（中央の言葉も1枚の絵で描く）にする
 
@@ -558,7 +557,6 @@ export function createVJ(stage, { localFonts = false } = {}) {
     const now = performance.now();
     const dt = Math.min(64, now - last);
     last = now;
-    frameNo++;
     if (cfg.style === 'micro') { frameMicro(now, dt); raf = requestAnimationFrame(frame); return; }
     dtAvg += (dt - dtAvg) * 0.03;
     if (!lite && dtAvg > 27) lite = true;        // 約37fps を下回り続けたら軽くする
@@ -857,24 +855,8 @@ export function createVJ(stage, { localFonts = false } = {}) {
       }
     }
 
-    // 計器：左上の読み出し、右上のフレーム番号、下のオシロスコープ、右端のレベル
-    const m = R(22), lh = 9 * P;
-    A(0.75); text3('KANPE.VJ / 1PX MONO', m, m, P);
-    A(0.5);
-    const tsec = (now - bornAt) / 1000;
-    const tc = `T+${String(Math.floor(tsec / 60)).padStart(2, '0')}:${String(Math.floor(tsec % 60)).padStart(2, '0')}.${String(Math.floor((tsec % 1) * 100)).padStart(2, '0')}`;
-    text3(tc, m, m + lh, P);
-    const dots = live.reduce((t, w) => t + w.bmp.pts.length / 2, 0);
-    text3(`WORDS ${String(live.length).padStart(2, '0')}  DOTS ${String(dots).padStart(5, '0')}`, m, m + lh * 2, P);
-    text3('LVL', m, m + lh * 3, P);
-    for (let i = 0; i < 24; i++) { A(i < lvl * 24 ? 0.8 : 0.16); ctx.fillRect(m + 16 * P + i * 3 * P, m + lh * 3, P, 5 * P); }
-    A(0.5); text3(`FR ${String(frameNo % 1e6).padStart(6, '0')}`, CW - m, m, P, 'right');
-    text3(cfg.calm ? 'MODE CALM' : 'MODE LIVE', CW - m, m + lh, P, 'right');
-    if (hero) { // 中央の言葉の文字コードを流す
-      A(0.32);
-      const codes = [...hero.text].map((c) => 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0'));
-      for (let i = 0; i < Math.min(6, codes.length); i++) text3(codes[i], CW - m, m + lh * (3 + i), P, 'right');
-    }
+    // 計器：下のオシロスコープ（左上・右上の読み出しは、カスタムロゴと重なるのでやめた）
+    const m = R(22);
     if (!calm) { // オシロスコープ
       const y0 = CH - R(8), amp = R(6) * (0.15 + lvl);
       A(0.55);

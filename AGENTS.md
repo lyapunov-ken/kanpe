@@ -63,6 +63,7 @@ docs/            調査メモ
 ## いまの状態（2026-10-17 時点）
 - 作業中：`fix/ticker-themes`（v1.5.1）新語の出かた「花火」（firework。光が昇る `FW_RISE` のあいだ字は出ない）。テロップは一定の速さで流れる（`display.js` の tickerPlace / tickerStep。1語ずつ translateX、画面から出たら消す、右の外にたまったら速める。時間では消さない）。書体は 墨・やわらか・夜・ポップ（無料）／透過・筆・ドット（お手軽）。透過が使えないときは OBS の URL に theme=clear を付けない
   - 別窓の操作バー（`display.js` の「別窓の操作バー」：renderBar / setWindowOpt / syncAll）：下中央に出て 2.6 秒で隠れる。レイアウト・文字サイズ・書体・色はその窓だけ（`LOCK` と URL の layout / size / theme / accent）。埋め込み（プレビュー）・OBS・`ui=0` では出さない。`applyTheme` は body の class を作り直すので、`ui-on` / `ui-idle` / `fz-focus` は残している
+  - VJ モードでは左上・右上の計器の文字（1px の読み出し）と右下の KANPE（`#credit`）を出さない（ロゴと重なるため）
 - 本番：`main` = v1.5.0
   - タブは「表示」（書体・色・レイアウト・5段階の文字サイズ／表示時間／同時に出す語）「機能」（ブレストモード・話者）「設定」（背景・ロゴ・辞書・OBS）。タブの id は `look` / `feat` / `set`（以前の `coin` / `more` は読み替える）
   - 5段階の値は `settings.js` の `SIZE_STEPS` / `TTL_STEPS` / `WORD_STEPS`。保存値は `nearestStep` で近い段に寄せる。初めての人は墨・組版・中・8秒・24語
