@@ -90,122 +90,134 @@
       </div>
     </div>
 
-    <div class="sec coin-sec" id="coinSec">
-      <h2 class="coin-h"><span class="coin-ic" aria-hidden="true">✦</span>ブレストモード<em class="coin-state">オン</em></h2>
-      <div class="coin-card">
-        <div class="coin-art" aria-hidden="true"><span class="ca-a">価格</span><span class="ca-x">×</span><span class="ca-b">地方</span><span class="ca-eq">→</span><span class="ca-c">地格</span></div>
-        <label class="switch coin-switch"><span><b>新語ミックス</b><small>画面に出た言葉どうしを掛け合わせて、新しい言葉を生み出します</small></span><input id="fusion" type="checkbox" role="switch"></label>
-        <div class="coin-row">
-          <button id="btnFuse" class="btn" type="button">いま混ぜる <kbd>M</kbd></button>
-          <span class="hint">オンにすると、話している間ときどき自動で生まれます</span>
-        </div>
-        <div class="coin-opts">
-          <div class="coin-opt"><span class="lbl">新語の色</span><div id="fzColors" class="accents fz-colors" role="radiogroup" aria-label="新語の色"></div></div>
-          <div class="coin-opt"><span class="lbl">出かた</span><div id="fzMotions" class="segmented" role="radiogroup" aria-label="新語の出かた"></div><p id="fzMotionNote" class="hint"></p></div>
-          <div class="coin-opt"><span class="lbl">速さ</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="新語の出る速さ"></div></div>
-        </div>
-      </div>
+    <div class="side-tabs" role="tablist" aria-label="設定の切り替え">
+      <button id="tabLook" class="side-tab" type="button" role="tab" aria-selected="true" aria-controls="paneLook" data-tab="look">表示</button>
+      <button id="tabCoin" class="side-tab tab-coin" type="button" role="tab" aria-selected="false" aria-controls="paneCoin" data-tab="coin" tabindex="-1"><span class="coin-ic" aria-hidden="true">✦</span>ブレストモード<em class="tab-on">ON</em></button>
+      <button id="tabMore" class="side-tab" type="button" role="tab" aria-selected="false" aria-controls="paneMore" data-tab="more" tabindex="-1">詳細</button>
     </div>
 
-    <div class="sec">
-      <h2>表示</h2>
-      <div class="field"><span class="lbl">書体テーマ</span><div id="themes" class="themes" role="radiogroup" aria-label="書体テーマ"></div></div>
-      <div class="field pro-themes">
-        <span class="lbl">プレミアム書体 <em class="pro-tag">¥480〜</em></span>
-        <div id="proThemes" class="themes" role="radiogroup" aria-label="プレミアム書体"></div>
-      </div>
-      <div class="field">
-        <span class="lbl">アクセントカラー</span>
-        <div id="accents" class="accents" role="radiogroup" aria-label="アクセントカラー"></div>
-        <p class="hint">初めて出た言葉の色と下線に使います</p>
-      </div>
-      <div class="field">
-        <span class="lbl">背景（画像・カメラ） <em class="pro-tag">¥480〜</em></span>
-        <div class="bg-row">
-          <div id="bgThumb" class="bg-thumb" aria-hidden="true"></div>
-          <div class="bg-actions">
-            <label class="btn bg-pick">画像を選ぶ<input id="bgFile" type="file" accept="image/*"></label>
-            <button id="bgRemove" class="btn" type="button" hidden>外す</button>
+    <div class="side-panes">
+      <div id="paneLook" class="sec pane" role="tabpanel" aria-labelledby="tabLook">
+        <div class="field theme-field">
+          <div class="lbl-row theme-lbls"><span class="lbl">書体テーマ</span><span class="pro-lbl" title="プレミアム書体"><em class="pro-tag">¥480〜</em></span></div>
+          <div class="theme-row">
+            <div id="themes" class="themes" role="radiogroup" aria-label="書体テーマ"></div>
+            <div id="proThemes" class="themes pro-row" role="radiogroup" aria-label="プレミアム書体"></div>
           </div>
         </div>
-        <div class="cam-row">
-          <button id="bgCam" class="btn bg-cam" type="button" aria-pressed="false">カメラを映す</button>
-          <select id="bgCamSel" aria-label="使うカメラ" hidden></select>
+        <div id="trialBox" class="trial">
+          <div class="trial-bar"><i id="trialFill"></i></div>
+          <p id="trialNote" class="hint" title="プレミアム書体・背景（画像・カメラ）・VJ モード・話者の色分けは、使い始めてから24時間お試しできます">¥480〜 の機能は、無料でも1日お試しできます</p>
         </div>
-        <label class="switch" id="bgMirrorRow" hidden><span>カメラを左右反転</span><input id="bgMirror" type="checkbox" role="switch"></label>
-        <label class="slider" id="bgDimRow" hidden><span class="lbl">背景の暗さ</span><output id="vBgDim"></output><input id="bgDim" type="range" min="0" max="0.85" step="0.05"></label>
-        <p class="hint">画像は長い辺が1000px以下になるよう自動で縮小し、表示の窓に合わせてトリミングします。カメラの映像はこの端末の中だけで使い、どこにも送りません（OBS のブラウザソースでは映りません）</p>
-      </div>
-      <div id="trialBox" class="trial">
-        <div class="trial-bar"><i id="trialFill"></i></div>
-        <p id="trialNote" class="hint">プレミアム書体・背景画像・VJ モード・話者の色分けは、無料プランでも1日（24時間）お試しできます</p>
-      </div>
-      <div class="field"><span class="lbl">レイアウト</span><div id="layouts" class="segmented four" role="radiogroup" aria-label="レイアウト"></div><p id="layoutNote" class="hint"></p></div>
-      <div id="vjOpts" class="field vj-opts" hidden>
-        <span class="lbl">VJ スタイル <em class="pro-tag">¥480〜</em></span>
-        <div id="vjStyles" class="segmented four" role="radiogroup" aria-label="VJ スタイル"></div>
-        <p id="vjStyleNote" class="hint"></p>
-        <span class="lbl vj-sub">VJ の書体</span>
-        <div id="vjFonts" class="segmented five vj-fonts" role="radiogroup" aria-label="VJ の書体"></div>
-      </div>
-      <div id="kanpeOpts" class="field" hidden>
-        <span class="lbl">同じ話の記憶</span>
-        <div id="echoSpans" class="segmented" role="radiogroup" aria-label="同じ話の記憶"></div>
-        <p id="echoNote" class="hint"></p>
-      </div>
-      <div class="sliders">
-        <label class="slider" data-novj><span class="lbl">文字サイズ</span><output id="vSize"></output><input id="baseSize" type="range" min="20" max="90" step="1"></label>
-        <label class="slider"><span class="lbl">表示時間</span><output id="vTtl"></output><input id="ttl" type="range" min="3" max="30" step="1"></label>
-        <label class="slider" data-novj><span class="lbl">同時に出す語</span><output id="vMax"></output><input id="maxWords" type="range" min="6" max="40" step="1"></label>
-      </div>
-      <div class="switches">
-        <label class="switch" data-novj><span>縦組みを混ぜる</span><input id="vertical" type="checkbox" role="switch"></label>
-        <label class="switch"><span>字幕ライン</span><input id="caption" type="checkbox" role="switch"></label>
-        <label class="switch"><span>動きを控えめに</span><input id="reduceMotion" type="checkbox" role="switch"></label>
-      </div>
-    </div>
-
-    <div class="sec" id="speakerSec">
-      <h2>話者 <em class="pro-tag">¥480〜</em></h2>
-      <div class="field">
-        <span class="lbl">ラベルと色分け</span>
-        <div id="spModes" class="segmented" role="radiogroup" aria-label="話者の色分け"></div>
-        <p id="spModeNote" class="hint"></p>
-      </div>
-      <div id="spBody" class="sp-body" hidden>
-        <div class="field"><span class="lbl">人数</span><div id="spCounts" class="segmented" role="radiogroup" aria-label="話者の人数"></div></div>
-        <div class="field"><span class="lbl">名前と色</span><ul id="spList" class="sp-list"></ul></div>
-        <div class="field"><span class="lbl">いま話している人 <kbd>1</kbd>〜<kbd>4</kbd></span><div id="spNow" class="sp-now" role="group" aria-label="いま話している人"></div></div>
-      </div>
-      <p class="hint">おトクプランでは、クラウド認識が声を聞き分けて自動で色分けします（近日公開）</p>
-    </div>
-
-    <div class="sec">
-      <h2>辞書</h2>
-      <label class="field"><span class="lbl">登録キーワード</span><textarea id="registered" rows="2" placeholder="商品名、番組名、ゲストの名前など"></textarea><span class="hint">強調して表示し、優先して拾います。読点か改行で区切ります。</span></label>
-      <label class="field"><span class="lbl">NG ワード</span><textarea id="ng" rows="2" placeholder="社外秘のコードネームなど"></textarea><span class="hint">画面にも字幕にも出しません。</span></label>
-    </div>
-
-    <div class="sec">
-      <h2>表示ビュー</h2>
-      <p class="hint">別窓（カンペ・組版）は、プレビューの右下から開けます</p>
-      <details class="obs">
-        <summary><span>OBS に透過で重ねる</span><small>実験的</small></summary>
-        <ol class="steps-mini">
-          <li>OBS の「ツール → WebSocketサーバー設定」でサーバーを有効にする</li>
-          <li>接続先とパスワードを入れて「接続」</li>
-          <li>「URLをコピー」して OBS のブラウザソースに貼る（1920×1080）</li>
-        </ol>
-        <div class="grid2">
-          <input id="obsUrl" class="mono" placeholder="ws://127.0.0.1:4455" aria-label="接続先">
-          <input id="obsPassword" type="password" placeholder="パスワード" aria-label="パスワード">
+        <div class="field">
+          <div class="lbl-row"><span class="lbl">アクセントカラー</span><span class="hint">初めて出た言葉の色と下線</span></div>
+          <div id="accents" class="accents" role="radiogroup" aria-label="アクセントカラー"></div>
         </div>
-        <div class="obs-actions">
-          <button id="obsConnect" class="btn" type="button">接続</button>
-          <button id="obsCopy" class="btn" type="button">URLをコピー</button>
-          <span id="obsStatus" class="hint">未接続</span>
+        <div class="field"><span class="lbl">レイアウト</span><div id="layouts" class="segmented four" role="radiogroup" aria-label="レイアウト"></div><p id="layoutNote" class="hint"></p></div>
+        <div id="vjOpts" class="field vj-opts" hidden>
+          <span class="lbl">VJ スタイル <em class="pro-tag">¥480〜</em></span>
+          <div id="vjStyles" class="segmented four" role="radiogroup" aria-label="VJ スタイル"></div>
+          <p id="vjStyleNote" class="hint"></p>
+          <span class="lbl vj-sub">VJ の書体</span>
+          <div id="vjFonts" class="segmented five vj-fonts" role="radiogroup" aria-label="VJ の書体"></div>
         </div>
-      </details>
+        <div id="kanpeOpts" class="field" hidden>
+          <span class="lbl">同じ話の記憶</span>
+          <div id="echoSpans" class="segmented" role="radiogroup" aria-label="同じ話の記憶"></div>
+          <p id="echoNote" class="hint"></p>
+        </div>
+        <div class="sliders">
+          <label class="slider" data-novj><span class="lbl">文字サイズ</span><output id="vSize"></output><input id="baseSize" type="range" min="20" max="90" step="1"></label>
+          <label class="slider"><span class="lbl">表示時間</span><output id="vTtl"></output><input id="ttl" type="range" min="3" max="30" step="1"></label>
+          <label class="slider" data-novj><span class="lbl">同時に出す語</span><output id="vMax"></output><input id="maxWords" type="range" min="6" max="40" step="1"></label>
+        </div>
+        <div class="switches">
+          <label class="switch" data-novj><span>縦組みを混ぜる</span><input id="vertical" type="checkbox" role="switch"></label>
+          <label class="switch"><span>字幕ライン</span><input id="caption" type="checkbox" role="switch"></label>
+          <label class="switch"><span>動きを控えめに</span><input id="reduceMotion" type="checkbox" role="switch"></label>
+        </div>
+      </div>
+
+      <div id="paneCoin" class="sec pane coin-sec" role="tabpanel" aria-labelledby="tabCoin" hidden>
+        <div class="coin-card">
+          <div class="coin-art" aria-hidden="true"><span class="ca-a">価格</span><span class="ca-x">×</span><span class="ca-b">地方</span><span class="ca-eq">→</span><span class="ca-c">地格</span></div>
+          <label class="switch coin-switch"><span><b>新語ミックス</b><small>画面に出た言葉どうしを掛け合わせて、新しい言葉を生み出します</small></span><input id="fusion" type="checkbox" role="switch"></label>
+          <div class="coin-row">
+            <button id="btnFuse" class="btn" type="button">いま混ぜる <kbd>M</kbd></button>
+            <span class="hint">オンにすると、話している間ときどき自動で生まれます</span>
+          </div>
+          <div class="coin-opts">
+            <div class="coin-opt"><span class="lbl">新語の色</span><div id="fzColors" class="accents fz-colors" role="radiogroup" aria-label="新語の色"></div></div>
+            <div class="coin-opt"><span class="lbl">出かた</span><div id="fzMotions" class="segmented" role="radiogroup" aria-label="新語の出かた"></div><p id="fzMotionNote" class="hint"></p></div>
+            <div class="coin-opt"><span class="lbl">速さ</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="新語の出る速さ"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="paneMore" class="pane more-pane" role="tabpanel" aria-labelledby="tabMore" hidden>
+        <details class="acc-sec" name="more" id="bgSec">
+          <summary><span class="acc-t">背景（画像・カメラ）<em class="pro-tag">¥480〜</em></span><small class="acc-d">画像やカメラの映像の上に文字を重ねる</small><b id="stBg" class="acc-st" hidden></b></summary>
+          <div class="acc-body">
+            <div class="bg-row">
+              <div id="bgThumb" class="bg-thumb" aria-hidden="true"></div>
+              <div class="bg-actions">
+                <label class="btn bg-pick">画像を選ぶ<input id="bgFile" type="file" accept="image/*"></label>
+                <button id="bgRemove" class="btn" type="button" hidden>外す</button>
+              </div>
+            </div>
+            <div class="cam-row">
+              <button id="bgCam" class="btn bg-cam" type="button" aria-pressed="false">カメラを映す</button>
+              <select id="bgCamSel" aria-label="使うカメラ" hidden></select>
+            </div>
+            <label class="switch" id="bgMirrorRow" hidden><span>カメラを左右反転</span><input id="bgMirror" type="checkbox" role="switch"></label>
+            <label class="slider" id="bgDimRow" hidden><span class="lbl">背景の暗さ</span><output id="vBgDim"></output><input id="bgDim" type="range" min="0" max="0.85" step="0.05"></label>
+            <p class="hint">画像は長い辺が1000px以下になるよう自動で縮小し、表示の窓に合わせてトリミングします。カメラの映像はこの端末の中だけで使い、どこにも送りません（OBS のブラウザソースでは映りません）</p>
+          </div>
+        </details>
+        <details class="acc-sec" name="more" id="speakerSec">
+          <summary><span class="acc-t">話者<em class="pro-tag">¥480〜</em></span><small class="acc-d">話す人ごとに名前のラベルと色を付ける</small><b id="stSp" class="acc-st" hidden></b></summary>
+          <div class="acc-body">
+            <div class="field">
+              <span class="lbl">ラベルと色分け</span>
+              <div id="spModes" class="segmented" role="radiogroup" aria-label="話者の色分け"></div>
+              <p id="spModeNote" class="hint"></p>
+            </div>
+            <div id="spBody" class="sp-body" hidden>
+              <div class="field"><span class="lbl">人数</span><div id="spCounts" class="segmented" role="radiogroup" aria-label="話者の人数"></div></div>
+              <div class="field"><span class="lbl">名前と色</span><ul id="spList" class="sp-list"></ul></div>
+              <div class="field"><span class="lbl">いま話している人 <kbd>1</kbd>〜<kbd>4</kbd></span><div id="spNow" class="sp-now" role="group" aria-label="いま話している人"></div></div>
+            </div>
+            <p class="hint">おトクプランでは、クラウド認識が声を聞き分けて自動で色分けします（近日公開）</p>
+          </div>
+        </details>
+        <details class="acc-sec" name="more" id="dictSec">
+          <summary><span class="acc-t">辞書</span><small class="acc-d">登録キーワードと NG ワード</small><b id="stDict" class="acc-st" hidden></b></summary>
+          <div class="acc-body">
+            <label class="field"><span class="lbl">登録キーワード</span><textarea id="registered" rows="2" placeholder="商品名、番組名、ゲストの名前など"></textarea><span class="hint">強調して表示し、優先して拾います。読点か改行で区切ります。</span></label>
+            <label class="field"><span class="lbl">NG ワード</span><textarea id="ng" rows="2" placeholder="社外秘のコードネームなど"></textarea><span class="hint">画面にも字幕にも出しません。</span></label>
+          </div>
+        </details>
+        <details class="acc-sec" name="more" id="obsSec">
+          <summary><span class="acc-t">OBS に重ねる<small class="acc-tag">実験的</small></span><small class="acc-d">配信画面に透過で重ねる</small><b id="stObs" class="acc-st" hidden></b></summary>
+          <div class="acc-body">
+              <p class="hint">別窓（カンペ・組版）は、プレビューの右下から開けます</p>
+            <ol class="steps-mini">
+              <li>OBS の「ツール → WebSocketサーバー設定」でサーバーを有効にする</li>
+              <li>接続先とパスワードを入れて「接続」</li>
+              <li>「URLをコピー」して OBS のブラウザソースに貼る（1920×1080）</li>
+            </ol>
+            <div class="grid2">
+              <input id="obsUrl" class="mono" placeholder="ws://127.0.0.1:4455" aria-label="接続先">
+              <input id="obsPassword" type="password" placeholder="パスワード" aria-label="パスワード">
+            </div>
+            <div class="obs-actions">
+              <button id="obsConnect" class="btn" type="button">接続</button>
+              <button id="obsCopy" class="btn" type="button">URLをコピー</button>
+              <span id="obsStatus" class="hint">未接続</span>
+            </div>
+          </div>
+        </details>
+      </div>
     </div>
   </section>
 

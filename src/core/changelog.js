@@ -4,7 +4,9 @@ export const CHANGELOG = [
   {
     v: '1.3.1', date: '2026-10-17',
     items: [
-      { type: 'improve', ja: '「ブレスト」を「ブレストモード」に改め、マイクのすぐ下へ。新語ミックスをオンにすると「オン」の印が付き、枠が光ります', en: 'Brainstorm is now “Brainstorm mode”, placed right below the mic. When Word mix is on, an “ON” badge appears and the panel glows' },
+      { type: 'improve', ja: '設定を「表示」「ブレストモード」「詳細」の3つのタブに分けました。マイクとタブはいつも上に見えていて、ほとんどの画面でスクロールせずに操作できます。最後に開いたタブを覚えておきます', en: 'Settings are now split into three tabs: Display, Brainstorm and More. The mic and tabs always stay visible, so on most screens you can work without scrolling. The last tab you opened is remembered' },
+      { type: 'improve', ja: '「ブレスト」を「ブレストモード」に改め、青い印で目立つように。新語ミックスをオンにすると、タブに「ON」が付き、枠が光ります', en: 'Brainstorm is now “Brainstorm mode”, marked in blue. When Word mix is on, its tab shows “ON” and the panel glows' },
+      { type: 'improve', ja: '「詳細」タブの背景・話者・辞書・OBS は、開くと1つだけ広がります。閉じていても、使っている設定には印が付きます', en: 'In the More tab, Background, Speakers, Dictionary and OBS open one at a time, and show a small badge when in use' },
     ],
   },
   {
