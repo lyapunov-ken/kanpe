@@ -1,13 +1,13 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, LOGO_SIZES, loadSettings } from '../core/settings.js?v=202610172302';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610172302';
-import { createBus } from '../core/bus.js?v=202610172302';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610172302';
-import { runs } from '../core/extract.js?v=202610172302';
-import { EN, L, tr } from '../core/i18n.js?v=202610172302';
-import { createVJ } from './vj.js?v=202610172302';
-import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610172302';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, LOGO_SIZES, SIZE_STEPS, nearestStep, loadSettings } from '../core/settings.js?v=202610172315';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610172315';
+import { createBus } from '../core/bus.js?v=202610172315';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610172315';
+import { runs } from '../core/extract.js?v=202610172315';
+import { EN, L, tr } from '../core/i18n.js?v=202610172315';
+import { createVJ } from './vj.js?v=202610172315';
+import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610172315';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -190,7 +190,8 @@ function applyTheme() {
     root.style.setProperty('--bg-dim', String(S.bgDim == null ? 0.4 : S.bgDim));
     root.style.setProperty('--bg-dim-color', th.bg === 'transparent' ? '#000' : th.bg);
   }
-  document.body.className = `theme-${S.theme} layout-${S.layout}` + (isLight(themeBg()) ? ' bg-light' : '') + (S.layout === 'vj' ? ` vj-${S.vjStyle || 'micro'}` : '') + (S.reduceMotion ? ' calm' : '') +
+  const keep = ['ui-on', 'ui-idle', 'fz-focus'].filter((c) => document.body.classList.contains(c)); // 操作バーの表示や新語の演出中の印は残す
+  document.body.className = keep.concat('').join(' ') + `theme-${S.theme} layout-${S.layout}` + (isLight(themeBg()) ? ' bg-light' : '') + (S.layout === 'vj' ? ` vj-${S.vjStyle || 'micro'}` : '') + (S.reduceMotion ? ' calm' : '') +
     (S.caption ? ' has-cap' : '') + (EMBED ? ' embed' : '') + (S.credit === false ? '' : ' has-credit') + (S.bgImage || camStream ? ' has-bgimg' : '') +
     (S.logo ? ' has-logo' : '');
   applyLogo();
@@ -1462,115 +1463,166 @@ if (OBS_URL) {
   bus.link(link);
 }
 
-// ---------------------------------------------------------------- 別窓での書体切り替え
-// カンペ・組版を別窓で開いたときだけ、マウスを動かすと右上に書体の選択バーが出る。
-// 選んだ書体はこの窓だけに効く（URL に残るので再読み込みしても保たれる）。「連動」でコンソールの書体に戻る。
+// ---------------------------------------------------------------- 別窓の操作バー
+// カンペ・組版を別窓で開いたときだけ、マウスを動かすと画面の下に操作バーが出る（動画プレーヤーのように、しばらくすると隠れる）。
+// レイアウト・文字サイズ・書体・色は「この窓だけ」に効く（URL に残るので、再読み込みしても保たれる）。
+// コンソールと違う設定にしているときだけ「コンソールに合わせる」が出て、全部まとめて戻せる。
+// キー：F 全画面／L レイアウト／T 書体／+ − 文字サイズ／0 コンソールに合わせる／Esc 消去／? キーの一覧。ダブルクリックでも全画面
 const SHOW_UI = !EMBED && !OBS_URL && P.get('ui') !== '0';
 const isLocked = (id) => THEMES[id] && THEMES[id].pro && !canUse('theme:premium') && trialRemainingMs() <= 0;
-let picker = null, pickerNote = null, uiTimer = 0;
+const vjLocked = () => !canUse('layout:vj') && trialRemainingMs() <= 0;
+const WIN_KEYS = { theme: 'theme', accent: 'accent', layout: 'layout', baseSize: 'size' }; // この窓だけの設定と、URL での名前
+const SIZE_KEYS = Object.keys(SIZE_STEPS).map(Number);
+let bar = null, pop = null, keysPop = null, note = null, uiTimer = 0;
 
+// この窓だけの設定を変える（val が null ならコンソールに合わせる）
+function setWindowOpt(key, val) {
+  const url = new URL(location.href), param = WIN_KEYS[key];
+  if (val == null) { delete LOCK[key]; url.searchParams.delete(param); }
+  else { LOCK[key] = val; url.searchParams.set(param, key === 'accent' ? String(val).slice(1) : String(val)); }
+  history.replaceState(null, '', url);
+  const prev = S;
+  S = { ...DEFAULTS, ...(lastSettings || loadSettings()), ...LOCK };
+  applyTheme();
+  root.style.setProperty('--base', basePx() + 'px');
+  if (prev.layout !== S.layout) setupLayout();
+  renderBar();
+}
 function setWindowTheme(id) {
   if (id && isLocked(id)) { notify(L('プレミアム書体のお試し期間（1日）は終わりました', 'The 1-day trial of premium typefaces has ended')); return; }
-  const url = new URL(location.href);
-  if (id) { LOCK.theme = id; url.searchParams.set('theme', id); }
-  else { delete LOCK.theme; url.searchParams.delete('theme'); }
-  history.replaceState(null, '', url);
-  S = { ...DEFAULTS, ...(lastSettings || loadSettings()), ...LOCK };
-  applyTheme();
-  renderPicker();
+  setWindowOpt('theme', id);
 }
+function setWindowAccent(c) { setWindowOpt('accent', c); }
+function setWindowLayout(id) {
+  if (id === 'vj' && vjLocked()) { notify(L('VJ モードのお試し期間（1日）は終わりました', 'The 1-day trial of VJ mode has ended')); return; }
+  setWindowOpt('layout', id);
+}
+function stepSize(dir) {
+  const i = SIZE_KEYS.indexOf(nearestStep(SIZE_STEPS, S.baseSize));
+  const j = Math.max(0, Math.min(SIZE_KEYS.length - 1, i + dir));
+  if (j !== i) setWindowOpt('baseSize', SIZE_KEYS[j]);
+  showUi();
+}
+function syncAll() {
+  const url = new URL(location.href);
+  for (const [k, param] of Object.entries(WIN_KEYS)) { delete LOCK[k]; url.searchParams.delete(param); }
+  history.replaceState(null, '', url);
+  setWindowOpt('theme', null);
+  notify(L('コンソールの設定に合わせました', 'Now following the console'));
+}
+const windowOwn = () => Object.keys(WIN_KEYS).filter((k) => LOCK[k] != null);
 
 function notify(text) {
-  if (!pickerNote) return;
-  pickerNote.textContent = text;
-  pickerNote.classList.add('on');
+  if (!note) return;
+  note.textContent = text;
+  note.classList.add('on');
   showUi();
   clearTimeout(notify.t);
-  notify.t = setTimeout(() => pickerNote.classList.remove('on'), 3200);
+  notify.t = setTimeout(() => note.classList.remove('on'), 3200);
 }
 
-function renderPicker() {
-  if (!picker) return;
-  const row = picker.querySelector('.pk-themes');
-  row.replaceChildren();
-  const follow = document.createElement('button');
-  follow.type = 'button';
-  follow.className = 'pk-follow';
-  follow.textContent = L('連動', 'Sync');
-  follow.title = L('コンソールで選んだ書体に合わせる', 'Follow the typeface chosen in the console');
+const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+function btn(cls, label, title, fn) {
+  const b = mk('button', cls);
+  b.type = 'button';
+  if (label != null) b.innerHTML = label;
+  if (title) { b.title = title; b.setAttribute('aria-label', title); }
+  b.addEventListener('click', fn);
+  return b;
+}
+
+function renderBar() {
+  if (!bar) return;
+  document.title = `${tr(LAYOUTS[S.layout] || LAYOUTS.compose)}｜KANPE`; // OBS のウィンドウキャプチャで選びやすいように
+  bar.replaceChildren();
+  // レイアウト
+  const lay = mk('div', 'wb-seg');
+  lay.setAttribute('role', 'radiogroup');
+  lay.setAttribute('aria-label', L('レイアウト', 'Layout'));
+  for (const [id, def] of Object.entries(LAYOUTS)) {
+    const b = btn('wb-opt' + (def.pro ? ' plus' : '') + (id === 'vj' && vjLocked() ? ' locked' : ''), tr(def) + (def.pro ? '<i aria-hidden="true">+</i>' : ''), tr(def, 'note'), () => setWindowLayout(id));
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', String(S.layout === id));
+    lay.appendChild(b);
+  }
+  // 文字サイズ
+  const size = mk('div', 'wb-size');
+  const cur = nearestStep(SIZE_STEPS, S.baseSize), ci = SIZE_KEYS.indexOf(cur);
+  const dn = btn('wb-icon', 'A<small>−</small>', L('文字を小さく（−）', 'Smaller text (−)'), () => stepSize(-1));
+  const up = btn('wb-icon', 'A<small>+</small>', L('文字を大きく（+）', 'Larger text (+)'), () => stepSize(1));
+  dn.disabled = ci <= 0; up.disabled = ci >= SIZE_KEYS.length - 1;
+  const v = mk('span', 'wb-size-v', tr(SIZE_STEPS[cur]));
+  v.title = L('文字サイズ', 'Text size');
+  size.append(dn, v, up);
+  if (S.layout === 'vj') size.classList.add('off'); // VJ では文字サイズは効かない
+  // 書体と色（ポップアップ）
+  const th = THEMES[S.theme] || THEMES[DEFAULT_THEME];
+  const tb = btn('wb-btn wb-theme', '', L('書体と色（T）', 'Typeface and color (T)'), () => togglePop(pop));
+  const tile = mk('span', 'wb-tile', '字');
+  tile.style.background = th.bg === 'transparent' ? 'repeating-conic-gradient(#3a3d44 0 25%, #2a2d33 0 50%) 0 0 / 8px 8px' : th.bg;
+  tile.style.color = th.ink; tile.style.fontFamily = `${th.family}, ${th.fallback}`; tile.style.fontWeight = th.strong;
+  tb.append(tile, mk('span', null, tr(th)));
+  tb.setAttribute('aria-expanded', String(!pop.hidden));
+  // 消去・全画面・キー
+  const clr = btn('wb-btn', `${L('消去', 'Clear')}<kbd>Esc</kbd>`, L('この窓の言葉を消す（Esc）', 'Clear this window (Esc)'), () => clearAll());
+  const fs = btn('wb-btn wb-fs', `${document.fullscreenElement ? L('戻す', 'Exit') : L('全画面', 'Full screen')}<kbd>F</kbd>`, L('全画面（F・ダブルクリック）', 'Full screen (F or double-click)'), toggleFullscreen);
+  const kb = btn('wb-icon wb-keys', '?', L('キー操作の一覧（?）', 'Keyboard shortcuts (?)'), () => togglePop(keysPop));
+  kb.setAttribute('aria-expanded', String(!keysPop.hidden));
+  bar.append(lay, size, tb, clr, fs, kb);
+  // この窓だけの設定があるとき
+  const own = windowOwn();
+  if (own.length) {
+    const names = { theme: L('書体', 'typeface'), accent: L('色', 'color'), layout: L('レイアウト', 'layout'), baseSize: L('文字サイズ', 'size') };
+    const sync = btn('wb-sync', `${L('コンソールに合わせる', 'Follow console')}<kbd>0</kbd>`, L(`この窓だけ：${own.map((k) => names[k]).join('・')}。コンソールの設定に戻します（0）`, `This window only: ${own.map((k) => names[k]).join(', ')}. Go back to the console’s settings (0)`), syncAll);
+    bar.append(sync);
+  }
+  renderPop();
+}
+
+function renderPop() {
+  if (!pop) return;
+  pop.replaceChildren();
+  const row = mk('div', 'pk-row');
+  const follow = btn('pk-follow', L('コンソールと同じ', 'Same as console'), L('コンソールで選んだ書体に合わせる', 'Follow the typeface chosen in the console'), () => setWindowTheme(null));
   follow.setAttribute('aria-pressed', String(!LOCK.theme));
-  follow.addEventListener('click', () => setWindowTheme(null));
   row.appendChild(follow);
   for (const [id, th] of Object.entries(THEMES)) {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'pk-theme' + (th.pro ? ' plus' : '') + (isLocked(id) ? ' locked' : '');
-    b.title = th.pro ? L(`${th.label}（プレミアム書体）`, `${tr(th)} (premium)`) : tr(th);
+    const b = btn('pk-theme' + (th.pro ? ' plus' : '') + (isLocked(id) ? ' locked' : ''), '', th.pro ? L(`${th.label}（お手軽プランの書体）`, `${tr(th)} (Plus)`) : tr(th), () => setWindowTheme(id));
     b.setAttribute('aria-pressed', String(S.theme === id));
-    const tile = document.createElement('span');
-    tile.className = 'pk-tile';
-    tile.textContent = '字';
+    const tile = mk('span', 'pk-tile', '字');
     tile.style.background = th.bg === 'transparent' ? 'repeating-conic-gradient(#3a3d44 0 25%, #2a2d33 0 50%) 0 0 / 8px 8px' : th.bg;
-    tile.style.color = th.ink;
-    tile.style.fontFamily = `${th.family}, ${th.fallback}`;
-    tile.style.fontWeight = th.strong;
-    const name = document.createElement('span');
-    name.className = 'pk-name';
-    name.textContent = tr(th);
-    b.append(tile, name);
-    b.addEventListener('click', () => setWindowTheme(id));
+    tile.style.color = th.ink; tile.style.fontFamily = `${th.family}, ${th.fallback}`; tile.style.fontWeight = th.strong;
+    b.append(tile, mk('span', 'pk-name', tr(th)));
     row.appendChild(b);
   }
-  const fs = document.createElement('button');
-  fs.type = 'button';
-  fs.className = 'pk-fs';
-  fs.textContent = document.fullscreenElement ? L('戻す', 'Exit') : L('全画面', 'Full');
-  fs.title = L('全画面（F キー）', 'Fullscreen (F key)');
-  fs.addEventListener('click', toggleFullscreen);
-  row.appendChild(fs);
-
-  // アクセントカラー（この窓だけ。「連動」でコンソールの色に戻る）
-  const arow = picker.querySelector('.pk-accents');
-  arow.replaceChildren();
-  const accLocked = !canUse('accent:custom') && trialRemainingMs() <= 0;
-  const af = document.createElement('button');
-  af.type = 'button';
-  af.className = 'pk-follow small';
-  af.textContent = L('連動', 'Sync');
-  af.title = L('コンソールで選んだ色に合わせる', 'Follow the color chosen in the console');
+  const arow = mk('div', 'pk-row pk-accents');
+  const af = btn('pk-follow small', L('コンソールと同じ', 'Same as console'), L('コンソールで選んだ色に合わせる', 'Follow the color chosen in the console'), () => setWindowAccent(null));
   af.setAttribute('aria-pressed', String(!LOCK.accent));
-  af.addEventListener('click', () => setWindowAccent(null));
   arow.appendChild(af);
   for (const a of ACCENTS) {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'pk-acc' + (accLocked ? ' locked' : '');
+    const b = btn('pk-acc', '', tr(a), () => setWindowAccent(a.c));
     b.style.background = a.c;
-    b.title = tr(a);
     b.setAttribute('aria-pressed', String(LOCK.accent === a.c));
-    b.addEventListener('click', () => setWindowAccent(a.c));
     arow.appendChild(b);
   }
+  pop.append(mk('span', 'pk-label', L('書体', 'TYPEFACE')), row, mk('span', 'pk-label', L('アクセントの色', 'ACCENT')), arow);
 }
 
-function setWindowAccent(c) {
-  if (c && !canUse('accent:custom') && trialRemainingMs() <= 0) { notify(L('プレミアム機能のお試し期間（1日）は終わりました', 'The 1-day trial of premium features has ended')); return; }
-  const url = new URL(location.href);
-  if (c) { LOCK.accent = c; url.searchParams.set('accent', c.slice(1)); }
-  else { delete LOCK.accent; url.searchParams.delete('accent'); }
-  history.replaceState(null, '', url);
-  S = { ...DEFAULTS, ...(lastSettings || loadSettings()), ...LOCK };
-  applyTheme();
-  renderPicker();
+function togglePop(which, force) {
+  const open = force != null ? force : which.hidden;
+  for (const p of [pop, keysPop]) p.hidden = p === which ? !open : true;
+  renderBar();
+  showUi();
 }
 
 function showUi() {
-  if (!picker) return;
+  if (!bar) return;
   document.body.classList.add('ui-on');
   document.body.classList.remove('ui-idle');
   clearTimeout(uiTimer);
   uiTimer = setTimeout(() => {
-    if (picker.matches(':hover') || picker.querySelector(':focus-visible')) return showUi(); // キーボード操作中は出したまま
+    const busy = bar.matches(':hover') || !pop.hidden || !keysPop.hidden || pop.matches(':hover') || document.activeElement && bar.contains(document.activeElement) && document.activeElement.matches(':focus-visible');
+    if (busy) return showUi();
     document.body.classList.remove('ui-on');
     document.body.classList.add('ui-idle');
   }, 2600);
@@ -1581,19 +1633,37 @@ function toggleFullscreen() {
 }
 
 if (SHOW_UI) {
-  picker = document.createElement('div');
-  picker.id = 'picker';
-  picker.setAttribute('role', 'toolbar');
-  picker.setAttribute('aria-label', L('この窓の書体', 'Typeface for this window'));
-  picker.innerHTML = `<span class="pk-label">${L('書体', 'TYPEFACE')}</span><div class="pk-row pk-themes"></div>` +
-    `<span class="pk-label">${L('アクセント', 'ACCENT')}</span><div class="pk-row pk-accents"></div><p class="pk-note" aria-live="polite"></p>`;
-  pickerNote = picker.querySelector('.pk-note');
-  document.body.appendChild(picker);
-  renderPicker();
+  bar = mk('div');
+  bar.id = 'wbar';
+  bar.setAttribute('role', 'toolbar');
+  bar.setAttribute('aria-label', L('この窓の操作', 'Window controls'));
+  pop = mk('div', 'wb-pop');
+  pop.hidden = true;
+  pop.setAttribute('role', 'dialog');
+  pop.setAttribute('aria-label', L('この窓の書体と色', 'Typeface and color for this window'));
+  keysPop = mk('div', 'wb-pop wb-keys-pop');
+  keysPop.hidden = true;
+  keysPop.setAttribute('role', 'dialog');
+  keysPop.setAttribute('aria-label', L('キー操作', 'Keyboard shortcuts'));
+  const keys = [['F', L('全画面（ダブルクリックでも）', 'Full screen (or double-click)')], ['L', L('レイアウトを切り替え', 'Next layout')], ['T', L('書体を切り替え', 'Next typeface')],
+    ['+ / −', L('文字を大きく／小さく', 'Larger / smaller text')], ['0', L('コンソールに合わせる', 'Follow the console')], ['Esc', L('画面の言葉を消す', 'Clear the words')], ['?', L('この一覧', 'This list')]];
+  keysPop.innerHTML = `<span class="pk-label">${L('キー操作', 'KEYBOARD')}</span><dl class="wb-keylist">${keys.map(([k, d]) => `<dt><kbd>${k}</kbd></dt><dd>${d}</dd>`).join('')}</dl>` +
+    `<p class="wb-keynote">${L('この窓で変えた設定は、この窓だけに効きます', 'Changes here apply to this window only')}</p>`;
+  note = mk('p', 'wb-note');
+  note.setAttribute('aria-live', 'polite');
+  document.body.append(pop, keysPop, bar, note);
+  renderBar();
   for (const ev of ['mousemove', 'pointerdown', 'touchstart']) window.addEventListener(ev, showUi, { passive: true });
-  picker.addEventListener('focusin', showUi);
-  document.addEventListener('fullscreenchange', renderPicker);
+  bar.addEventListener('focusin', showUi);
+  document.addEventListener('fullscreenchange', renderBar);
+  // 画面（バーの外）を押したら、開いているポップアップを閉じる。ダブルクリックで全画面
+  stage.addEventListener('pointerdown', () => { if (!pop.hidden || !keysPop.hidden) togglePop(pop, false); });
+  window.addEventListener('dblclick', (e) => { if (!bar.contains(e.target) && !pop.contains(e.target) && !keysPop.contains(e.target)) toggleFullscreen(); });
+  // はじめて開いたときだけ、使い方をひとこと（この端末で一度見たら出さない）
+  let seen = false;
+  try { seen = localStorage.getItem('kanpe.wbar.v1') === '1'; localStorage.setItem('kanpe.wbar.v1', '1'); } catch {}
   showUi();
+  if (!seen) notify(L('この窓だけの見た目を変えられます。マウスを止めるとバーは隠れます（F：全画面・?：キー操作）', 'Change the look of this window only. The bar hides when the mouse stops (F: full screen, ?: shortcuts)'));
 
   // この窓でプレミアム機能を使い始めたら、無料プランの1日お試しを開始する（コンソールと共通）
   let last = performance.now();
@@ -1602,10 +1672,12 @@ if (SHOW_UI) {
     const dt = t - last;
     last = t;
     const plusTheme = LOCK.theme && THEMES[LOCK.theme] && THEMES[LOCK.theme].pro;
-    if (plusTheme && !canUse('theme:premium')) { // アクセントカラーは無料なので数えない
+    const plusLayout = LOCK.layout === 'vj';
+    if ((plusTheme && !canUse('theme:premium')) || (plusLayout && !canUse('layout:vj'))) { // アクセントカラーは無料なので数えない
       addTrialUsage(dt);
       if (trialRemainingMs() <= 0) {
-        setWindowTheme(null);
+        if (plusTheme) setWindowTheme(null);
+        if (plusLayout) setWindowOpt('layout', null);
         notify(L('プレミアム機能のお試し期間（1日）が終わったので、コンソールの設定に戻しました', 'The 1-day trial has ended, so this window follows the console again'));
       }
     }
@@ -1613,13 +1685,27 @@ if (SHOW_UI) {
 }
 
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') clearAll();
-  if ((e.key === 't' || e.key === 'T') && SHOW_UI) { // T キーで書体を順に切り替え
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'Escape') {
+    if (SHOW_UI && (!pop.hidden || !keysPop.hidden)) { togglePop(pop, false); return; }
+    clearAll();
+    return;
+  }
+  if (e.key === 'f' || e.key === 'F') { if (!EMBED) toggleFullscreen(); return; }
+  if (!SHOW_UI) return;
+  const k = e.key;
+  if (k === 't' || k === 'T') { // 書体を順に
     const ids = Object.keys(THEMES).filter((id) => !isLocked(id));
     setWindowTheme(ids[(ids.indexOf(S.theme) + 1) % ids.length]);
-    showUi();
-  }
-  if (e.key === 'f' && !EMBED) toggleFullscreen();
+  } else if (k === 'l' || k === 'L') { // レイアウトを順に
+    const ids = Object.keys(LAYOUTS).filter((id) => id !== 'vj' || !vjLocked());
+    setWindowLayout(ids[(ids.indexOf(S.layout) + 1) % ids.length]);
+  } else if (k === '+' || k === '=' || k === 'ArrowUp') { e.preventDefault(); stepSize(1); }
+  else if (k === '-' || k === '_' || k === 'ArrowDown') { e.preventDefault(); stepSize(-1); }
+  else if (k === '0') { if (windowOwn().length) syncAll(); }
+  else if (k === '?' || k === '/') togglePop(keysPop);
+  else return;
+  showUi();
 });
 window.addEventListener('resize', () => { root.style.setProperty('--base', basePx() + 'px'); applyLogo(); });
 
@@ -1635,7 +1721,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610172302').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610172315').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 

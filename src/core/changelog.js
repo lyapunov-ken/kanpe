@@ -4,6 +4,8 @@ export const CHANGELOG = [
   {
     v: '1.5.1', date: '2026-10-17',
     items: [
+      { type: 'improve', ja: '別窓（カンペ・組版を別窓で）の操作を一新。マウスを動かすと画面の下に操作バーが出て、レイアウト・文字サイズ・書体と色・消去・全画面をその場で切り替えられます。変えた設定はその窓だけに効き、「コンソールに合わせる」でまとめて戻せます。キー操作（F・L・T・+ −・0・Esc・?）とダブルクリックで全画面にも対応。窓のタイトルにレイアウト名が出るので、OBS のウィンドウキャプチャで選びやすくなりました', en: 'Pop-out windows got a new control bar: move the mouse to show it at the bottom, then switch layout, text size, typeface and color, clear, or go full screen. Changes apply to that window only, and “Follow console” resets them all. Keyboard shortcuts (F, L, T, + −, 0, Esc, ?) and double-click for full screen are supported, and the window title shows the layout name for easy picking in OBS window capture' },
+      { type: 'fix', ja: 'コンソールで設定を変えると、別窓の操作パネルが消えてしまうことがあった不具合', en: 'The pop-out window’s controls could vanish when settings changed in the console' },
       { type: 'fix', ja: 'テロップを、ニュースのように一定の速さで流れるように。言葉は右の外から入って左へ流れ、画面から出たら消えます。言葉が続くときは少し速く流して追いつきます（「表示時間」は1語が画面を横切る秒数）', en: 'The Ticker now scrolls smoothly at a steady speed like a news crawl: words enter from the right, flow left and disappear off-screen, speeding up a little to catch up when words pile up (Display time is how long a word takes to cross the screen)' },
       { type: 'new', ja: '新語の出かたに「花火」：画面の下から光が昇って弾け、火花の中から新語が花開きます', en: 'New “Firework” entrance: a spark rises from below, bursts, and the new word blooms out of the fireworks' },
       { type: 'fix', ja: '「機能」タブを開いたとき、タブの下に横の罫線が出ていた不具合', en: 'A stray line appeared under the tabs when the Features tab was open' },
