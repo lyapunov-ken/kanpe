@@ -252,3 +252,23 @@ body {
 }
 .vj-micro #caption.final { color: #fff; }
 .vj-micro #caption::before { content: "> "; opacity: .5; }
+
+/* ---- 新語の誕生：モーションタイポグラフィの演出（display.js の fzStage） ---- */
+/* ピント送り：誕生のあいだ、ほかの言葉を沈めて新語に視線を集める（外側の不透明度は退場の演出が使うので、内側だけ） */
+#stage .w > .wi { transition: opacity .55s ease, filter .55s ease; }
+.fz-focus #stage .w:not(.k-fusion):not(.fz-parent) > .wi { opacity: .3; filter: blur(1.4px); }
+.calm #stage .w > .wi { transition: none; }
+/* 閃光：新語の位置から広がる光 */
+.fz-flash { position: fixed; inset: 0; z-index: 9; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at var(--x) var(--y), color-mix(in srgb, var(--fl, var(--accent2)) 70%, #fff) 0, color-mix(in srgb, var(--fl, var(--accent2)) 35%, transparent) 9%, transparent 38%); }
+.bg-light .fz-flash { background: radial-gradient(circle at var(--x) var(--y), color-mix(in srgb, var(--fl, var(--accent2)) 45%, transparent) 0, transparent 34%); }
+#fx .fz-dot { fill: var(--fzs, var(--accent2)); transform-box: fill-box; transform-origin: center; }
+#fx .fz-ring.bold { stroke-width: 2.4; }
+#fx .fz-pillar { fill: var(--accent2); transform-box: fill-box; transform-origin: center; }
+#fx .fz-ink { fill: var(--fzs, var(--accent2)); transform-box: fill-box; transform-origin: center; filter: blur(6px); }
+/* 集束の残像 */
+.fz-trail { position: absolute; pointer-events: none; }
+/* 誕生のあいだは輪郭を少し太く、光らせる（色が満ちたら元に戻る） */
+.k-fusion.fz-live:not(.filled) .c { -webkit-text-stroke-width: max(1px, .024em); }
+.k-fusion.fz-live:not(.filled) > .wi { filter: drop-shadow(0 0 .1em color-mix(in srgb, var(--fz, var(--accent2)) 70%, transparent)); }
+.bg-light .k-fusion.fz-live:not(.filled) > .wi { filter: drop-shadow(0 0 .06em color-mix(in srgb, var(--fz, var(--accent2)) 45%, transparent)); }

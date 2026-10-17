@@ -630,22 +630,15 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px va
   .nw-head, .nw-body { padding-left: 18px; padding-right: 18px; }
 }
 
-/* ---- サイドメニュー：マイクは上に固定、その下を3つのタブ（表示・ブレストモード・詳細）に分ける ----
+/* ---- サイドメニュー：マイクは上に固定、その下を3つのタブ（表示・機能・設定）に分ける ----
    PC では、タブの中身だけがスクロールする（マイクとタブはいつも見えている）。
    中身はなるべく1画面に収まるよう、書体を1列・スライダーを1行・スイッチを2列にしてある */
-.side-tabs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.75fr) minmax(0, 1fr); gap: 3px; padding: 3px;
+.side-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; padding: 3px;
   margin: 0 14px; background: var(--bg); border: 1px solid var(--line2); border-radius: 11px; }
 .side-tab { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 6px; border-radius: 8px;
   color: var(--sub); font-weight: 700; font-size: 13px; white-space: nowrap; transition: background .15s, color .15s; }
 .side-tab:hover { color: var(--ink); }
 .side-tab[aria-selected="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px var(--shade), inset 0 0 0 1px var(--line2); }
-.tab-coin { color: var(--demo); }
-.tab-coin:hover { color: var(--demo); background: color-mix(in srgb, var(--demo) 8%, transparent); }
-.tab-coin[aria-selected="true"] { color: var(--demo); background: color-mix(in srgb, var(--demo) 10%, var(--panel));
-  box-shadow: 0 1px 2px var(--shade), inset 0 0 0 1px color-mix(in srgb, var(--demo) 45%, var(--line2)); }
-.tab-on { display: none; font-style: normal; font-size: 9px; font-weight: 800; letter-spacing: .08em; line-height: 1; padding: 3px 5px; border-radius: 999px;
-  color: var(--panel); background: var(--demo); }
-.controls:has(#fusion:checked) .tab-on { display: inline-block; }
 
 .mic-sec { padding: 16px 18px; gap: 12px; }
 .pane { padding: 14px 16px 18px; gap: 14px; }
@@ -787,3 +780,60 @@ html[lang="en"] .slider { grid-template-columns: 104px minmax(0, 1fr) 72px; }
 .hp-dev-row { display: flex; gap: 8px; }
 .hp-dev-row input { flex: 1; min-width: 0; height: 36px; }
 .plan-actions:empty { display: none; }
+
+/* ---- 文字サイズ・表示時間・同時に出す語：5段階のボタン（見出しとボタンを1行に） ---- */
+.steps { display: flex; flex-direction: column; gap: 6px; }
+.step-row { display: grid; grid-template-columns: 84px minmax(0, 1fr); align-items: center; column-gap: 10px; }
+html[lang="en"] .step-row { grid-template-columns: 104px minmax(0, 1fr); }
+.step-seg { padding: 2px; gap: 2px; border-radius: 9px; }
+.step-seg button { height: 26px; font-size: 12px; border-radius: 7px; padding: 0 2px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ---- タブ「機能」：ブレストモードがオンのあいだは、タブに青い点を付ける ---- */
+.tab-dot { display: none; width: 7px; height: 7px; border-radius: 50%; background: var(--demo); box-shadow: 0 0 0 3px color-mix(in srgb, var(--demo) 22%, transparent); }
+.controls:has(#fusion:checked) .tab-dot { display: inline-block; }
+
+/* 機能タブ：ブレストモード（主役）と話者を、見出しつきの2つのまとまりに */
+.feat-pane { gap: 16px; }
+.feat-sec { display: flex; flex-direction: column; gap: 10px; }
+.feat-sec + .feat-sec { padding-top: 14px; border-top: 1px solid var(--line); }
+.feat-h { display: flex; align-items: center; gap: 7px; }
+.coin-h { color: var(--demo); font-size: 12px; }
+.coin-state { display: none; margin-left: auto; font-style: normal; font-size: 9.5px; letter-spacing: .1em; padding: 2px 7px; border-radius: 999px;
+  color: var(--panel); background: var(--demo); }
+.coin-sec:has(#fusion:checked) .coin-state { display: inline-block; }
+.feat-pane.coin-sec, .feat-pane { background: none; }
+.feat-sec.coin-sec { background: none; }
+.coin-sec .coin-card { background:
+  radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--demo) 12%, transparent), transparent 60%), var(--raise); }
+.coin-switch small { font-size: 11px; }
+.coin-inline { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; column-gap: 8px; }
+html[lang="en"] .coin-inline { grid-template-columns: 56px minmax(0, 1fr); }
+.coin-inline .segmented button { height: 26px; font-size: 12px; }
+#fzMotions button { height: 28px; font-size: 12px; padding: 0 2px; white-space: nowrap; }
+#fzMotionNote { min-height: 1.6em; }
+.fz-colors { flex-wrap: nowrap; justify-content: space-between; }
+.coin-sec .fz-colors .acc { width: 22px; height: 22px; }
+.fz-auto { position: relative; background: var(--raise2) !important; box-shadow: inset 0 0 0 1px var(--edge2); }
+.fz-auto::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--c); }
+.fz-random { display: grid; place-items: center; background: var(--raise2) !important; color: var(--sub); }
+.fz-random b { font-size: 12px; font-weight: 800; line-height: 1; }
+
+/* 話者：見出しとオン・オフを1行に。詳しい設定はオンにしたときだけ */
+.sp-head { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; }
+.sp-head .feat-h .plus-mark { margin-left: 4px; }
+.sp-head .segmented button { height: 28px; font-size: 12.5px; }
+#speakerSec .sp-soon { display: none; }
+#speakerSec:has(#spBody:not([hidden])) .sp-soon { display: block; }
+/* アクセントカラー：「標準」も丸い見本にして1列に */
+#accents { flex-wrap: nowrap; justify-content: space-between; gap: 4px; }
+#accents .acc, #accents .acc-custom { width: 22px; height: 22px; }
+/* 話者：オフのときの説明は省く（オン・オフのボタンだけで伝わる） */
+#speakerSec:not(:has(#spBody:not([hidden]))) #spModeNote { display: none; }
+.feat-pane { gap: 12px; }
+.feat-sec + .feat-sec { padding-top: 12px; }
+/* 低い画面（ノート PC）では、ブレストモードの見本の絵を省いて、操作を1画面に収める */
+@media (min-width: 901px) and (max-height: 840px) {
+  .coin-sec .coin-art { display: none; }
+  .steps { gap: 4px; }
+  #paneLook { gap: 11px; }
+}

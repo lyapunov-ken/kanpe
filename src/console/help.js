@@ -1,12 +1,12 @@
 // 使い方ガイド（アプリ内ヘルプ）。右上の「ヘルプ」、? キー、または app.html#help（#help-scenes など）で開く。
 // 文言は L('日本語', 'English') で持つので、英語版のコンソールでもそのまま使える。
-import { L } from '../core/i18n.js?v=202610171959';
+import { L } from '../core/i18n.js?v=202610172051';
 
 // シーン別のおすすめ設定（無料プランの機能だけで組む。アクセントカラーや背景などの好みは触らない）
 export const PRESETS = {
-  stream: { label: L('ひとり雑談', 'Solo chat stream'), s: { theme: 'yoru', layout: 'compose', baseSize: 40, ttl: 8, maxWords: 24, vertical: true, caption: true, fusion: false } },
-  game: { label: L('ゲーム実況', 'Gameplay commentary'), s: { theme: 'clear', layout: 'ticker', baseSize: 34, ttl: 6, maxWords: 12, vertical: false, caption: false, fusion: false } },
-  brainstorm: { label: L('ブレスト会議', 'Brainstorming meeting'), s: { theme: 'sumi', layout: 'compose', baseSize: 36, ttl: 30, maxWords: 40, vertical: false, caption: false, fusion: true } },
+  stream: { label: L('ひとり雑談', 'Solo chat stream'), s: { theme: 'yoru', layout: 'compose', baseSize: 42, ttl: 8, maxWords: 24, vertical: true, caption: true, fusion: false } },
+  game: { label: L('ゲーム実況', 'Gameplay commentary'), s: { theme: 'clear', layout: 'ticker', baseSize: 34, ttl: 6, maxWords: 10, vertical: false, caption: false, fusion: false } },
+  brainstorm: { label: L('ブレスト会議', 'Brainstorming meeting'), s: { theme: 'sumi', layout: 'compose', baseSize: 34, ttl: 30, maxWords: 40, vertical: false, caption: false, fusion: true } },
   speech: { label: L('スピーチ・講演', 'Speech or talk'), s: { theme: 'yoru', layout: 'kanpe', baseSize: 56, ttl: 15, maxWords: 10, vertical: false, caption: true, fusion: false } },
 };
 
@@ -76,24 +76,24 @@ function html() {
           'Start / stop, the language to listen for, and the recognition engine. High-accuracy recognition is part of the Pro plan (coming soon).')}</dd>
         <dt>${L('設定の3つのタブ', 'The three settings tabs')}</dt>
         <dd>${L(
-          'マイクの下の設定は「表示」「ブレストモード」「詳細」の3つのタブに分かれています。最後に開いていたタブを覚えておきます。キーボードでは ← → で切り替えられます。',
-          'The settings below the mic are split into three tabs: Display, Brainstorm and More. The last tab you opened is remembered; use ← → to switch with the keyboard.')}</dd>
+          'マイクの下の設定は3つのタブに分かれています。<b>表示</b>＝書体・色・レイアウト・文字の大きさや出かた／<b>機能</b>＝配信中に使うブレストモード（新語ミックス）と話者／<b>設定</b>＝前もって整える背景・ロゴ・辞書・OBS。最後に開いていたタブを覚えておきます。キーボードでは ← → で切り替えられます。',
+          'The settings below the mic are split into three tabs: <b>Display</b> (typefaces, colors, layout, text size and timing), <b>Features</b> (Brainstorm mode and speakers, used while live) and <b>Settings</b> (background, logo, dictionary and OBS, set up in advance). The last tab you opened is remembered; use ← → to switch with the keyboard.')}</dd>
         <dt>${L('表示', 'Display')}</dt>
         <dd>${L(
-          '<b>書体テーマ</b>は文字と背景の雰囲気、<b>レイアウト</b>は言葉の置き方です。組版＝画面いっぱいに組む／カンペ＝下から大きく積み上がる／テロップ＝下部を横に流れる／VJ＝ドット絵で光らせる。<b>表示時間</b>は言葉が消えるまでの秒数、<b>同時に出す語</b>は画面に残す最大の語数です。<br>カンペでは<b>同じ話の記憶</b>（5分・10分・オフ）を選べます。その時間内にくり返した言葉ほど大きく、長く残り、同じ話を続けるほど画面が言葉で埋まっていきます。<br>アクセントカラーは無料プランでも自由に変えられます。プレミアム書体・背景（画像・カメラ）・カスタムロゴ・VJ はお手軽プラン以上の機能で、無料プランでも1日お試しできます。<br>「詳細」タブの<b>ロゴ</b>で画像を選ぶと、真ん中を正方形に切り抜いて画面の左上に出します（大きさは小・中・大）。組版では言葉がロゴを避けて並び、別窓や OBS にも同じように出ます。<br>VJ ではスタイル（1px・LED・ネオン・ピクセル）と書体（5種）を選べます。1px は白黒の点と線だけで組む繊細な表示です。文字が読みにくいときは、書体を「ゴシック」か「明朝」にしてください。動きは「動きを控えめに」で止められます。<br>ブレストモードの<b>新語ミックス</b>をオンにすると、画面に出た言葉どうしが掛け合わさって新しい言葉が生まれます。「いま混ぜる」か <kbd>M</kbd> キーで好きなときにも混ぜられ、生まれた言葉は文字起こしの上に残ります。画面に出る新語は5つまでで、続けて混ぜると古い新語から早めに消えます。新語の色（虹・ランダムも）、出かた（衝突・デコード・シャッター・集束・スキャン・ランダム）、速さも選べます。',
-          '<b>Typeface theme</b> sets the look of the letters and background; <b>Layout</b> sets where words go: Compose fills the screen, Cue stacks big words from the bottom, Ticker scrolls along the bottom, VJ draws words in glowing dots. <b>Display time</b> is how long words stay, and <b>Words on screen</b> is the most shown at once.<br>In Cue layout, <b>Topic memory</b> (5 min, 10 min or off) makes words you repeat within that time grow bigger and stay longer, so the more you stay on one topic, the more the screen fills with words.<br>Accent colors are free to change on any plan. Premium typefaces, backgrounds (image / camera), a custom logo and VJ are Plus features you can try free for one day.<br>Choose an image under <b>Logo</b> in the More tab and its center is cropped to a square and shown in the top-left corner (small, medium or large). In Compose layout words are placed around it, and it appears the same in pop-out windows and OBS.<br>In VJ mode you pick a style (1px, LED, Neon, Pixel) and a typeface (5 kinds). 1px is a delicate monochrome look built only from dots and lines. If letters are hard to read, choose Gothic or Mincho. “Reduce motion” stops the movement.<br>Turn on <b>Word mix</b> in Brainstorm mode and words on screen combine into brand-new words. Press “Mix now” or <kbd>M</kbd> any time; new words are kept above the transcript. Up to five new words stay on screen; keep mixing and the oldest fade out early. You can also pick the new word’s color (including rainbow and random), entrance (Collide, Decode, Shutter, Converge, Scan, Random) and speed.')}</dd>
-        <dt>${L('話者（詳細タブ）', 'Speakers (More tab)')}</dt>
+          '<b>書体テーマ</b>は文字と背景の雰囲気、<b>レイアウト</b>は言葉の置き方です。組版＝画面いっぱいに組む／カンペ＝下から大きく積み上がる／テロップ＝下部を横に流れる／VJ＝ドット絵で光らせる。<b>文字サイズ</b>・<b>表示時間</b>（言葉が消えるまでの秒数）・<b>同時に出す語</b>（画面に残す最大の語数）は、それぞれ5段階から選べます。<br>カンペでは<b>同じ話の記憶</b>（5分・10分・オフ）を選べます。その時間内にくり返した言葉ほど大きく、長く残り、同じ話を続けるほど画面が言葉で埋まっていきます。<br>アクセントカラーは無料プランでも自由に変えられます。プレミアム書体・背景（画像・カメラ）・カスタムロゴ・VJ はお手軽プラン以上の機能で、無料プランでも1日お試しできます。<br>「設定」タブの<b>ロゴ</b>で画像を選ぶと、真ん中を正方形に切り抜いて画面の左上に出します（大きさは小・中・大）。組版では言葉がロゴを避けて並び、別窓や OBS にも同じように出ます。<br>VJ ではスタイル（1px・LED・ネオン・ピクセル）と書体（5種）を選べます。1px は白黒の点と線だけで組む繊細な表示です。文字が読みにくいときは、書体を「ゴシック」か「明朝」にしてください。動きは「動きを控えめに」で止められます。<br>ブレストモードの<b>新語ミックス</b>をオンにすると、画面に出た言葉どうしが掛け合わさって新しい言葉が生まれます。「いま混ぜる」か <kbd>M</kbd> キーで好きなときにも混ぜられ、生まれた言葉は文字起こしの上に残ります。画面に出る新語は5つまでで、続けて混ぜると古い新語から早めに消えます。新語の色（虹・ランダムも）、出かた（衝突・デコード・シャッター・集束・スキャン・ランダム）、速さも選べます。',
+          '<b>Typeface theme</b> sets the look of the letters and background; <b>Layout</b> sets where words go: Compose fills the screen, Cue stacks big words from the bottom, Ticker scrolls along the bottom, VJ draws words in glowing dots. <b>Text size</b>, <b>Display time</b> (how long words stay) and <b>Words on screen</b> (the most shown at once) each have five steps.<br>In Cue layout, <b>Topic memory</b> (5 min, 10 min or off) makes words you repeat within that time grow bigger and stay longer, so the more you stay on one topic, the more the screen fills with words.<br>Accent colors are free to change on any plan. Premium typefaces, backgrounds (image / camera), a custom logo and VJ are Plus features you can try free for one day.<br>Choose an image under <b>Logo</b> in the Settings tab and its center is cropped to a square and shown in the top-left corner (small, medium or large). In Compose layout words are placed around it, and it appears the same in pop-out windows and OBS.<br>In VJ mode you pick a style (1px, LED, Neon, Pixel) and a typeface (5 kinds). 1px is a delicate monochrome look built only from dots and lines. If letters are hard to read, choose Gothic or Mincho. “Reduce motion” stops the movement.<br>Turn on <b>Word mix</b> in Brainstorm mode and words on screen combine into brand-new words. Press “Mix now” or <kbd>M</kbd> any time; new words are kept above the transcript. Up to five new words stay on screen; keep mixing and the oldest fade out early. You can also pick the new word’s color (including rainbow and random), entrance (Collide, Decode, Shutter, Converge, Scan, Random) and speed.')}</dd>
+        <dt>${L('話者（機能タブ）', 'Speakers (Features tab)')}</dt>
         <dd>${L(
           '話している人ごとに名前と色を付けます（最大4人）。切り替えはボタンかキーボードの <kbd>1</kbd>〜<kbd>4</kbd>。PC では声の高さで自動切り替えもできます。お手軽プラン以上の機能です。',
           'Give each person a name and color (up to 4). Switch with the buttons or keys <kbd>1</kbd>–<kbd>4</kbd>; on a computer it can also switch automatically by voice pitch. A Plus feature.')}</dd>
-        <dt>${L('辞書（詳細タブ）', 'Dictionary (More tab)')}</dt>
+        <dt>${L('辞書（設定タブ）', 'Dictionary (Settings tab)')}</dt>
         <dd>${L(
           '<b>登録キーワード</b>は優先して拾い、強調して表示します。人名・商品名・プロジェクト名など、自動では拾いにくい語を入れてください。<b>NG ワード</b>は画面にも字幕にも出しません。',
           '<b>Keywords</b> are picked up first and highlighted — add names, products and project names. <b>Blocked words</b> never appear on screen or in captions.')}</dd>
         <dt>${L('表示ビュー', 'Display views')}</dt>
         <dd>${L(
-          'プレビューと同じ表示を別ウィンドウで開きます（プレビューの右下から）。設定の変更は、同じブラウザで開いたすべての窓にすぐ反映されます。OBS に透過で重ねるときは「詳細」タブから。',
-          'Opens the preview in its own window (from the bottom right of the preview). Changes apply instantly to every window open in the same browser. To overlay on OBS, use the More tab.')}</dd>
+          'プレビューと同じ表示を別ウィンドウで開きます（プレビューの右下から）。設定の変更は、同じブラウザで開いたすべての窓にすぐ反映されます。OBS に透過で重ねるときは「設定」タブから。',
+          'Opens the preview in its own window (from the bottom right of the preview). Changes apply instantly to every window open in the same browser. To overlay on OBS, use the Settings tab.')}</dd>
         <dt>${L('文字起こし', 'Transcript')}</dt>
         <dd>${L(
           '確定した発話が時刻つきで残ります。「TXT」でテキスト、「SRT」で動画用の字幕ファイルとして保存できます。つなぎ言葉（えー、あのー など）は自動で除きます。',
@@ -150,7 +150,7 @@ function html() {
       <h4>${L('A. 透過で重ねる（推奨）', 'A. Transparent overlay (recommended)')}</h4>
       <ol>
         <li>${L('OBS 28 以降の「ツール → WebSocketサーバー設定」でサーバーを有効にし、パスワードを控える', 'In OBS 28 or later, enable Tools → WebSocket Server Settings and note the password')}</li>
-        <li>${L('「詳細」タブの「OBS に重ねる」を開き、接続先とパスワードを入れて「接続」', 'Open “Overlay on OBS” in the More tab, enter the address and password, then Connect')}</li>
+        <li>${L('「設定」タブの「OBS に重ねる」を開き、接続先とパスワードを入れて「接続」', 'Open “Overlay on OBS” in the Settings tab, enter the address and password, then Connect')}</li>
         <li>${L('「URLをコピー」して OBS のブラウザソースに貼る（1920×1080）', 'Press Copy URL and paste it into an OBS Browser Source (1920×1080)')}</li>
       </ol>
       <h4>${L('B. かんたん', 'B. Quick setup')}</h4>
