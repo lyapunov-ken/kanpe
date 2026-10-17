@@ -174,6 +174,20 @@
             <p class="hint">Images are resized to 1000px on the long side and cropped to fit the window. Camera video stays on this device and is never sent anywhere (it doesn’t show in OBS browser sources).</p>
           </div>
         </details>
+        <details class="acc-sec" name="more" id="logoSec">
+          <summary><span class="acc-t">Logo<em class="pro-tag">¥480+</em></span><small class="acc-d">A square logo in the top-left corner</small><b id="stLogo" class="acc-st" hidden></b></summary>
+          <div class="acc-body">
+            <div class="logo-row">
+              <div id="logoThumb" class="logo-thumb" aria-hidden="true"></div>
+              <div class="bg-actions">
+                <label class="btn logo-pick">Choose logo<input id="logoFile" type="file" accept="image/*"></label>
+                <button id="logoRemove" class="btn" type="button" hidden>Remove</button>
+              </div>
+            </div>
+            <div id="logoSizeRow" class="field" hidden><span class="lbl">Size</span><div id="logoSizes" class="segmented" role="radiogroup" aria-label="Logo size"></div></div>
+            <p class="hint">The center is cropped to a square (1:1) and shown in the top-left corner. A PNG with a transparent background works best. Words are placed around the logo.</p>
+          </div>
+        </details>
         <details class="acc-sec" name="more" id="speakerSec">
           <summary><span class="acc-t">Speakers<em class="pro-tag">¥480+</em></span><small class="acc-d">A name label and color for each speaker</small><b id="stSp" class="acc-st" hidden></b></summary>
           <div class="acc-body">

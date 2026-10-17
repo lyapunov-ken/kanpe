@@ -1,6 +1,6 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
-import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, loadSettings } from '../core/settings.js?v=202610171656';
+import { THEMES, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, LOGO_SIZES, loadSettings } from '../core/settings.js?v=202610171656';
 import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610171656';
 import { createBus } from '../core/bus.js?v=202610171656';
 import { connectObs, BG_KEEP } from '../core/obs.js?v=202610171656';
@@ -192,7 +192,9 @@ function applyTheme() {
     root.style.setProperty('--bg-dim-color', th.bg === 'transparent' ? '#000' : th.bg);
   }
   document.body.className = `theme-${S.theme} layout-${S.layout}` + (isLight(themeBg()) ? ' bg-light' : '') + (S.layout === 'vj' ? ` vj-${S.vjStyle || 'micro'}` : '') + (S.reduceMotion ? ' calm' : '') +
-    (S.caption ? ' has-cap' : '') + (EMBED ? ' embed' : '') + (S.credit === false ? '' : ' has-credit') + (S.bgImage || camStream ? ' has-bgimg' : '');
+    (S.caption ? ' has-cap' : '') + (EMBED ? ' embed' : '') + (S.credit === false ? '' : ' has-credit') + (S.bgImage || camStream ? ' has-bgimg' : '') +
+    (S.logo ? ' has-logo' : '');
+  applyLogo();
   if (!LOCAL_FONTS && th.gf && !fontLinks.has(th.gf)) {
     fontLinks.add(th.gf);
     const l = document.createElement('link');
@@ -293,6 +295,29 @@ function overlap(x, y, w, h, r) {
   return ox * oy;
 }
 
+// ---------------------------------------------------------------- カスタムロゴ（お手軽プラン）
+// 左上に正方形で出す。一辺と余白は「1280×720 を 1 とした基準の大きさ」で決めて、窓の大きさに合わせて拡縮する
+// （余白は言葉の置き場所の余白と同じ。どの窓でも同じ場所・同じ大きさになり、言葉の並びもそろう）
+const logoEl = document.getElementById('logo');
+function logoRef() {
+  if (!S.logo) return null;
+  const s = unit();
+  const W = Math.round(stage.clientWidth / s), H = Math.round(stage.clientHeight / s);
+  return { pad: Math.min(W, H) * 0.05, size: (LOGO_SIZES[S.logoSize] || LOGO_SIZES.m).ref };
+}
+function applyLogo() {
+  if (!logoEl) return;
+  const src = typeof S.logo === 'string' && S.logo.startsWith('data:image/') ? S.logo : '';
+  if (logoEl.dataset.src !== src) { // 数十KBの文字列なので、変わった時だけ差し替える
+    logoEl.dataset.src = src;
+    if (src) logoEl.src = src; else logoEl.removeAttribute('src');
+  }
+  logoEl.hidden = !src;
+  const r = logoRef(), s = unit();
+  root.style.setProperty('--logo', r ? r.size * s + 'px' : '0px');
+  root.style.setProperty('--logo-pad', r ? r.pad * s + 'px' : '0px');
+}
+
 // 12カラムの格子にスナップしながら、重ならない場所を探す。大きい語ほど中央寄り。
 // 計算は「1280×720 を 1 とした基準の大きさ」で行う（字の大きさと同じ倍率 unit() で割る）。
 // w・h も基準の大きさで測ったもの（refSize）を受け取る。こうすると、プレビューと別窓のように
@@ -309,6 +334,8 @@ function place(w, h, lv, self, rand = Math.random) {
   const centerWeight = w * h * (lv >= 3 ? 1.4 : lv === 2 ? 0.8 : lv === 1 ? 0.25 : 0.08);
   const others = [];
   const t = clockAt();
+  const lr = logoRef(); // ロゴには絶対に重ねない（新語と同じ扱い）
+  if (lr) others.push({ r: { x: lr.pad, y: lr.pad, w: lr.size, h: lr.size }, leaving: false, fz: true });
   for (const it of items.values()) {
     if (it === self || !it.rect || (it.leaving && it.goneAt <= t)) continue;
     others.push({ r: { x: it.rect.x / s, y: it.rect.y / s, w: it.rect.w / s, h: it.rect.h / s }, leaving: it.leaving, fz: it.kind === 'fusion' });
@@ -1153,6 +1180,7 @@ let lastSettings = null; // コンソールから届いた最新の設定（別�
 function applySettings(s) {
   const prev = S;
   if (s && s.bgImage === BG_KEEP) s = { ...s, bgImage: prev.bgImage || '' };
+  if (s && s.logo === BG_KEEP) s = { ...s, logo: prev.logo || '' };
   lastSettings = s;
   S = { ...DEFAULTS, ...s, ...LOCK };
   applyTheme();
@@ -1330,7 +1358,7 @@ window.addEventListener('keydown', (e) => {
   }
   if (e.key === 'f' && !EMBED) toggleFullscreen();
 });
-window.addEventListener('resize', () => root.style.setProperty('--base', basePx() + 'px'));
+window.addEventListener('resize', () => { root.style.setProperty('--base', basePx() + 'px'); applyLogo(); });
 
 applyTheme();
 setupLayout();

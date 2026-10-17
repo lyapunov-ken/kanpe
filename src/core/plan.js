@@ -84,6 +84,7 @@ export const REQUIRES = {
   // アクセントカラーは 2026-10-15 から無料プランでも変えられる（ここに載せない機能は誰でも使える）
   'bg:image': 'plus',        // 背景画像のアップロード
   'bg:camera': 'plus',       // 背景にカメラの映像を映す
+  'logo:custom': 'plus',     // 画面の左上にカスタムロゴ（1:1）を出す
   'layout:vj': 'plus',       // ドットアートの VJ モード
   'speaker:labels': 'plus',  // 話者のラベルと色分け（手動切り替え・声の高さで自動）
   'speaker:diarize': 'pro',  // クラウド認識による話者の自動聞き分け

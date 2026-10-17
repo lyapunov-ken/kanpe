@@ -42,19 +42,22 @@ export function connectObs({ url, password = '', onMessage, onStatus }) {
   const schedule = () => { clearTimeout(timer); timer = setTimeout(open, 2500); };
   open();
 
-  // 背景画像（数百KB）は変わった時だけ送る。同じなら目印だけ送り、受け手は手元の画像を使い続ける
-  let lastBg = '';
+  // 背景画像（数百KB）とロゴは変わった時だけ送る。同じなら目印だけ送り、受け手は手元の画像を使い続ける
+  const last = { bgImage: '', logo: '' };
   return {
     send(msg) {
       if (!ready) return;
-      if (msg && msg.t === 'settings' && msg.s && msg.s.bgImage) {
-        if (msg.s.bgImage === lastBg) msg = { ...msg, s: { ...msg.s, bgImage: BG_KEEP } };
-        else lastBg = msg.s.bgImage;
+      if (msg && msg.t === 'settings' && msg.s) {
+        for (const k of Object.keys(last)) {
+          if (!msg.s[k]) continue;
+          if (msg.s[k] === last[k]) msg = { ...msg, s: { ...msg.s, [k]: BG_KEEP } };
+          else last[k] = msg.s[k];
+        }
       }
       ws.send(JSON.stringify({ op: 6, d: { requestType: 'BroadcastCustomEvent', requestId: String(++req),
         requestData: { eventData: { __kanpe: 1, msg } } } }));
     },
-    resetBg() { lastBg = ''; },
+    resetBg() { last.bgImage = ''; last.logo = ''; },
     close() { closed = true; clearTimeout(timer); try { ws && ws.close(); } catch { /* noop */ } },
   };
 }

@@ -103,6 +103,15 @@ body {
 .calm .w.aging { transition-duration: 1s; }
 @media (prefers-reduced-motion: reduce) { #caption { transition: none; } }
 
+/* カスタムロゴ（お手軽プラン）：左上に正方形で。大きさと余白は display.js が窓に合わせて決める（--logo・--logo-pad） */
+#logo { position: fixed; left: var(--logo-pad, 0); top: var(--logo-pad, 0); width: var(--logo, 0); height: var(--logo, 0); object-fit: contain;
+  z-index: 11; pointer-events: none; user-select: none; animation: logo-in .6s ease both; }
+#logo[hidden] { display: none; }
+@keyframes logo-in { from { opacity: 0; } to { opacity: 1; } }
+.calm #logo { animation: none; }
+/* カンペは下から積み上がるので、画面が埋まったときに上の行がロゴにかからないよう、上の余白をロゴのぶん空ける */
+.has-logo.layout-kanpe .flow { padding-top: max(calc(6vh - 3.5vh * var(--fill)), calc(var(--logo-pad) + var(--logo) + var(--base) * .3)); }
+
 /* Free のクレジット表示（Plus 以上で消える） */
 #credit {
   position: fixed; right: 2.4vw; bottom: 2.4vh; display: none; align-items: center; gap: .45em;

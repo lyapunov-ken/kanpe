@@ -1,5 +1,5 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610171656';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610171656';
 import { EN, L, tr } from '../core/i18n.js?v=202610171656';
 import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610171656';
 import { createBus } from '../core/bus.js?v=202610171656';
@@ -514,7 +514,7 @@ function renderAccents() {
   custom.appendChild(input);
   box.appendChild(custom);
 }
-const usingPlusTrial = () => !canUse('theme:premium') && ((THEMES[S.theme] && THEMES[S.theme].pro) || !!S.bgImage || !!S.bgCamera ||
+const usingPlusTrial = () => !canUse('theme:premium') && ((THEMES[S.theme] && THEMES[S.theme].pro) || !!S.bgImage || !!S.bgCamera || !!S.logo ||
   S.layout === 'vj' || S.speakerMode !== 'off');
 function updateTrial() {
   const box = $('#trialBox');
@@ -540,9 +540,11 @@ setInterval(() => {
       if (THEMES[S.theme] && THEMES[S.theme].pro) S.theme = DEFAULT_THEME;
       S.bgImage = '';
       S.bgCamera = false;
+      S.logo = '';
       if (S.layout === 'vj') S.layout = 'compose';
       S.speakerMode = 'off';
       renderBg();
+      renderLogo();
       renderCam();
       pushSettings();
       renderThemes();
@@ -610,6 +612,62 @@ $('#bgFile').addEventListener('change', async (e) => {
   }
 });
 $('#bgRemove').addEventListener('click', () => { S.bgImage = ''; renderBg(); updateTrial(); pushSettings(); });
+
+// ---- カスタムロゴ（お手軽プラン以上。無料プランは1日お試し）----
+// 真ん中を正方形に切り抜き、一辺 320px 以下に縮小する。透明な部分はそのまま残す（WebP、使えなければ PNG）。
+// 表示ビューは左上に出し、組版では言葉がロゴを避けて並ぶ。
+const LOGO_MAX = 320;
+const logoLocked = () => !canUse('logo:custom') && trialRemainingMs() <= 0;
+async function squareLogo(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error('decode'));
+      i.src = url;
+    });
+    const w0 = img.naturalWidth || LOGO_MAX, h0 = img.naturalHeight || LOGO_MAX; // SVG は大きさがないことがある
+    const side = Math.min(w0, h0);
+    const n = Math.max(1, Math.min(LOGO_MAX, Math.round(side)));
+    const c = document.createElement('canvas');
+    c.width = c.height = n;
+    c.getContext('2d').drawImage(img, (w0 - side) / 2, (h0 - side) / 2, side, side, 0, 0, n, n);
+    const webp = c.toDataURL('image/webp', 0.92);
+    return { data: webp.startsWith('data:image/webp') ? webp : c.toDataURL('image/png'), n, cropped: w0 !== h0 };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+function renderLogo() {
+  const thumb = $('#logoThumb');
+  thumb.replaceChildren();
+  if (S.logo) { const i = document.createElement('img'); i.src = S.logo; i.alt = ''; thumb.appendChild(i); }
+  $('#logoRemove').hidden = !S.logo;
+  $('#logoSizeRow').hidden = !S.logo;
+  document.querySelector('.logo-pick').classList.toggle('locked', logoLocked());
+  segButtons('#logoSizes', LOGO_SIZES, 'logoSize');
+}
+$('#logoFile').addEventListener('click', (e) => {
+  if (logoLocked()) { e.preventDefault(); toast(L(`お試し期間（1日）は終わりました。カスタムロゴは${PLUS_LABEL}で使えます`, `Your 1-day trial has ended. Custom logos are part of ${PLUS_LABEL}.`)); }
+});
+$('#logoFile').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (!/^image\//.test(file.type)) { toast(L('画像ファイルを選んでください', 'Please choose an image file')); return; }
+  try {
+    const { data, cropped } = await squareLogo(file);
+    S.logo = data;
+    renderLogo();
+    updateTrial();
+    pushSettings();
+    toast(cropped ? L('ロゴを設定しました（真ん中を正方形に切り抜きました）', 'Logo set (cropped to a square from the center)') : L('ロゴを設定しました', 'Logo set'));
+  } catch {
+    toast(L('この画像は読み込めませんでした。PNG か JPEG で試してください', 'Couldn’t read this image. Please try a PNG or JPEG.'));
+  }
+});
+$('#logoRemove').addEventListener('click', () => { S.logo = ''; renderLogo(); updateTrial(); pushSettings(); });
 
 // ---- 背景にカメラの映像（お手軽プラン以上。無料プランは1日お試し）----
 // 許可はここ（コンソール）で一度だけ取る。映像を映すのは表示ビュー側で、同じサイトなので許可を引き継ぐ。
@@ -692,6 +750,8 @@ if (!THEMES[S.theme] || (THEMES[S.theme].pro && !canUse('theme:premium') && tria
 if (S.accent && accentLocked()) S.accent = '';
 if (S.bgImage && accentLocked()) S.bgImage = '';
 if (S.bgCamera && (camLocked() || !CAN_CAM)) S.bgCamera = false;
+if (S.logo && logoLocked()) S.logo = '';
+if (!LOGO_SIZES[S.logoSize]) S.logoSize = 'm';
 if (S.layout === 'vj' && plusLocked('layout:vj')) S.layout = 'compose';
 if (!LAYOUTS[S.layout]) S.layout = 'compose';
 if (S.speakerMode !== 'off' && plusLocked('speaker:labels')) S.speakerMode = 'off';
@@ -711,6 +771,7 @@ bindRange('maxWords', 'vMax', (v) => L(`${v}語`, `${v} words`));
 bindRange('bgDim', 'vBgDim', (v) => `${Math.round(v * 100)}%`);
 renderBg();
 renderCam();
+renderLogo();
 if (S.bgCamera) listCameras();
 bindCheck('vertical');
 bindCheck('caption');
@@ -772,6 +833,7 @@ sideTabs.forEach((t, i) => {
 function updateMore() {
   const st = (id, text) => { const e = document.getElementById(id); if (e) { e.textContent = text; e.hidden = !text; } };
   st('stBg', S.bgCamera ? L('カメラ', 'Camera') : S.bgImage ? L('画像', 'Image') : '');
+  st('stLogo', S.logo ? L('オン', 'On') : '');
   st('stSp', S.speakerMode && S.speakerMode !== 'off' ? L('オン', 'On') : '');
   const words = (S.registered || '').split(/[、,，\n]/).map((w) => w.trim()).filter(Boolean).length;
   st('stDict', words ? L(`${words}語`, `${words} words`) : '');
@@ -1044,6 +1106,7 @@ function applyPlanUI() {
   renderSpeakers();
   renderBg();
   renderCam();
+  renderLogo();
   updateTrial();
   pushSettings(false);
 }
@@ -1076,8 +1139,8 @@ function renderPlanDialog() {
   } else if (lic && lic.plan !== 'free' && lic.expires * 1000 <= Date.now()) {
     box.append(h('p', 'lang-body', L('ご契約の期限が切れています。更新するとまた使えます', 'Your subscription has ended. Renew to keep using paid features.')));
   } else {
-    box.append(h('p', 'lang-body', L('お手軽プラン（月¥480・税込）で、VJ モード・話者の色分け・プレミアム書体・背景画像が使え、「KANPE」表示を消せます。いつでも解約できます。',
-      'Plus (¥480/mo incl. tax) unlocks VJ mode, speaker colors, premium typefaces and background images, and removes the “KANPE” mark. Cancel any time.')));
+    box.append(h('p', 'lang-body', L('お手軽プラン（月¥480・税込）で、VJ モード・話者の色分け・プレミアム書体・背景画像・カスタムロゴが使え、「KANPE」表示を消せます。いつでも解約できます。',
+      'Plus (¥480/mo incl. tax) unlocks VJ mode, speaker colors, premium typefaces, background images and a custom logo, and removes the “KANPE” mark. Cancel any time.')));
   }
   const actions = h('div', 'plan-actions');
   const msg = h('p', 'plan-msg'); msg.setAttribute('aria-live', 'polite');

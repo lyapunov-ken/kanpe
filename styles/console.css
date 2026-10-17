@@ -753,3 +753,14 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px va
 /* 英語版は見出しと数字が長いので、スライダーの左右の幅を広げる */
 html[lang="en"] .slider { grid-template-columns: 104px minmax(0, 1fr) 72px; }
 .slider output { white-space: nowrap; }
+
+/* ---- カスタムロゴ（お手軽プラン）：正方形のサムネイルと、選ぶ・外すボタン ---- */
+.logo-row { display: flex; align-items: center; gap: 12px; }
+.logo-thumb { width: 56px; height: 56px; flex: none; border-radius: 8px; display: grid; place-items: center; color: var(--faint); font-size: 11px;
+  background: repeating-conic-gradient(var(--check1) 0 25%, var(--check2) 0 50%) 0 0 / 10px 10px; box-shadow: inset 0 0 0 1px var(--line2); }
+.logo-thumb img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
+.logo-thumb:empty::before { content: "なし"; }
+:lang(en) .logo-thumb:empty::before { content: "None"; }
+.logo-pick { position: relative; overflow: hidden; cursor: pointer; }
+.logo-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
+.logo-pick.locked { opacity: .45; }
