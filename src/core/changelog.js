@@ -7,6 +7,8 @@ export const CHANGELOG = [
       { type: 'improve', ja: '設定を「表示」「ブレストモード」「詳細」の3つのタブに分けました。マイクとタブはいつも上に見えていて、ほとんどの画面でスクロールせずに操作できます。最後に開いたタブを覚えておきます', en: 'Settings are now split into three tabs: Display, Brainstorm and More. The mic and tabs always stay visible, so on most screens you can work without scrolling. The last tab you opened is remembered' },
       { type: 'improve', ja: '「ブレスト」を「ブレストモード」に改め、青い印で目立つように。新語ミックスをオンにすると、タブに「ON」が付き、枠が光ります', en: 'Brainstorm is now “Brainstorm mode”, marked in blue. When Word mix is on, its tab shows “ON” and the panel glows' },
       { type: 'improve', ja: '「詳細」タブの背景・話者・辞書・OBS は、開くと1つだけ広がります。閉じていても、使っている設定には印が付きます', en: 'In the More tab, Background, Speakers, Dictionary and OBS open one at a time, and show a small badge when in use' },
+      { type: 'fix', ja: '別窓（カンペ・組版）とプレビューで、言葉の置き場所・縦横・大きさがそろうように。あとから別窓を開いても、いまプレビューに出ている言葉から同じ画面で始まります', en: 'The cue and compose windows now match the preview: words appear in the same places, orientation and size. A window opened later starts from the words already on the preview' },
+      { type: 'fix', ja: '画面の高さが足りないときに、プレビューの形がつぶれて 16:9 でなくなっていた不具合', en: 'The preview no longer gets squashed out of 16:9 on short screens' },
     ],
   },
   {

@@ -24,7 +24,12 @@ const ROOT = EN ? '../' : ''; // 英語版は /en/ にあるので、表示ビ�
 const HL = EN ? 'hl=en' : '';
 
 const ex = new Extractor({ lang: S.lang, registered: S.registered, ng: S.ng });
-const bus = createBus((m) => { if (m.t === 'hello') { try { obs && obs.resetBg(); } catch { /* noop */ } pushSettings(false); } });
+const bus = createBus((m) => {
+  if (m.t !== 'hello') return;
+  try { obs && obs.resetBg(); } catch { /* noop */ }
+  pushSettings(false);
+  sendSync(m.from); // 新しく開いた窓に、いま画面に出ている言葉を渡して追いつかせる
+});
 let obs = null, unlinkObs = null;
 
 let paused = false;
@@ -34,10 +39,37 @@ const uttStart = new Map();
 const clock = () => { if (t0 === null) t0 = performance.now(); return (performance.now() - t0) / 1000; };
 
 // ------------------------------------------------------------ 送信
-function send(m) { bus.send(m); }
+// 別窓とプレビューを同じ画面にするしくみ：
+// - 言葉ごとに「種（seed）」を付けて送る。どの窓も同じ種から置き場所・縦横を決めるので、同じ並びになる
+// - 最近送った言葉を覚えておき、あとから開いた窓には、それまでの流れをまとめて渡す（窓はそれをなぞって追いつく）
+const recent = []; // { at, m }
+let layoutAt = performance.now(), lastLayout = S.layout; // レイアウトを切り替えた時刻（その窓は画面が作り直される）
+let lastCap = null;
+const newSeed = () => (Math.random() * 4294967296) >>> 0;
+function logEvent(m) {
+  const t = performance.now();
+  recent.push({ at: t, m });
+  // 画面に残りうる時間（新語の余韻・間があいたときの延長・カンペの記憶）より古いものは忘れる
+  const keep = Math.max(S.ttl * 1000 * 3.2 * 2.6, (+S.echo || 0) * 60000) + 5000;
+  while (recent.length && (t - recent[0].at > keep || recent.length > 2000)) recent.shift();
+}
+function send(m) {
+  if (m.t === 'word' || m.t === 'fuse') { m = { ...m, seed: newSeed(), ts: Date.now() }; logEvent(m); } // ts：言った時刻（どの窓も同じ時刻を使う）
+  else if (m.t === 'clear') recent.length = 0;
+  else if (m.t === 'caption') lastCap = { at: performance.now(), m };
+  bus.send(m);
+}
+function sendSync(to) {
+  if (!to) return;
+  const t = performance.now();
+  const events = recent.map((r) => ({ ...r.m, ago: Math.round(t - r.at) }));
+  if (lastCap && t - lastCap.at < 4000) events.push({ ...lastCap.m, ago: Math.round(t - lastCap.at) });
+  bus.send({ t: 'sync', to, events, since: Math.round(t - layoutAt) });
+}
 function pushSettings(save = true) {
   if (save) saveSettings(S);
   updateMore();
+  if (S.layout !== lastLayout) { lastLayout = S.layout; layoutAt = performance.now(); }
   // OBS の接続先・パスワードは表示ビューに不要なので送らない
   const { obsPassword, obsUrl, ...pub } = S; // eslint-disable-line no-unused-vars
   send({ t: 'settings', s: { ...pub, credit: !canUse('credit:hide') } });

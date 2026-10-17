@@ -7,7 +7,8 @@ const ID = Math.random().toString(36).slice(2);
 export function createBus(onMessage) {
   let bc = null;
   const links = new Set();
-  const receive = (m) => { if (m && m.from !== ID) onMessage(m); };
+  // to があるメッセージは、その窓だけが受け取る（新しく開いた窓への追いつき用など）
+  const receive = (m) => { if (m && m.from !== ID && (!m.to || m.to === ID)) onMessage(m); };
   try {
     bc = new BroadcastChannel(CHANNEL);
     bc.onmessage = (e) => receive(e.data);
