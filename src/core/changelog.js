@@ -2,6 +2,16 @@
 // type：new＝新機能 / improve＝改善 / fix＝修正。文言は短く、利用者向けのやさしい言葉で（日本語と英語）。
 export const CHANGELOG = [
   {
+    v: '1.3.1', date: '2026-10-17',
+    items: [
+      { type: 'improve', ja: '設定を「表示」「ブレストモード」「詳細」の3つのタブに分けました。マイクとタブはいつも上に見えていて、ほとんどの画面でスクロールせずに操作できます。最後に開いたタブを覚えておきます', en: 'Settings are now split into three tabs: Display, Brainstorm and More. The mic and tabs always stay visible, so on most screens you can work without scrolling. The last tab you opened is remembered' },
+      { type: 'improve', ja: '「ブレスト」を「ブレストモード」に改め、青い印で目立つように。新語ミックスをオンにすると、タブに「ON」が付き、枠が光ります', en: 'Brainstorm is now “Brainstorm mode”, marked in blue. When Word mix is on, its tab shows “ON” and the panel glows' },
+      { type: 'improve', ja: '「詳細」タブの背景・話者・辞書・OBS は、開くと1つだけ広がります。閉じていても、使っている設定には印が付きます', en: 'In the More tab, Background, Speakers, Dictionary and OBS open one at a time, and show a small badge when in use' },
+      { type: 'fix', ja: '別窓（カンペ・組版）とプレビューで、言葉の置き場所・縦横・大きさがそろうように。あとから別窓を開いても、いまプレビューに出ている言葉から同じ画面で始まります', en: 'The cue and compose windows now match the preview: words appear in the same places, orientation and size. A window opened later starts from the words already on the preview' },
+      { type: 'fix', ja: '画面の高さが足りないときに、プレビューの形がつぶれて 16:9 でなくなっていた不具合', en: 'The preview no longer gets squashed out of 16:9 on short screens' },
+    ],
+  },
+  {
     v: '1.3.0', date: '2026-10-15',
     items: [
       { type: 'new', ja: '新語ミックス：画面に出た言葉どうしを掛け合わせて、新しい言葉を生み出します（ブレスト向け）。色・出かた（衝突・デコード・シャッター・集束・スキャン）・速さも選べます。新語はほかの言葉と重ならない場所に、いつも手前に出て余韻を残し、色は背景に合わせて読みやすく整えます。同時に出る新語は5つまでで、それを超えると古い新語から早めに消えます', en: 'Word mix: combines words on screen into brand-new words (for brainstorming), with your choice of color, entrance (Collide, Decode, Shutter, Converge, Scan) and speed. New words never overlap other words, stay in front, linger longer, and their colors adjust to the background for readability. Up to five new words show at once; beyond that, the oldest fade out early' },

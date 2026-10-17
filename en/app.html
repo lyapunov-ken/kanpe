@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97%20BGMPRcdefhilnotux%E3%82%AF%E3%82%B4%E3%82%B7%E3%83%83%E3%83%88%E3%83%89%E4%B8%B8%E5%A4%AA%E6%98%8E%E6%9C%9D%E6%A5%B5&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="../styles/console.css?v=202610151239">
+<link rel="stylesheet" href="../styles/console.css?v=202610171656">
 </head>
 <body>
 <header class="top">
@@ -90,122 +90,134 @@
       </div>
     </div>
 
-    <div class="sec">
-      <h2>DISPLAY</h2>
-      <div class="field"><span class="lbl">Typeface theme</span><div id="themes" class="themes" role="radiogroup" aria-label="Typeface theme"></div></div>
-      <div class="field pro-themes">
-        <span class="lbl">Premium typefaces <em class="pro-tag">¥480+</em></span>
-        <div id="proThemes" class="themes" role="radiogroup" aria-label="Premium typefaces"></div>
-      </div>
-      <div class="field">
-        <span class="lbl">Accent color</span>
-        <div id="accents" class="accents" role="radiogroup" aria-label="Accent color"></div>
-        <p class="hint">Used for the color and underline of words heard for the first time</p>
-      </div>
-      <div class="field">
-        <span class="lbl">Background (image / camera) <em class="pro-tag">¥480+</em></span>
-        <div class="bg-row">
-          <div id="bgThumb" class="bg-thumb" aria-hidden="true"></div>
-          <div class="bg-actions">
-            <label class="btn bg-pick">Choose image<input id="bgFile" type="file" accept="image/*"></label>
-            <button id="bgRemove" class="btn" type="button" hidden>Remove</button>
+    <div class="side-tabs" role="tablist" aria-label="Settings tabs">
+      <button id="tabLook" class="side-tab" type="button" role="tab" aria-selected="true" aria-controls="paneLook" data-tab="look">Display</button>
+      <button id="tabCoin" class="side-tab tab-coin" type="button" role="tab" aria-selected="false" aria-controls="paneCoin" data-tab="coin" tabindex="-1"><span class="coin-ic" aria-hidden="true">✦</span>Brainstorm<em class="tab-on">ON</em></button>
+      <button id="tabMore" class="side-tab" type="button" role="tab" aria-selected="false" aria-controls="paneMore" data-tab="more" tabindex="-1">More</button>
+    </div>
+
+    <div class="side-panes">
+      <div id="paneLook" class="sec pane" role="tabpanel" aria-labelledby="tabLook">
+        <div class="field theme-field">
+          <div class="lbl-row theme-lbls"><span class="lbl">Typeface theme</span><span class="pro-lbl" title="Premium typefaces"><em class="pro-tag">¥480〜</em></span></div>
+          <div class="theme-row">
+            <div id="themes" class="themes" role="radiogroup" aria-label="Typeface theme"></div>
+            <div id="proThemes" class="themes pro-row" role="radiogroup" aria-label="Premium typefaces"></div>
           </div>
         </div>
-        <div class="cam-row">
-          <button id="bgCam" class="btn bg-cam" type="button" aria-pressed="false">Show camera</button>
-          <select id="bgCamSel" aria-label="Camera" hidden></select>
+        <div id="trialBox" class="trial">
+          <div class="trial-bar"><i id="trialFill"></i></div>
+          <p id="trialNote" class="hint" title="Premium typefaces, backgrounds (image / camera), VJ mode and speaker colors can be tried for 24 hours from first use">Features marked ¥480+ can be tried free for a day</p>
         </div>
-        <label class="switch" id="bgMirrorRow" hidden><span>Mirror camera</span><input id="bgMirror" type="checkbox" role="switch"></label>
-        <label class="slider" id="bgDimRow" hidden><span class="lbl">Background dimming</span><output id="vBgDim"></output><input id="bgDim" type="range" min="0" max="0.85" step="0.05"></label>
-        <p class="hint">Images are resized to 1000px on the long side and cropped to fit the window. Camera video stays on this device and is never sent anywhere (it doesn’t show in OBS browser sources).</p>
+        <div class="field">
+          <div class="lbl-row"><span class="lbl">Accent color</span><span class="hint">For words heard the first time</span></div>
+          <div id="accents" class="accents" role="radiogroup" aria-label="Accent color"></div>
+        </div>
+        <div class="field"><span class="lbl">Layout</span><div id="layouts" class="segmented four" role="radiogroup" aria-label="Layout"></div><p id="layoutNote" class="hint"></p></div>
+        <div id="vjOpts" class="field vj-opts" hidden>
+          <span class="lbl">VJ style <em class="pro-tag">¥480+</em></span>
+          <div id="vjStyles" class="segmented four" role="radiogroup" aria-label="VJ style"></div>
+          <p id="vjStyleNote" class="hint"></p>
+          <span class="lbl vj-sub">VJ typeface</span>
+          <div id="vjFonts" class="segmented five vj-fonts" role="radiogroup" aria-label="VJ typeface"></div>
+        </div>
+        <div id="kanpeOpts" class="field" hidden>
+          <span class="lbl">Topic memory</span>
+          <div id="echoSpans" class="segmented" role="radiogroup" aria-label="Topic memory"></div>
+          <p id="echoNote" class="hint"></p>
+        </div>
+        <div class="sliders">
+          <label class="slider" data-novj><span class="lbl">Text size</span><output id="vSize"></output><input id="baseSize" type="range" min="20" max="90" step="1"></label>
+          <label class="slider"><span class="lbl">Display time</span><output id="vTtl"></output><input id="ttl" type="range" min="3" max="30" step="1"></label>
+          <label class="slider" data-novj><span class="lbl">Words on screen</span><output id="vMax"></output><input id="maxWords" type="range" min="6" max="40" step="1"></label>
+        </div>
+        <div class="switches">
+          <label class="switch" data-novj><span>Mix in vertical text</span><input id="vertical" type="checkbox" role="switch"></label>
+          <label class="switch"><span>Caption line</span><input id="caption" type="checkbox" role="switch"></label>
+          <label class="switch"><span>Reduce motion</span><input id="reduceMotion" type="checkbox" role="switch"></label>
+        </div>
       </div>
-      <div id="trialBox" class="trial">
-        <div class="trial-bar"><i id="trialFill"></i></div>
-        <p id="trialNote" class="hint">Premium typefaces, background images, VJ mode and speaker colors can be tried free for one day (24 hours)</p>
-      </div>
-      <div class="field"><span class="lbl">Layout</span><div id="layouts" class="segmented four" role="radiogroup" aria-label="Layout"></div><p id="layoutNote" class="hint"></p></div>
-      <div id="vjOpts" class="field vj-opts" hidden>
-        <span class="lbl">VJ style <em class="pro-tag">¥480+</em></span>
-        <div id="vjStyles" class="segmented four" role="radiogroup" aria-label="VJ style"></div>
-        <p id="vjStyleNote" class="hint"></p>
-        <span class="lbl vj-sub">VJ typeface</span>
-        <div id="vjFonts" class="segmented five vj-fonts" role="radiogroup" aria-label="VJ typeface"></div>
-      </div>
-      <div id="kanpeOpts" class="field" hidden>
-        <span class="lbl">Topic memory</span>
-        <div id="echoSpans" class="segmented" role="radiogroup" aria-label="Topic memory"></div>
-        <p id="echoNote" class="hint"></p>
-      </div>
-      <div class="sliders">
-        <label class="slider" data-novj><span class="lbl">Text size</span><output id="vSize"></output><input id="baseSize" type="range" min="20" max="90" step="1"></label>
-        <label class="slider"><span class="lbl">Display time</span><output id="vTtl"></output><input id="ttl" type="range" min="3" max="30" step="1"></label>
-        <label class="slider" data-novj><span class="lbl">Words on screen</span><output id="vMax"></output><input id="maxWords" type="range" min="6" max="40" step="1"></label>
-      </div>
-      <div class="switches">
-        <label class="switch" data-novj><span>Mix in vertical text</span><input id="vertical" type="checkbox" role="switch"></label>
-        <label class="switch"><span>Caption line</span><input id="caption" type="checkbox" role="switch"></label>
-        <label class="switch"><span>Reduce motion</span><input id="reduceMotion" type="checkbox" role="switch"></label>
-      </div>
-    </div>
 
-    <div class="sec coin-sec" id="coinSec">
-      <h2>BRAINSTORM</h2>
-      <div class="coin-card">
-        <div class="coin-art" aria-hidden="true"><span class="ca-a">Typography</span><span class="ca-x">×</span><span class="ca-b">Browser</span><span class="ca-eq">→</span><span class="ca-c">Typowser</span></div>
-        <label class="switch coin-switch"><span><b>Word mix</b><small>Combines words on screen into brand-new coined words</small></span><input id="fusion" type="checkbox" role="switch"></label>
-        <div class="coin-row">
-          <button id="btnFuse" class="btn" type="button">Mix now <kbd>M</kbd></button>
-          <span class="hint">When on, new words are born now and then while you talk</span>
-        </div>
-        <div class="coin-opts">
-          <div class="coin-opt"><span class="lbl">New-word color</span><div id="fzColors" class="accents fz-colors" role="radiogroup" aria-label="New-word color"></div></div>
-          <div class="coin-opt"><span class="lbl">Entrance</span><div id="fzMotions" class="segmented" role="radiogroup" aria-label="New-word entrance"></div><p id="fzMotionNote" class="hint"></p></div>
-          <div class="coin-opt"><span class="lbl">Speed</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="New-word speed"></div></div>
+      <div id="paneCoin" class="sec pane coin-sec" role="tabpanel" aria-labelledby="tabCoin" hidden>
+        <div class="coin-card">
+          <div class="coin-art" aria-hidden="true"><span class="ca-a">Typography</span><span class="ca-x">×</span><span class="ca-b">Browser</span><span class="ca-eq">→</span><span class="ca-c">Typowser</span></div>
+          <label class="switch coin-switch"><span><b>Word mix</b><small>Combines words on screen into brand-new coined words</small></span><input id="fusion" type="checkbox" role="switch"></label>
+          <div class="coin-row">
+            <button id="btnFuse" class="btn" type="button">Mix now <kbd>M</kbd></button>
+            <span class="hint">When on, new words are born now and then while you talk</span>
+          </div>
+          <div class="coin-opts">
+            <div class="coin-opt"><span class="lbl">New-word color</span><div id="fzColors" class="accents fz-colors" role="radiogroup" aria-label="New-word color"></div></div>
+            <div class="coin-opt"><span class="lbl">Entrance</span><div id="fzMotions" class="segmented" role="radiogroup" aria-label="New-word entrance"></div><p id="fzMotionNote" class="hint"></p></div>
+            <div class="coin-opt"><span class="lbl">Speed</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="New-word speed"></div></div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="sec" id="speakerSec">
-      <h2>SPEAKERS <em class="pro-tag">¥480+</em></h2>
-      <div class="field">
-        <span class="lbl">Labels and colors</span>
-        <div id="spModes" class="segmented" role="radiogroup" aria-label="Speaker colors"></div>
-        <p id="spModeNote" class="hint"></p>
+      <div id="paneMore" class="pane more-pane" role="tabpanel" aria-labelledby="tabMore" hidden>
+        <details class="acc-sec" name="more" id="bgSec">
+          <summary><span class="acc-t">Background (image / camera)<em class="pro-tag">¥480+</em></span><small class="acc-d">Put words over an image or your camera</small><b id="stBg" class="acc-st" hidden></b></summary>
+          <div class="acc-body">
+            <div class="bg-row">
+              <div id="bgThumb" class="bg-thumb" aria-hidden="true"></div>
+              <div class="bg-actions">
+                <label class="btn bg-pick">Choose image<input id="bgFile" type="file" accept="image/*"></label>
+                <button id="bgRemove" class="btn" type="button" hidden>Remove</button>
+              </div>
+            </div>
+            <div class="cam-row">
+              <button id="bgCam" class="btn bg-cam" type="button" aria-pressed="false">Show camera</button>
+              <select id="bgCamSel" aria-label="Camera" hidden></select>
+            </div>
+            <label class="switch" id="bgMirrorRow" hidden><span>Mirror camera</span><input id="bgMirror" type="checkbox" role="switch"></label>
+            <label class="slider" id="bgDimRow" hidden><span class="lbl">Background dimming</span><output id="vBgDim"></output><input id="bgDim" type="range" min="0" max="0.85" step="0.05"></label>
+            <p class="hint">Images are resized to 1000px on the long side and cropped to fit the window. Camera video stays on this device and is never sent anywhere (it doesn’t show in OBS browser sources).</p>
+          </div>
+        </details>
+        <details class="acc-sec" name="more" id="speakerSec">
+          <summary><span class="acc-t">Speakers<em class="pro-tag">¥480+</em></span><small class="acc-d">A name label and color for each speaker</small><b id="stSp" class="acc-st" hidden></b></summary>
+          <div class="acc-body">
+            <div class="field">
+              <span class="lbl">Labels and colors</span>
+              <div id="spModes" class="segmented" role="radiogroup" aria-label="Speaker colors"></div>
+              <p id="spModeNote" class="hint"></p>
+            </div>
+            <div id="spBody" class="sp-body" hidden>
+              <div class="field"><span class="lbl">People</span><div id="spCounts" class="segmented" role="radiogroup" aria-label="Number of speakers"></div></div>
+              <div class="field"><span class="lbl">Names and colors</span><ul id="spList" class="sp-list"></ul></div>
+              <div class="field"><span class="lbl">Speaking now <kbd>1</kbd>–<kbd>4</kbd></span><div id="spNow" class="sp-now" role="group" aria-label="Speaking now"></div></div>
+            </div>
+            <p class="hint">With Pro, cloud recognition tells voices apart and colors them automatically (coming soon)</p>
+          </div>
+        </details>
+        <details class="acc-sec" name="more" id="dictSec">
+          <summary><span class="acc-t">Dictionary</span><small class="acc-d">Keywords and blocked words</small><b id="stDict" class="acc-st" hidden></b></summary>
+          <div class="acc-body">
+            <label class="field"><span class="lbl">Keywords</span><textarea id="registered" rows="2" placeholder="Product names, show titles, guest names…"></textarea><span class="hint">Highlighted and picked up first. Separate with commas or new lines.</span></label>
+            <label class="field"><span class="lbl">Blocked words</span><textarea id="ng" rows="2" placeholder="Confidential code names, etc."></textarea><span class="hint">Never shown on screen or in captions.</span></label>
+          </div>
+        </details>
+        <details class="acc-sec" name="more" id="obsSec">
+          <summary><span class="acc-t">Overlay on OBS<small class="acc-tag">Beta</small></span><small class="acc-d">Transparent overlay on your stream</small><b id="stObs" class="acc-st" hidden></b></summary>
+          <div class="acc-body">
+              <p class="hint">Open the cue and compose windows from the bottom right of the preview</p>
+            <ol class="steps-mini">
+              <li>In OBS, enable the server under Tools → WebSocket Server Settings</li>
+              <li>Enter the address and password, then press Connect</li>
+              <li>Press Copy URL and paste it into an OBS Browser Source (1920×1080)</li>
+            </ol>
+            <div class="grid2">
+              <input id="obsUrl" class="mono" placeholder="ws://127.0.0.1:4455" aria-label="Address">
+              <input id="obsPassword" type="password" placeholder="Password" aria-label="Password">
+            </div>
+            <div class="obs-actions">
+              <button id="obsConnect" class="btn" type="button">Connect</button>
+              <button id="obsCopy" class="btn" type="button">Copy URL</button>
+              <span id="obsStatus" class="hint">Not connected</span>
+            </div>
+          </div>
+        </details>
       </div>
-      <div id="spBody" class="sp-body" hidden>
-        <div class="field"><span class="lbl">People</span><div id="spCounts" class="segmented" role="radiogroup" aria-label="Number of speakers"></div></div>
-        <div class="field"><span class="lbl">Names and colors</span><ul id="spList" class="sp-list"></ul></div>
-        <div class="field"><span class="lbl">Speaking now <kbd>1</kbd>–<kbd>4</kbd></span><div id="spNow" class="sp-now" role="group" aria-label="Speaking now"></div></div>
-      </div>
-      <p class="hint">With Pro, cloud recognition tells voices apart and colors them automatically (coming soon)</p>
-    </div>
-
-    <div class="sec">
-      <h2>DICTIONARY</h2>
-      <label class="field"><span class="lbl">Keywords</span><textarea id="registered" rows="2" placeholder="Product names, show titles, guest names…"></textarea><span class="hint">Highlighted and picked up first. Separate with commas or new lines.</span></label>
-      <label class="field"><span class="lbl">Blocked words</span><textarea id="ng" rows="2" placeholder="Confidential code names, etc."></textarea><span class="hint">Never shown on screen or in captions.</span></label>
-    </div>
-
-    <div class="sec">
-      <h2>DISPLAY VIEWS</h2>
-      <p class="hint">Open the cue and compose windows from the bottom right of the preview</p>
-      <details class="obs">
-        <summary><span>Overlay on OBS (transparent)</span><small>Beta</small></summary>
-        <ol class="steps-mini">
-          <li>In OBS, enable the server under Tools → WebSocket Server Settings</li>
-          <li>Enter the address and password, then press Connect</li>
-          <li>Press Copy URL and paste it into an OBS Browser Source (1920×1080)</li>
-        </ol>
-        <div class="grid2">
-          <input id="obsUrl" class="mono" placeholder="ws://127.0.0.1:4455" aria-label="Address">
-          <input id="obsPassword" type="password" placeholder="Password" aria-label="Password">
-        </div>
-        <div class="obs-actions">
-          <button id="obsConnect" class="btn" type="button">Connect</button>
-          <button id="obsCopy" class="btn" type="button">Copy URL</button>
-          <span id="obsStatus" class="hint">Not connected</span>
-        </div>
-      </details>
     </div>
   </section>
 
@@ -241,9 +253,9 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="../src/ui/lang.js?v=202610151239" defer></script>
-<script src="../src/ui/menu.js?v=202610151239" defer></script>
-<script src="../src/ui/mode.js?v=202610151239" defer></script>
-<script type="module" src="../src/console/console.js?v=202610151239"></script>
+<script src="../src/ui/lang.js?v=202610171656" defer></script>
+<script src="../src/ui/menu.js?v=202610171656" defer></script>
+<script src="../src/ui/mode.js?v=202610171656" defer></script>
+<script type="module" src="../src/console/console.js?v=202610171656"></script>
 </body>
 </html>

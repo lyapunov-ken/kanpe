@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610151239';
-import { EN, L, tr } from '../core/i18n.js?v=202610151239';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610151239';
-import { createBus } from '../core/bus.js?v=202610151239';
-import { connectObs } from '../core/obs.js?v=202610151239';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610151239';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610151239';
-import { simulateSpeech } from './demo.js?v=202610151239';
-import { initHelp } from './help.js?v=202610151239';
-import { initNews } from './news.js?v=202610151239';
-import { createGuide, guideSeen } from './guide.js?v=202610151239';
-import { coinWord } from '../core/coin.js?v=202610151239';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610151239';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610171656';
+import { EN, L, tr } from '../core/i18n.js?v=202610171656';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610171656';
+import { createBus } from '../core/bus.js?v=202610171656';
+import { connectObs } from '../core/obs.js?v=202610171656';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610171656';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610171656';
+import { simulateSpeech } from './demo.js?v=202610171656';
+import { initHelp } from './help.js?v=202610171656';
+import { initNews } from './news.js?v=202610171656';
+import { createGuide, guideSeen } from './guide.js?v=202610171656';
+import { coinWord } from '../core/coin.js?v=202610171656';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610171656';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -24,7 +24,12 @@ const ROOT = EN ? '../' : ''; // 英語版は /en/ にあるので、表示ビ�
 const HL = EN ? 'hl=en' : '';
 
 const ex = new Extractor({ lang: S.lang, registered: S.registered, ng: S.ng });
-const bus = createBus((m) => { if (m.t === 'hello') { try { obs && obs.resetBg(); } catch { /* noop */ } pushSettings(false); } });
+const bus = createBus((m) => {
+  if (m.t !== 'hello') return;
+  try { obs && obs.resetBg(); } catch { /* noop */ }
+  pushSettings(false);
+  sendSync(m.from); // 新しく開いた窓に、いま画面に出ている言葉を渡して追いつかせる
+});
 let obs = null, unlinkObs = null;
 
 let paused = false;
@@ -34,9 +39,37 @@ const uttStart = new Map();
 const clock = () => { if (t0 === null) t0 = performance.now(); return (performance.now() - t0) / 1000; };
 
 // ------------------------------------------------------------ 送信
-function send(m) { bus.send(m); }
+// 別窓とプレビューを同じ画面にするしくみ：
+// - 言葉ごとに「種（seed）」を付けて送る。どの窓も同じ種から置き場所・縦横を決めるので、同じ並びになる
+// - 最近送った言葉を覚えておき、あとから開いた窓には、それまでの流れをまとめて渡す（窓はそれをなぞって追いつく）
+const recent = []; // { at, m }
+let layoutAt = performance.now(), lastLayout = S.layout; // レイアウトを切り替えた時刻（その窓は画面が作り直される）
+let lastCap = null;
+const newSeed = () => (Math.random() * 4294967296) >>> 0;
+function logEvent(m) {
+  const t = performance.now();
+  recent.push({ at: t, m });
+  // 画面に残りうる時間（新語の余韻・間があいたときの延長・カンペの記憶）より古いものは忘れる
+  const keep = Math.max(S.ttl * 1000 * 3.2 * 2.6, (+S.echo || 0) * 60000) + 5000;
+  while (recent.length && (t - recent[0].at > keep || recent.length > 2000)) recent.shift();
+}
+function send(m) {
+  if (m.t === 'word' || m.t === 'fuse') { m = { ...m, seed: newSeed(), ts: Date.now() }; logEvent(m); } // ts：言った時刻（どの窓も同じ時刻を使う）
+  else if (m.t === 'clear') recent.length = 0;
+  else if (m.t === 'caption') lastCap = { at: performance.now(), m };
+  bus.send(m);
+}
+function sendSync(to) {
+  if (!to) return;
+  const t = performance.now();
+  const events = recent.map((r) => ({ ...r.m, ago: Math.round(t - r.at) }));
+  if (lastCap && t - lastCap.at < 4000) events.push({ ...lastCap.m, ago: Math.round(t - lastCap.at) });
+  bus.send({ t: 'sync', to, events, since: Math.round(t - layoutAt) });
+}
 function pushSettings(save = true) {
   if (save) saveSettings(S);
+  updateMore();
+  if (S.layout !== lastLayout) { lastLayout = S.layout; layoutAt = performance.now(); }
   // OBS の接続先・パスワードは表示ビューに不要なので送らない
   const { obsPassword, obsUrl, ...pub } = S; // eslint-disable-line no-unused-vars
   send({ t: 'settings', s: { ...pub, credit: !canUse('credit:hide') } });
@@ -494,7 +527,7 @@ function updateTrial() {
   box.classList.toggle('active', trialStarted() && rem > 0);
   $('#trialNote').textContent = rem <= 0 ? L(`お試し期間（1日）は終わりました。${PLUS_LABEL}で続けて使えます`, `Your 1-day trial has ended. Keep using these with ${PLUS_LABEL}.`)
     : trialStarted() ? L(`お試し中　残り ${left}（終わると標準の見た目に戻ります）`, `Trial: ${left} left (then everything returns to the standard look)`)
-    : L('プレミアム書体・背景画像・VJ モード・話者の色分けは、無料プランでも1日（24時間）お試しできます。使い始めた時から数えます', 'Premium typefaces, background images, VJ mode and speaker colors can be tried free for one day (24 hours), counted from first use.');
+    : L('¥480〜 の機能は、無料でも1日お試しできます', 'Features marked ¥480+ can be tried free for a day');
 }
 let trialLast = performance.now();
 setInterval(() => {
@@ -696,9 +729,55 @@ function applyPreset(p) {
   for (const id of ['vertical', 'caption', 'fusion']) $('#' + id).checked = !!S[id];
   updateTrial();
   pushSettings();
+  showTab(S.fusion ? 'coin' : 'look'); // 選んだ設定が見えるタブへ（ブレスト会議ならブレストモード）
   toast(L(`「${p.label}」向けの設定にしました`, `Switched to settings for: ${p.label}`));
 }
 const help = initHelp({ onPreset: applyPreset, onGuide: () => guide.start() });
+
+// ------------------------------------------------------------ サイドメニューのタブ（表示・ブレストモード・詳細）
+// 最後に開いていたタブはこの端末に覚えておく。← → で隣のタブへ（Home / End で端へ）
+const TABKEY = 'kanpe.tab.v1';
+const sideTabs = [...document.querySelectorAll('.side-tab')];
+function showTab(id, focus = false) {
+  const cur = document.querySelector('.side-tab[aria-selected="true"]');
+  if (!cur || cur.dataset.tab !== id) {
+    for (const t of sideTabs) {
+      const on = t.dataset.tab === id;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      $('#' + t.getAttribute('aria-controls')).hidden = !on;
+    }
+    const panes = $('.side-panes');
+    if (panes) panes.scrollTop = 0;
+    try { localStorage.setItem(TABKEY, id); } catch { /* 保存できない環境 */ }
+  }
+  if (focus) { const t = sideTabs.find((x) => x.dataset.tab === id); if (t) t.focus(); }
+}
+sideTabs.forEach((t, i) => {
+  t.addEventListener('click', () => showTab(t.dataset.tab));
+  t.addEventListener('keydown', (e) => {
+    const n = sideTabs.length;
+    const j = { ArrowRight: (i + 1) % n, ArrowLeft: (i - 1 + n) % n, Home: 0, End: n - 1 }[e.key];
+    if (j === undefined) return;
+    e.preventDefault();
+    showTab(sideTabs[j].dataset.tab, true);
+  });
+});
+{
+  let t0 = 'look';
+  try { t0 = localStorage.getItem(TABKEY) || t0; } catch { /* noop */ }
+  showTab(sideTabs.some((t) => t.dataset.tab === t0) ? t0 : 'look');
+}
+// 「詳細」タブの見出しに、いまの状態を小さく出す（閉じたままでも、何が効いているかわかるように）
+function updateMore() {
+  const st = (id, text) => { const e = document.getElementById(id); if (e) { e.textContent = text; e.hidden = !text; } };
+  st('stBg', S.bgCamera ? L('カメラ', 'Camera') : S.bgImage ? L('画像', 'Image') : '');
+  st('stSp', S.speakerMode && S.speakerMode !== 'off' ? L('オン', 'On') : '');
+  const words = (S.registered || '').split(/[、,，\n]/).map((w) => w.trim()).filter(Boolean).length;
+  st('stDict', words ? L(`${words}語`, `${words} words`) : '');
+  st('stObs', obs ? L('接続', 'On') : '');
+}
+updateMore();
 
 
 // ------------------------------------------------------------ 話者のラベルと色分け（お手軽プラン以上。無料プランは1日お試し）
@@ -1234,14 +1313,14 @@ function obsLabel(st) {
   return { connecting: L('接続中…', 'Connecting…'), connected: L('接続済み', 'Connected'), disconnected: L('未接続（再試行中）', 'Disconnected (retrying)'), 'auth-failed': L('パスワードが違います', 'Wrong password') }[st] || st;
 }
 $('#obsConnect').addEventListener('click', () => {
-  if (obs) { obs.close(); unlinkObs && unlinkObs(); obs = null; $('#obsConnect').textContent = L('接続', 'Connect'); $('#obsStatus').textContent = L('未接続', 'Not connected'); return; }
+  if (obs) { obs.close(); unlinkObs && unlinkObs(); obs = null; $('#obsConnect').textContent = L('接続', 'Connect'); $('#obsStatus').textContent = L('未接続', 'Not connected'); updateMore(); return; }
   S.obsUrl = $('#obsUrl').value.trim() || DEFAULTS.obsUrl;
   S.obsPassword = $('#obsPassword').value;
   saveSettings(S);
   obs = connectObs({
     url: S.obsUrl, password: S.obsPassword,
     onMessage: bus.receive,
-    onStatus: (st) => { $('#obsStatus').textContent = obsLabel(st); if (st === 'connected') pushSettings(false); },
+    onStatus: (st) => { $('#obsStatus').textContent = obsLabel(st); if (st === 'connected') pushSettings(false); updateMore(); },
   });
   unlinkObs = bus.link(obs);
   $('#obsConnect').textContent = L('切断', 'Disconnect');
@@ -1342,7 +1421,7 @@ const guide = createGuide({
       enter: () => { if (!demoRunning && !rec.wanted) { guideDemo = true; $('#btnDemo').click(); } },
     },
     {
-      target: () => $('#themes').closest('.field'),
+      target: () => { showTab('look'); return $('#themes').closest('.field'); },
       title: L('見た目を選んで、映す', 'Pick a look, then put it on screen'),
       body: L('書体テーマで雰囲気が変わります（その下のレイアウトでは、言葉の置き方を選べます）。決まったら、プレビュー右下の「組版を別窓で」で大きな画面を開き、モニターや配信に映します。', 'Typeface themes change the mood (and the layout just below changes how words are placed). When you’re happy, open a big window with “Open compose view” at the bottom right of the preview and show it on a monitor or your stream.'),
     },
