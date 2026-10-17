@@ -5,6 +5,7 @@ export const CHANGELOG = [
     v: '1.4.0', date: '2026-10-17',
     items: [
       { type: 'new', ja: 'カスタムロゴ：番組や会社のロゴを、画面の左上に正方形（1:1）で出せます。大きさは小・中・大。組版では言葉がロゴを避けて並び、別窓・OBS にも同じように出ます（お手軽プラン。無料プランでも1日お試しできます）', en: 'Custom logo: show your show’s or company’s logo as a square (1:1) in the top-left corner, in small, medium or large. In Compose layout words are placed around it, and it appears the same in pop-out windows and OBS (Plus plan; try it free for a day)' },
+      { type: 'improve', ja: 'お手軽プランの機能には、値段の代わりに小さな「+」の印を付けるように。印の意味は1か所でまとめて説明します。お手軽プランの人には印を出しません', en: 'Plus features now carry a small “+” mark instead of a price, explained once in a single note. Plus subscribers don’t see the marks' },
     ],
   },
   {

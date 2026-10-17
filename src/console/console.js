@@ -418,7 +418,14 @@ function segButtons(container, entries, key) {
       if (key === 'vjFont') { b.style.fontFamily = `${def.family}, sans-serif`; b.style.fontWeight = def.weight; } // 書体の名前をその書体で見せる
     }
     if (def.pro && plusLocked(key === 'layout' ? 'layout:vj' : 'theme:premium')) b.classList.add('locked');
-    if (def.pro && key === 'layout') { const t = document.createElement('em'); t.className = 'seg-tag'; t.textContent = '+'; b.appendChild(t); }
+    if (def.pro && key === 'layout') { // お手軽プランの印（無料プランのときだけ見える。console.css）
+      const t = document.createElement('em');
+      t.className = 'seg-tag plus-mark';
+      t.title = L('お手軽プランの機能', 'Plus plan feature');
+      t.setAttribute('aria-hidden', 'true');
+      t.innerHTML = '<b>+</b>';
+      b.appendChild(t);
+    }
     b.addEventListener('click', () => pick(container, entries, key, id, def));
     box.appendChild(b);
   }
@@ -527,7 +534,7 @@ function updateTrial() {
   box.classList.toggle('active', trialStarted() && rem > 0);
   $('#trialNote').textContent = rem <= 0 ? L(`お試し期間（1日）は終わりました。${PLUS_LABEL}で続けて使えます`, `Your 1-day trial has ended. Keep using these with ${PLUS_LABEL}.`)
     : trialStarted() ? L(`お試し中　残り ${left}（終わると標準の見た目に戻ります）`, `Trial: ${left} left (then everything returns to the standard look)`)
-    : L('¥480〜 の機能は、無料でも1日お試しできます', 'Features marked ¥480+ can be tried free for a day');
+    : L('お手軽プランの機能です。無料でも1日お試しできます', 'Plus plan features — try them free for a day');
 }
 let trialLast = performance.now();
 setInterval(() => {

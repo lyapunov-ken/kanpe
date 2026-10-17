@@ -99,7 +99,7 @@
     <div class="side-panes">
       <div id="paneLook" class="sec pane" role="tabpanel" aria-labelledby="tabLook">
         <div class="field theme-field">
-          <div class="lbl-row theme-lbls"><span class="lbl">Typeface theme</span><span class="pro-lbl" title="Premium typefaces"><em class="pro-tag">¥480〜</em></span></div>
+          <div class="lbl-row theme-lbls"><span class="lbl">Typeface theme</span><span class="pro-lbl" title="Premium typefaces"><em class="plus-mark" title="Plus plan feature"><b aria-hidden="true">+</b><span class="vh">(Plus plan feature)</span></em></span></div>
           <div class="theme-row">
             <div id="themes" class="themes" role="radiogroup" aria-label="Typeface theme"></div>
             <div id="proThemes" class="themes pro-row" role="radiogroup" aria-label="Premium typefaces"></div>
@@ -107,7 +107,7 @@
         </div>
         <div id="trialBox" class="trial">
           <div class="trial-bar"><i id="trialFill"></i></div>
-          <p id="trialNote" class="hint" title="Premium typefaces, backgrounds (image / camera), VJ mode and speaker colors can be tried for 24 hours from first use">Features marked ¥480+ can be tried free for a day</p>
+          <p class="hint trial-note" title="Features marked + (premium typefaces, backgrounds, logo, VJ mode, speaker colors) all come with the Plus plan (¥480/mo). Free users can try them for 24 hours from first use."><em class="plus-mark" aria-hidden="true"><b>+</b></em><span id="trialNote">Plus plan features — try them free for a day</span></p>
         </div>
         <div class="field">
           <div class="lbl-row"><span class="lbl">Accent color</span><span class="hint">For words heard the first time</span></div>
@@ -115,7 +115,7 @@
         </div>
         <div class="field"><span class="lbl">Layout</span><div id="layouts" class="segmented four" role="radiogroup" aria-label="Layout"></div><p id="layoutNote" class="hint"></p></div>
         <div id="vjOpts" class="field vj-opts" hidden>
-          <span class="lbl">VJ style <em class="pro-tag">¥480+</em></span>
+          <span class="lbl">VJ style<em class="plus-mark" title="Plus plan feature"><b aria-hidden="true">+</b><span class="vh">(Plus plan feature)</span></em></span>
           <div id="vjStyles" class="segmented four" role="radiogroup" aria-label="VJ style"></div>
           <p id="vjStyleNote" class="hint"></p>
           <span class="lbl vj-sub">VJ typeface</span>
@@ -156,7 +156,7 @@
 
       <div id="paneMore" class="pane more-pane" role="tabpanel" aria-labelledby="tabMore" hidden>
         <details class="acc-sec" name="more" id="bgSec">
-          <summary><span class="acc-t">Background (image / camera)<em class="pro-tag">¥480+</em></span><small class="acc-d">Put words over an image or your camera</small><b id="stBg" class="acc-st" hidden></b></summary>
+          <summary><span class="acc-t">Background (image / camera)<em class="plus-mark" title="Plus plan feature"><b aria-hidden="true">+</b><span class="vh">(Plus plan feature)</span></em></span><small class="acc-d">Put words over an image or your camera</small><b id="stBg" class="acc-st" hidden></b></summary>
           <div class="acc-body">
             <div class="bg-row">
               <div id="bgThumb" class="bg-thumb" aria-hidden="true"></div>
@@ -175,7 +175,7 @@
           </div>
         </details>
         <details class="acc-sec" name="more" id="logoSec">
-          <summary><span class="acc-t">Logo<em class="pro-tag">¥480+</em></span><small class="acc-d">A square logo in the top-left corner</small><b id="stLogo" class="acc-st" hidden></b></summary>
+          <summary><span class="acc-t">Logo<em class="plus-mark" title="Plus plan feature"><b aria-hidden="true">+</b><span class="vh">(Plus plan feature)</span></em></span><small class="acc-d">A square logo in the top-left corner</small><b id="stLogo" class="acc-st" hidden></b></summary>
           <div class="acc-body">
             <div class="logo-row">
               <div id="logoThumb" class="logo-thumb" aria-hidden="true"></div>
@@ -189,7 +189,7 @@
           </div>
         </details>
         <details class="acc-sec" name="more" id="speakerSec">
-          <summary><span class="acc-t">Speakers<em class="pro-tag">¥480+</em></span><small class="acc-d">A name label and color for each speaker</small><b id="stSp" class="acc-st" hidden></b></summary>
+          <summary><span class="acc-t">Speakers<em class="plus-mark" title="Plus plan feature"><b aria-hidden="true">+</b><span class="vh">(Plus plan feature)</span></em></span><small class="acc-d">A name label and color for each speaker</small><b id="stSp" class="acc-st" hidden></b></summary>
           <div class="acc-body">
             <div class="field">
               <span class="lbl">Labels and colors</span>
@@ -231,6 +231,7 @@
             </div>
           </div>
         </details>
+        <p class="hint more-legend"><em class="plus-mark" aria-hidden="true"><b>+</b></em>Plus plan features — try them free for a day</p>
       </div>
     </div>
   </section>
