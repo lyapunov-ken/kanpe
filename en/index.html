@@ -32,7 +32,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700&family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../styles/lp.css?v=202610180020">
+<link rel="stylesheet" href="../styles/lp.css?v=202610180310">
 <script>document.documentElement.classList.add('js');</script>
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://kanpe.yoneken.xyz/#website","url":"https://kanpe.yoneken.xyz/","name":"KANPE","alternateName":"KANPE リアルタイムカンペ","inLanguage":["ja","en"]},{"@type":"WebApplication","@id":"https://kanpe.yoneken.xyz/en/#app","name":"KANPE","url":"https://kanpe.yoneken.xyz/en/","description":"Real-time cue cards that turn what you say on stream into live Japanese typography. Runs in the browser with just a mic — free, no sign-up.","applicationCategory":"MultimediaApplication","operatingSystem":"Web browser","browserRequirements":"A browser with a microphone and speech recognition (Web Speech API): Chrome, Edge or Safari","inLanguage":"en","isAccessibleForFree":true,"image":"https://kanpe.yoneken.xyz/assets/og-en.png?v=1","isPartOf":{"@id":"https://kanpe.yoneken.xyz/#website"},"offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"JPY","url":"https://kanpe.yoneken.xyz/en/#pricing"},{"@type":"Offer","name":"Plus (monthly)","price":"480","priceCurrency":"JPY","url":"https://kanpe.yoneken.xyz/en/#pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"480","priceCurrency":"JPY","billingDuration":"P1M","unitCode":"MON"}},{"@type":"Offer","name":"Plus (yearly)","price":"4800","priceCurrency":"JPY","url":"https://kanpe.yoneken.xyz/en/#pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"4800","priceCurrency":"JPY","billingDuration":"P1Y","unitCode":"ANN"}}]}]}</script>
@@ -42,7 +42,6 @@
   <a class="logo" href="#top" aria-label="KANPE home"><span class="tally" aria-hidden="true"></span>KANPE<span class="beta mono">BETA</span></a>
   <nav class="links" id="siteMenu" aria-label="On this page">
     <a href="#features">Features</a>
-    <a href="#noface">No camera</a>
     <a href="#business">Business</a>
     <a href="#how">How it works</a>
     <a href="#pricing">Pricing</a>
@@ -199,48 +198,28 @@
       </article>
     </div>
     <p class="swipe-hint mono" aria-hidden="true"><span id="specCount">01 / 06</span><span>Swipe for more →</span></p>
-  </section>
 
-  <!-- ============ Faceless streaming ============ -->
-  <section class="section tint" id="noface" aria-labelledby="noface-title">
-    <div class="inner">
-      <header class="section-head reveal">
-        <p class="label mono"><span class="no">02</span>NO CAMERA</p>
-        <div>
-          <h2 id="noface-title">No face on camera. <wbr>Still a screen that moves.</h2>
-          <p>Not comfortable showing your face? Voice-only streams can look frozen. KANPE typesets what you say the moment you say it and keeps the whole screen moving. Viewers see your words, not your face.</p>
-        </div>
-      </header>
-      <div class="nf">
-        <div class="show-screen nf-screen reveal">
-          <iframe data-src="../display.html?demo=1&amp;ui=0&amp;layout=compose&amp;theme=yoru&amp;script=talk&amp;cap=1&amp;hl=en" title="Faceless chat stream demo" tabindex="-1"></iframe>
-          <span class="nf-live mono" aria-hidden="true"><i></i>LIVE</span>
-          <span class="nf-cam" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 14 18H4.5A1.5 1.5 0 0 1 3 16.5z"/><path d="M15.5 10.5 21 7.5v9l-5.5-3"/><path d="M2.5 3.5l19 17"/></svg>Camera off</span>
-        </div>
-        <div class="show-copy reveal">
-          <p class="label mono">FACELESS STREAM</p>
-          <h3>No camera. <wbr>Just a mic.</h3>
-          <p>All you need is a browser and a microphone — no camera, no avatar to set up. Words appear as you talk and quietly fade when you pause, so even streaming solo, the screen feels like it’s nodding along.</p>
-          <ul class="biz-points">
-            <li><b>Your face and room stay off screen</b>Only your words are shown, so you can go live whenever you like without worrying about what’s in frame</li>
-            <li><b>Voice-only, never boring</b>Radio-style chats and work-along streams keep moving as new words are set on screen</li>
-            <li><b>Late arrivals catch up fast</b>Words you repeat grow bigger, so anyone can see what you’re talking about at a glance. The caption line helps no one miss a thing</li>
-            <li><b>Your type becomes your face</b>Set the mood with typeface themes and accent colors, and brand your channel with a background image or custom logo (Plus plan)</li>
-          </ul>
-        </div>
+    <!-- Faceless streaming (compact band inside Features) -->
+    <aside class="nf-band reveal" id="noface" aria-labelledby="noface-title">
+      <div class="show-screen nf-screen">
+        <iframe data-src="../display.html?demo=1&amp;ui=0&amp;layout=compose&amp;theme=yoru&amp;script=talk&amp;cap=1&amp;hl=en" title="Faceless chat stream demo" tabindex="-1"></iframe>
+        <span class="nf-live mono" aria-hidden="true"><i></i>LIVE</span>
+        <span class="nf-cam" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 14 18H4.5A1.5 1.5 0 0 1 3 16.5z"/><path d="M15.5 10.5 21 7.5v9l-5.5-3"/><path d="M2.5 3.5l19 17"/></svg>Camera off</span>
       </div>
-      <div class="biz-foot reveal">
-        <p><b>Great for</b>Chat and radio-style streams, work-along and study streams, gameplay, readings and book clubs, or alongside a VTuber avatar. In the console, “Solo chat stream” under Help → Settings by scene sets everything up for a faceless stream in one tap.</p>
-        <a class="btn btn-ink" href="app.html#help-scenes">Try a faceless stream<span class="arrow" aria-hidden="true">→</span></a>
+      <div class="nf-copy">
+        <p class="label mono">NO CAMERA</p>
+        <h3 id="noface-title">No face on camera. <wbr>Still a screen that moves.</h3>
+        <p>All you need is a mic. Your words are typeset across the screen as you speak, so camera-off chats and radio-style streams never look frozen. Viewers see your words, not your face.</p>
+        <ul class="chips-row" aria-label="Great for"><li>No camera needed</li><li>Face and room stay private</li><li>Chat &amp; radio streams</li><li>Work-along streams</li><li>With a VTuber avatar</li></ul>
       </div>
-    </div>
+    </aside>
   </section>
 
   <!-- ============ Paid effects ============ -->
   <section class="section dark" id="plus" aria-labelledby="plus-title">
     <div class="inner">
       <header class="section-head reveal">
-        <p class="label mono"><span class="no">03</span>PLUS</p>
+        <p class="label mono"><span class="no">02</span>PLUS</p>
         <div>
           <h2 id="plus-title">Put on a show.</h2>
           <p>Two effects that come with Plus and up. Free users can try them for a day.</p>
@@ -272,7 +251,7 @@
   <!-- ============ For business ============ -->
   <section class="section" id="business" aria-labelledby="business-title">
     <header class="section-head reveal">
-      <p class="label mono"><span class="no">04</span>BUSINESS</p>
+      <p class="label mono"><span class="no">03</span>BUSINESS</p>
       <div>
         <h2 id="business-title">In the meeting room, <wbr>and at the lectern.</h2>
         <p>Built for streamers, KANPE works just as well at work. When the words you say appear as you say them, meetings stay focused on what matters and speakers never lose their place.</p>
@@ -318,7 +297,7 @@
   <section class="section tint" id="how" aria-labelledby="how-title">
     <div class="inner">
       <header class="section-head reveal">
-        <p class="label mono"><span class="no">05</span>HOW IT WORKS</p>
+        <p class="label mono"><span class="no">04</span>HOW IT WORKS</p>
         <div>
           <h2 id="how-title">Up and running in under three minutes.</h2>
           <p>No account, no install. Open it in your browser and start talking.</p>
@@ -348,10 +327,10 @@
         </li>
       </ol>
       <ul class="uses" aria-label="Great for">
-        <li class="reveal"><a href="#noface"><b>Solo &amp; faceless streams</b><span>Topics you can see keep the talk going</span></a></li>
+        <li class="reveal link"><a href="#noface"><b>Solo chat streams</b><span>Even camera-off, your topics stay visible</span></a></li>
         <li class="reveal"><b>Game streams</b><span>A ticker band that stays out of the way</span></li>
-        <li class="reveal"><a href="#business"><b>Brainstorming meetings</b><span>Everyone sees the ideas as they come</span></a></li>
-        <li class="reveal"><a href="#business"><b>Speeches &amp; talks</b><span>Your points stack up in front of you</span></a></li>
+        <li class="reveal link"><a href="#business"><b>Brainstorming meetings</b><span>Everyone sees the ideas as they come</span></a></li>
+        <li class="reveal link"><a href="#business"><b>Speeches &amp; talks</b><span>Your points stack up in front of you</span></a></li>
       </ul>
     </div>
   </section>
@@ -359,7 +338,7 @@
   <!-- ============ Pricing ============ -->
   <section class="section" id="pricing" aria-labelledby="pricing-title">
     <header class="section-head reveal">
-      <p class="label mono"><span class="no">06</span>PRICING</p>
+      <p class="label mono"><span class="no">05</span>PRICING</p>
       <div>
         <h2 id="pricing-title">Free, for as long as you like.</h2>
         <p>Just three plans, designed around streaming two hours, three times a week. Start free; pick Plus for looks and effects, or Pro for accuracy and automation. Prices are in Japanese yen and include tax.</p>
@@ -441,7 +420,7 @@
   <!-- ============ Privacy ============ -->
   <section class="section privacy" id="privacy" aria-labelledby="privacy-title">
     <header class="section-head reveal">
-      <p class="label mono"><span class="no">07</span>PRIVACY</p>
+      <p class="label mono"><span class="no">06</span>PRIVACY</p>
       <div>
         <h2 id="privacy-title">What you say stays on your device.</h2>
         <p>KANPE has no server that receives your transcripts or settings. Data moves as little as possible, so you can stream with peace of mind.</p>
@@ -460,7 +439,7 @@
   <section class="section tint" id="faq" aria-labelledby="faq-title">
     <div class="inner faq-grid">
       <header class="section-head reveal">
-        <p class="label mono"><span class="no">08</span>FAQ</p>
+        <p class="label mono"><span class="no">07</span>FAQ</p>
         <div>
           <h2 id="faq-title">Questions</h2>
         </div>
@@ -539,10 +518,10 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html?welcome=1" tabindex="-1">Start free in your browser<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="../src/ui/lang.js?v=202610180020" defer></script>
-<script src="../src/ui/menu.js?v=202610180020" defer></script>
-<script src="../src/ui/mode.js?v=202610180020" defer></script>
-<script src="../src/lp/lp.js?v=202610180020" defer></script>
-<script type="module" src="../src/lp/analytics.js?v=202610180020"></script>
+<script src="../src/ui/lang.js?v=202610180310" defer></script>
+<script src="../src/ui/menu.js?v=202610180310" defer></script>
+<script src="../src/ui/mode.js?v=202610180310" defer></script>
+<script src="../src/lp/lp.js?v=202610180310" defer></script>
+<script type="module" src="../src/lp/analytics.js?v=202610180310"></script>
 </body>
 </html>
