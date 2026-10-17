@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, SIZE_STEPS, TTL_STEPS, WORD_STEPS, nearestStep, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610172051';
-import { EN, L, tr } from '../core/i18n.js?v=202610172051';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610172051';
-import { createBus } from '../core/bus.js?v=202610172051';
-import { connectObs } from '../core/obs.js?v=202610172051';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610172051';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610172051';
-import { simulateSpeech } from './demo.js?v=202610172051';
-import { initHelp } from './help.js?v=202610172051';
-import { initNews } from './news.js?v=202610172051';
-import { createGuide, guideSeen } from './guide.js?v=202610172051';
-import { coinWord } from '../core/coin.js?v=202610172051';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610172051';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, SIZE_STEPS, TTL_STEPS, WORD_STEPS, nearestStep, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610172339';
+import { EN, L, tr } from '../core/i18n.js?v=202610172339';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610172339';
+import { createBus } from '../core/bus.js?v=202610172339';
+import { connectObs } from '../core/obs.js?v=202610172339';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610172339';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610172339';
+import { simulateSpeech } from './demo.js?v=202610172339';
+import { initHelp } from './help.js?v=202610172339';
+import { initNews } from './news.js?v=202610172339';
+import { createGuide, guideSeen } from './guide.js?v=202610172339';
+import { coinWord } from '../core/coin.js?v=202610172339';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610172339';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -791,7 +791,10 @@ bindText('ng', () => ex.setDict(S));
 
 // ------------------------------------------------------------ 使い方ガイド（ヘルプ）とシーン別のおすすめ設定
 function applyPreset(p) {
+  const theme0 = S.theme;
   Object.assign(S, p.s);
+  // お手軽プランの書体（透過など）で、お試しも終わっているときは、いまの書体のまま
+  if (THEMES[S.theme] && THEMES[S.theme].pro && plusLocked('theme:premium')) S.theme = theme0;
   renderThemes();
   segButtons('#layouts', LAYOUTS, 'layout');
   for (const [key, [, steps]] of Object.entries(STEP_SETS)) S[key] = nearestStep(steps, S[key]);
@@ -1419,9 +1422,15 @@ $('#obsConnect').addEventListener('click', () => {
 });
 $('#obsCopy').addEventListener('click', async () => {
   // 接続先とパスワードは # 以降に入れる（ブラウザはこの部分をサーバーへ送らない）
-  const url = `${base}display.html?theme=clear${HL ? '&' + HL : ''}#obs=${encodeURIComponent($('#obsUrl').value.trim() || DEFAULTS.obsUrl)}` +
+  // 透過はお手軽プランの書体。使えないとき（お試しも終わったとき）は、コンソールで選んだ書体のまま重ねる
+  const clearOk = !plusLocked('theme:premium');
+  const url = `${base}display.html?${clearOk ? 'theme=clear' : ''}${HL ? (clearOk ? '&' : '') + HL : ''}#obs=${encodeURIComponent($('#obsUrl').value.trim() || DEFAULTS.obsUrl)}` +
     ($('#obsPassword').value ? `&pw=${encodeURIComponent($('#obsPassword').value)}` : '');
-  try { await navigator.clipboard.writeText(url); toast(L('OBS 用の URL をコピーしました', 'OBS URL copied')); } catch { prompt(L('この URL を OBS のブラウザソースに貼ってください', 'Paste this URL into an OBS Browser Source'), url); }
+  try {
+    await navigator.clipboard.writeText(url);
+    toast(clearOk ? L('OBS 用の URL をコピーしました', 'OBS URL copied')
+      : L('OBS 用の URL をコピーしました（背景なしの「透過」はお手軽プランの書体なので、いまの書体のまま重なります）', 'OBS URL copied (the background-free “Clear” typeface is a Plus feature, so the overlay uses your current typeface)'));
+  } catch { prompt(L('この URL を OBS のブラウザソースに貼ってください', 'Paste this URL into an OBS Browser Source'), url); }
 });
 
 // ------------------------------------------------------------ 文字起こし

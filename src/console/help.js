@@ -1,6 +1,6 @@
 // 使い方ガイド（アプリ内ヘルプ）。右上の「ヘルプ」、? キー、または app.html#help（#help-scenes など）で開く。
 // 文言は L('日本語', 'English') で持つので、英語版のコンソールでもそのまま使える。
-import { L } from '../core/i18n.js?v=202610172051';
+import { L } from '../core/i18n.js?v=202610172339';
 
 // シーン別のおすすめ設定（無料プランの機能だけで組む。アクセントカラーや背景などの好みは触らない）
 export const PRESETS = {
@@ -112,7 +112,7 @@ function html() {
           [L('夜 × 組版', 'Night × Compose'), L('表示 8 秒・24 語', '8 s · 24 words'), L('縦組み・字幕ライン あり', 'Vertical text and caption line on')])}
         ${scene('game', L('配信', 'STREAMING'), false, L('ゲーム実況', 'Gameplay commentary'),
           L('OBS に透過で重ね、画面下に細く流してゲーム画面の邪魔をしません。', 'Overlay it in OBS as a slim ticker that stays out of the gameplay.'),
-          [L('透過 × テロップ', 'Clear × Ticker'), L('表示 6 秒・12 語', '6 s · 12 words'), L('字幕ライン なし', 'Caption line off')])}
+          [L('透過 × テロップ', 'Clear × Ticker'), L('表示 6 秒・10 語', '6 s · 10 words'), L('字幕ライン なし', 'Caption line off')])}
         ${scene('brainstorm', L('ビジネス', 'BUSINESS'), true, L('ブレスト会議', 'Brainstorming meeting'),
           L('会議室のディスプレイに映して、出た言葉を全員で眺めます。何度も出た言葉ほど大きく残るので、議論の中心が見えてきます。', 'Put it on the meeting-room display so everyone sees the ideas. Words that keep coming up grow bigger, so the heart of the discussion stands out.'),
           [L('墨 × 組版（明るい画面で見やすい）', 'Sumi × Compose (easy to read on a bright screen)'), L('表示 30 秒・40 語で長く残す', '30 s · 40 words, so ideas linger'), L('新語ミックス あり（出た言葉を掛け合わせて新しい言葉を生む）', 'Word mix on (combines words into new ones)'), L('字幕ライン なし', 'Caption line off')])}
@@ -153,6 +153,7 @@ function html() {
         <li>${L('「設定」タブの「OBS に重ねる」を開き、接続先とパスワードを入れて「接続」', 'Open “Overlay on OBS” in the Settings tab, enter the address and password, then Connect')}</li>
         <li>${L('「URLをコピー」して OBS のブラウザソースに貼る（1920×1080）', 'Press Copy URL and paste it into an OBS Browser Source (1920×1080)')}</li>
       </ol>
+      <p>${L('背景なしで重ねる書体「透過」は、お手軽プランの書体です（無料プランでも1日お試しできます）。使えないときは、コンソールで選んだ書体のまま重なります。', 'The background-free “Clear” typeface is a Plus feature (free users can try it for a day). Without it, the overlay uses the typeface chosen in the console.')}</p>
       <h4>${L('B. かんたん', 'B. Quick setup')}</h4>
       <p>${L('「組版を別窓で」で開いた窓を、OBS の「ウィンドウキャプチャ」で取り込みます。', 'Open “Open compose view” and capture that window with OBS’s Window Capture.')}</p>
     </section>

@@ -656,9 +656,11 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px va
 .lbl-row .hint { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
 
 /* 書体テーマ：無料5つ＋プレミアム2つを1列に */
-.theme-lbls, .theme-row { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 2fr); column-gap: 9px; }
+/* 無料の4つ（墨・やわらか・夜・ポップ）と、お手軽プランの3つ（透過・筆・ドット） */
+.theme-lbls, .theme-row { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 3fr); column-gap: 9px; }
+.theme-row #themes { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .theme-row .themes { gap: 5px; }
-.theme-row .pro-row { grid-template-columns: repeat(2, minmax(0, 1fr)); position: relative; }
+.theme-row .pro-row { grid-template-columns: repeat(3, minmax(0, 1fr)); position: relative; }
 .theme-row .pro-row::before { content: ""; position: absolute; left: -5px; top: 4px; bottom: 18px; border-left: 1px dashed var(--line2); }
 .pro-lbl { text-align: center; }
 .theme-row .theme { gap: 4px; font-size: 10.5px; white-space: nowrap; }
@@ -837,3 +839,5 @@ html[lang="en"] .coin-inline { grid-template-columns: 56px minmax(0, 1fr); }
   .steps { gap: 4px; }
   #paneLook { gap: 11px; }
 }
+/* タブの中身どうしには罫線を引かない（隠れているタブの「.sec」の次になっても線が出ないように） */
+.side-panes > .pane { border-top: 0; }

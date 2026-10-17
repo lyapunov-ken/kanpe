@@ -9,6 +9,12 @@ export const THEMES = {
     strong: 800, light: 500,
     bg: '#f2ede3', ink: '#1c1a16', sub: '#8b8477', accent: '#c7381f', accent2: '#2c5a87', stroke: 'transparent',
   },
+  yawaraka: {
+    label: 'やわらか', labelEn: 'Soft', note: '丸ゴシック', noteEn: 'Rounded gothic',
+    family: '"Zen Maru Gothic"', fallback: GOTHIC, gf: 'Zen+Maru+Gothic:wght@500;900',
+    strong: 900, light: 500,
+    bg: '#faf5ee', ink: '#3a332e', sub: '#a59b92', accent: '#e46f55', accent2: '#4f9585', stroke: 'transparent',
+  },
   yoru: {
     label: '夜', labelEn: 'Night', note: 'ゴシック・黒地', noteEn: 'Gothic on black',
     family: '"Zen Kaku Gothic New"', fallback: GOTHIC, gf: 'Zen+Kaku+Gothic+New:wght@500;900',
@@ -21,14 +27,8 @@ export const THEMES = {
     strong: 900, light: 400, // Dela は400のみ。font-synthesis:none で擬似ボールドを防ぎ、代替書体だけ太くする
     bg: '#17131f', ink: '#fff6ec', sub: '#988cb0', accent: '#ff4f8b', accent2: '#3ee6c5', stroke: 'transparent',
   },
-  yawaraka: {
-    label: 'やわらか', labelEn: 'Soft', note: '丸ゴシック', noteEn: 'Rounded gothic',
-    family: '"Zen Maru Gothic"', fallback: GOTHIC, gf: 'Zen+Maru+Gothic:wght@500;900',
-    strong: 900, light: 500,
-    bg: '#faf5ee', ink: '#3a332e', sub: '#a59b92', accent: '#e46f55', accent2: '#4f9585', stroke: 'transparent',
-  },
   clear: {
-    label: '透過', labelEn: 'Clear', note: 'OBSオーバーレイ', noteEn: 'OBS overlay',
+    label: '透過', labelEn: 'Clear', note: 'OBSオーバーレイ', noteEn: 'OBS overlay', pro: true,
     family: '"Zen Kaku Gothic New"', fallback: GOTHIC, gf: 'Zen+Kaku+Gothic+New:wght@500;900',
     strong: 900, light: 500,
     bg: 'transparent', ink: '#ffffff', sub: 'rgba(255,255,255,.78)', accent: '#ffe14d', accent2: '#7fe3ff', stroke: 'rgba(0,0,0,.82)',
@@ -123,6 +123,7 @@ export const FUSION_MOTIONS = {
   converge: { label: '集束', labelEn: 'Converge', note: '散った字が残像を引きながら、らせんを描いて集まる', noteEn: 'Scattered letters spiral in, trailing afterimages' },
   scan: { label: 'スキャン', labelEn: 'Scan', note: '光が走り抜け、字が奥から立ち上がって実体化する', noteEn: 'A beam sweeps across and letters rise up out of the screen' },
   ink: { label: '墨', labelEn: 'Ink', note: '墨がにじむように字が浮かび、しぶきが散る', noteEn: 'Letters bleed in like ink, with splashes' },
+  firework: { label: '花火', labelEn: 'Firework', note: '光が昇って弾け、火花の中から字が花開く', noteEn: 'A spark rises and bursts, and the word blooms out of the fireworks' },
   random: { label: 'ランダム', labelEn: 'Random', note: '生まれるたびに出かたを選び直す', noteEn: 'Picks a different motion every time' },
 };
 export const FUSION_SPEEDS = {
