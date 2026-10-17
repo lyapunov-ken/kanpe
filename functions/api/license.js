@@ -1,12 +1,19 @@
 // POST /api/license
 //   { session_id }  … 決済直後。Checkout の結果からライセンスを発行する
 //   { token }       … ライセンスの更新・別の端末での復元。契約の最新の状態を Stripe に聞き直して出し直す
-import { PROJECT, configured, fail, licenseResponse, readJson, sameOrigin, stripe, verifyLicense } from './_lib.js';
+//                     開発者ライセンスは Stripe を通さず、いまのパスワードと照らし合わせて出し直す
+import { DEV_CUSTOMER, PROJECT, configured, devLicenseResponse, devLicenseValid, fail, licenseResponse, readJson, sameOrigin, stripe, verifyLicense } from './_lib.js';
 
 export async function onRequestPost({ request, env }) {
   if (!sameOrigin(request, env)) return fail(403, 'forbidden', 'Cross-site request blocked');
-  if (!configured(env)) return fail(503, 'not_configured', 'Payments are not set up yet');
   const body = await readJson(request);
+  if (body && typeof body.token === 'string' && env.LICENSE_SECRET) {
+    const lic = await verifyLicense(env, body.token);
+    if (lic && lic.c === DEV_CUSTOMER) {
+      return (await devLicenseValid(env, lic)) ? devLicenseResponse(env) : fail(401, 'bad_license', 'Invalid license');
+    }
+  }
+  if (!configured(env)) return fail(503, 'not_configured', 'Payments are not set up yet');
   if (!body) return fail(400, 'bad_request', 'Invalid JSON');
 
   try {

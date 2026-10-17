@@ -53,6 +53,8 @@ async function post(path, body) {
 export async function activateFromSession(sessionId) { return saveLicense(await post('/api/license', { session_id: sessionId })); }
 // 別の端末で使う：ライセンスコードを入れて復元する
 export async function activateFromCode(code) { return saveLicense(await post('/api/license', { token: String(code || '').trim() })); }
+// 開発者モード：パスワードはサーバーで確かめる（コードには書かない）。合えば全機能のライセンスが届く
+export async function activateDev(password) { return saveLicense(await post('/api/dev', { password: String(password || '') })); }
 // コードをなくした：お申し込みのメールアドレスにコードを送り直してもらう（契約の有無は返ってこない）
 export async function requestLicenseEmail(email, lang) { return post('/api/license-email', { email: String(email || '').trim(), lang }); }
 // 契約の最新の状態に更新する（force でなければ半日に1回まで。通信できないときは手元の情報のまま）

@@ -214,12 +214,21 @@ function html() {
       <a href="index.html#faq">${L('よくある質問', 'FAQ')}</a>
       <a href="index.html#business">${L('ビジネスでの使い方', 'For business')}</a>
       <a href="index.html#pricing">${L('料金', 'Pricing')}</a>
+      <button class="hp-dev-btn" type="button" data-dev-toggle aria-expanded="false" aria-controls="hpDev">${L('開発者', 'Developer')}</button>
     </footer>
+    <form id="hpDev" class="hp-dev" data-dev-form hidden>
+      <label class="hp-dev-lbl" for="hpDevPw">${L('開発者のパスワード', 'Developer password')}</label>
+      <div class="hp-dev-row">
+        <input id="hpDevPw" type="password" autocomplete="off" spellcheck="false">
+        <button class="btn" type="submit">${L('有効にする', 'Unlock')}</button>
+      </div>
+      <p class="hint" data-dev-msg aria-live="polite">${L('有料版のすべての機能が、このブラウザで使えるようになります。', 'Unlocks every paid feature in this browser.')}</p>
+    </form>
   </div>
 </div>`;
 }
 
-export function initHelp({ onPreset, onGuide } = {}) {
+export function initHelp({ onPreset, onGuide, onDev } = {}) {
   const btn = document.getElementById('btnHelp');
   let dlg = null, body = null, links = [], sections = [];
   let pinned = ''; // 目次から飛んだ先（末尾近くの章でも、その章を選んだ状態にする）
@@ -254,6 +263,25 @@ export function initHelp({ onPreset, onGuide } = {}) {
     for (const ev of ['wheel', 'touchmove', 'keydown']) body.addEventListener(ev, () => { pinned = ''; }, { passive: true });
     const g = dlg.querySelector('[data-guide-start]');
     if (g) g.addEventListener('click', () => { close(); onGuide && onGuide(); });
+    // 開発者：パスワードを入れると有料版の機能が使えるようになる（確かめるのはサーバー）
+    const devBtn = dlg.querySelector('[data-dev-toggle]'), devForm = dlg.querySelector('[data-dev-form]');
+    if (devBtn && devForm) {
+      devBtn.addEventListener('click', () => {
+        devForm.hidden = !devForm.hidden;
+        devBtn.setAttribute('aria-expanded', String(!devForm.hidden));
+        if (!devForm.hidden) { devForm.querySelector('input').focus(); devForm.scrollIntoView({ block: 'nearest' }); }
+      });
+      devForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = devForm.querySelector('input'), go = devForm.querySelector('button'), msg = devForm.querySelector('[data-dev-msg]');
+        if (!input.value || !onDev) return;
+        go.disabled = true;
+        msg.textContent = L('確かめています…', 'Checking…');
+        msg.textContent = await onDev(input.value);
+        input.value = '';
+        go.disabled = false;
+      });
+    }
     for (const b of dlg.querySelectorAll('[data-preset]')) {
       b.addEventListener('click', () => {
         const p = PRESETS[b.dataset.preset];

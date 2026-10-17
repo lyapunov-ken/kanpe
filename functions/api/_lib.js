@@ -10,6 +10,8 @@
 //   SITE_URL            … 例 https://kanpe.yoneken.xyz（未設定ならリクエスト元から決める）
 //   STRIPE_PORTAL_CONFIG … 顧客ポータルの設定 ID（bpc_…）。未設定なら Stripe の既定の設定
 //   PRO_ENABLED         … "1" でおトクプランの申し込みを受け付ける（機能が揃うまでは未設定のまま）
+//   DEV_PASSWORD        … 開発者モード（ヘルプの一番下の「開発者」）のパスワード。合っていれば全機能のライセンスを出す。
+//                         値はここにもコードにも書かない（リポジトリは公開）。変えると、出した開発者ライセンスはすべて無効になる
 // ライセンスコードをメールで送る（未設定ならメールは送らず、画面に表示するだけ）
 //   STRIPE_WEBHOOK_SECRET … Stripe の Webhook の署名シークレット（whsec_…）。/api/stripe-webhook で使う
 //   RESEND_API_KEY        … メール配信サービス Resend の API キー（re_…）
@@ -145,11 +147,13 @@ const b64u = {
 async function hmacKey(env) {
   return crypto.subtle.importKey('raw', new TextEncoder().encode(env.LICENSE_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
 }
-export async function signLicense(env, { customer, plan, periodEnd }) {
-  const payload = { v: 1, c: customer, p: plan, e: periodEnd ? periodEnd + GRACE : 0, i: Math.floor(Date.now() / 1000) };
+async function signPayload(env, payload) {
   const body = b64u.enc(new TextEncoder().encode(JSON.stringify(payload)));
   const sig = await crypto.subtle.sign('HMAC', await hmacKey(env), new TextEncoder().encode(body));
   return { token: `kanpe1.${body}.${b64u.enc(sig)}`, payload };
+}
+export async function signLicense(env, { customer, plan, periodEnd }) {
+  return signPayload(env, { v: 1, c: customer, p: plan, e: periodEnd ? periodEnd + GRACE : 0, i: Math.floor(Date.now() / 1000) });
 }
 // 署名だけを確かめる（期限切れでも顧客 ID は取り出せる。最新の状態は Stripe に聞き直す）
 export async function verifyLicense(env, token) {
@@ -160,7 +164,9 @@ export async function verifyLicense(env, token) {
     const ok = await crypto.subtle.verify('HMAC', await hmacKey(env), b64u.dec(m[2]), new TextEncoder().encode(m[1]));
     if (!ok) return null;
     const payload = JSON.parse(new TextDecoder().decode(b64u.dec(m[1])));
-    if (payload.v !== 1 || !/^cus_[A-Za-z0-9]+$/.test(payload.c || '')) return null;
+    if (payload.v !== 1) return null;
+    if (payload.c === DEV_CUSTOMER) return typeof payload.d === 'string' ? payload : null; // 開発者ライセンス
+    if (!/^cus_[A-Za-z0-9]+$/.test(payload.c || '')) return null;
     return payload;
   } catch { return null; }
 }
@@ -170,6 +176,31 @@ export async function licenseResponse(env, customer, extra = {}) {
   const { token, payload } = await signLicense(env, { customer, plan: info.plan, periodEnd: info.periodEnd });
   return json({ token, plan: info.plan, expires: payload.e, status: info.status, interval: info.interval,
     cancelAtPeriodEnd: info.cancelAtPeriodEnd, mail: mailConfigured(env), ...extra });
+}
+
+// ---------------------------------------------------------------- 開発者モード
+// パスワード（環境変数 DEV_PASSWORD）が合えば、Stripe を通さずに全機能（おトクプラン）のライセンスを出す。
+// ライセンスには「いまのパスワードの指紋」を入れておき、更新のたびに照らし合わせる（パスワードを変えれば全部無効になる）。
+// 期限は30日。開いているあいだは半日ごとの更新で延びる。
+export const DEV_CUSTOMER = 'dev';
+const DEV_DAYS = 30;
+export function devConfigured(env) { return !!(env.DEV_PASSWORD && env.LICENSE_SECRET && env.LICENSE_SECRET.length >= 32); }
+async function devFingerprint(env) {
+  const sig = await crypto.subtle.sign('HMAC', await hmacKey(env), new TextEncoder().encode(`kanpe-dev:${env.DEV_PASSWORD}`));
+  return b64u.enc(sig).slice(0, 22);
+}
+const sha256 = async (text) => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
+export async function devPasswordOk(env, password) {
+  if (!devConfigured(env) || typeof password !== 'string' || !password || password.length > 200) return false;
+  return safeEqual(await sha256(password), await sha256(env.DEV_PASSWORD)); // 長さや中身で時間が変わらないよう、ハッシュどうしを比べる
+}
+export async function devLicenseValid(env, lic) {
+  return !!(lic && lic.c === DEV_CUSTOMER && devConfigured(env) && lic.d === await devFingerprint(env));
+}
+export async function devLicenseResponse(env) {
+  const now = Math.floor(Date.now() / 1000);
+  const { token, payload } = await signPayload(env, { v: 1, c: DEV_CUSTOMER, p: 'pro', e: now + DEV_DAYS * 86400, i: now, d: await devFingerprint(env) });
+  return json({ token, plan: 'pro', expires: payload.e, status: 'dev', interval: null, cancelAtPeriodEnd: false, mail: false });
 }
 
 // ---------------------------------------------------------------- Stripe の Webhook の署名

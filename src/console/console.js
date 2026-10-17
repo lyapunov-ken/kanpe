@@ -11,7 +11,7 @@ import { initHelp } from './help.js?v=202610171947';
 import { initNews } from './news.js?v=202610171947';
 import { createGuide, guideSeen } from './guide.js?v=202610171947';
 import { coinWord } from '../core/coin.js?v=202610171947';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610171947';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610171947';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -800,7 +800,20 @@ function applyPreset(p) {
   showTab(S.fusion ? 'coin' : 'look'); // 選んだ設定が見えるタブへ（ブレスト会議ならブレストモード）
   toast(L(`「${p.label}」向けの設定にしました`, `Switched to settings for: ${p.label}`));
 }
-const help = initHelp({ onPreset: applyPreset, onGuide: () => guide.start() });
+const help = initHelp({ onPreset: applyPreset, onGuide: () => guide.start(), onDev: devUnlock });
+// 開発者モード（ヘルプの一番下）：パスワードが合えば全機能のライセンスを受け取る。返り値はヘルプに出す一言
+async function devUnlock(password) {
+  try {
+    await activateDev(password);
+    applyPlanUI();
+    toast(L('開発者モード：有料版のすべての機能が使えます', 'Developer mode: every paid feature is unlocked'));
+    return L('有効にしました。このブラウザで、有料版のすべての機能が使えます（右上のプランのボタンから外せます）。', 'Unlocked. Every paid feature works in this browser (remove it from the plan button at the top right).');
+  } catch (e) {
+    if (e.code === 'bad_password') return L('パスワードが違います', 'Wrong password');
+    if (e.code === 'not_configured' || e.code === 'http_404' || e.code === 'http_405') return L('このサイトでは、開発者モードがまだ設定されていません', 'Developer mode isn’t set up on this site yet');
+    return payError(e);
+  }
+}
 
 // ------------------------------------------------------------ サイドメニューのタブ（表示・ブレストモード・詳細）
 // 最後に開いていたタブはこの端末に覚えておく。← → で隣のタブへ（Home / End で端へ）
@@ -1106,7 +1119,7 @@ function applyPlanUI() {
   const badge = $('#planBadge');
   badge.innerHTML = plan === 'free'
     ? `<b>${tr(PLANS.free)}</b><span>${L('アップグレード', 'Upgrade')}</span>`
-    : `<b>${tr(PLANS[plan])}</b><span>${L('管理', 'Manage')}</span>`;
+    : `<b>${(licenseInfo() || {}).status === 'dev' ? L('開発者モード', 'Developer') : tr(PLANS[plan])}</b><span>${L('管理', 'Manage')}</span>`;
   badge.classList.toggle('paid', plan !== 'free');
   renderThemes();
   segButtons('#layouts', LAYOUTS, 'layout');
@@ -1138,8 +1151,11 @@ function renderPlanDialog() {
   const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   box.append(h('p', 'lang-icon', 'K'));
   const title = h('h2', null, L('プラン', 'Your plan')); title.id = 'planDlgTitle'; box.append(title);
-  box.append(h('p', 'plan-now', tr(PLANS[plan])));
-  if (plan !== 'free' && lic) {
+  const dev = plan !== 'free' && lic && lic.status === 'dev';
+  box.append(h('p', 'plan-now', dev ? L('開発者モード', 'Developer mode') : tr(PLANS[plan])));
+  if (dev) {
+    box.append(h('p', 'lang-body', L(`有料版のすべての機能が使えます。${fmtDate(lic.expires)} まで（このページを開いていると自動で延びます）`, `Every paid feature is unlocked until ${fmtDate(lic.expires)} (extends automatically while you use KANPE).`)));
+  } else if (plan !== 'free' && lic) {
     box.append(h('p', 'lang-body', lic.cancelAtPeriodEnd
       ? L(`解約済みです。${fmtDate(lic.expires - 3 * 86400)} まで使えます`, `Cancelled — available until ${fmtDate(lic.expires - 3 * 86400)}`)
       : L(`次回の更新日：${fmtDate(lic.expires - 3 * 86400)}（${lic.interval === 'year' ? '年払い' : '月払い'}）`, `Renews on ${fmtDate(lic.expires - 3 * 86400)} (${lic.interval === 'year' ? 'yearly' : 'monthly'})`)));
@@ -1161,7 +1177,7 @@ function renderPlanDialog() {
       busy(b, true, L('お支払いページへ…', 'Opening checkout…'));
       try { await startCheckout('plus', 'year', LANG2); } catch (e) { msg.textContent = payError(e); busy(b, false, L('年払い　¥4,800（2か月分おトク）', 'Yearly — ¥4,800 (2 months free)')); }
     });
-  } else {
+  } else if (!dev) {
     btn(L('支払い方法・解約・領収書', 'Billing, cancel, receipts'), 'lang-ok', async (b) => {
       busy(b, true, L('開いています…', 'Opening…'));
       try { await openPortal(LANG2); } catch (e) { msg.textContent = payError(e); busy(b, false, L('支払い方法・解約・領収書', 'Billing, cancel, receipts')); }
@@ -1215,7 +1231,8 @@ function renderPlanDialog() {
     fetch('/api/license-email', { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : {})).then((x) => { if (x.enabled) for (const el of [mhint, mrow]) el.hidden = false; }).catch(() => {});
     det.append(mhint, mrow, mmsg);
   } else {
-    const p = h('p', 'hint', L('この端末では無料プランに戻ります。ご契約は続くので、ライセンスコードでいつでも戻せます（解約は「支払い方法・解約・領収書」から）。', 'This browser goes back to Free. Your subscription continues — restore it any time with your license code (cancel from “Billing, cancel, receipts”).'));
+    const p = h('p', 'hint', dev ? L('このブラウザで開発者モードを終え、無料プランに戻ります。', 'Ends developer mode in this browser and goes back to Free.')
+      : L('この端末では無料プランに戻ります。ご契約は続くので、ライセンスコードでいつでも戻せます（解約は「支払い方法・解約・領収書」から）。', 'This browser goes back to Free. Your subscription continues — restore it any time with your license code (cancel from “Billing, cancel, receipts”).'));
     const rm = h('button', 'btn', L('外す', 'Remove')); rm.type = 'button';
     rm.addEventListener('click', () => { clearLicense(); applyPlanUI(); renderPlanDialog(); });
     det.append(p, rm);
