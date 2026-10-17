@@ -123,6 +123,7 @@ export const FUSION_MOTIONS = {
   converge: { label: '集束', labelEn: 'Converge', note: '散った字が残像を引きながら、らせんを描いて集まる', noteEn: 'Scattered letters spiral in, trailing afterimages' },
   scan: { label: 'スキャン', labelEn: 'Scan', note: '光が走り抜け、字が奥から立ち上がって実体化する', noteEn: 'A beam sweeps across and letters rise up out of the screen' },
   ink: { label: '墨', labelEn: 'Ink', note: '墨がにじむように字が浮かび、しぶきが散る', noteEn: 'Letters bleed in like ink, with splashes' },
+  firework: { label: '花火', labelEn: 'Firework', note: '光が昇って弾け、火花の中から字が花開く', noteEn: 'A spark rises and bursts, and the word blooms out of the fireworks' },
   random: { label: 'ランダム', labelEn: 'Random', note: '生まれるたびに出かたを選び直す', noteEn: 'Picks a different motion every time' },
 };
 export const FUSION_SPEEDS = {

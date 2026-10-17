@@ -5,6 +5,8 @@ export const CHANGELOG = [
     v: '1.5.1', date: '2026-10-17',
     items: [
       { type: 'fix', ja: 'テロップを、ニュースのように一定の速さで流れるように。言葉は右の外から入って左へ流れ、画面から出たら消えます。言葉が続くときは少し速く流して追いつきます（「表示時間」は1語が画面を横切る秒数）', en: 'The Ticker now scrolls smoothly at a steady speed like a news crawl: words enter from the right, flow left and disappear off-screen, speeding up a little to catch up when words pile up (Display time is how long a word takes to cross the screen)' },
+      { type: 'new', ja: '新語の出かたに「花火」：画面の下から光が昇って弾け、火花の中から新語が花開きます', en: 'New “Firework” entrance: a spark rises from below, bursts, and the new word blooms out of the fireworks' },
+      { type: 'fix', ja: '「機能」タブを開いたとき、タブの下に横の罫線が出ていた不具合', en: 'A stray line appeared under the tabs when the Features tab was open' },
       { type: 'improve', ja: '書体テーマの並びを「墨・やわらか・夜・ポップ」に。「透過」は「筆」「ドット」と同じお手軽プランの書体になりました（無料プランでも1日お試しできます）', en: 'Typeface themes are now ordered Sumi, Soft, Night, Pop. “Clear” joins “Brush” and “Dot” as a Plus typeface (free users can try it for a day)' },
     ],
   },

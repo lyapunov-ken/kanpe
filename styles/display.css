@@ -273,3 +273,7 @@ body {
 .k-fusion.fz-live:not(.filled) .c { -webkit-text-stroke-width: max(1px, .024em); }
 .k-fusion.fz-live:not(.filled) > .wi { filter: drop-shadow(0 0 .1em color-mix(in srgb, var(--fz, var(--accent2)) 70%, transparent)); }
 .bg-light .k-fusion.fz-live:not(.filled) > .wi { filter: drop-shadow(0 0 .06em color-mix(in srgb, var(--fz, var(--accent2)) 45%, transparent)); }
+/* 花火：昇る光の尾と、明るい火花 */
+#fx .fz-rocket { stroke: var(--fzs, var(--accent2)); stroke-width: 2; stroke-linecap: round; }
+#fx .fz-spark { fill: color-mix(in srgb, var(--fzs, var(--accent2)) 45%, #fff); }
+.bg-light #fx .fz-spark { fill: var(--fzs, var(--accent2)); }

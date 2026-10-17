@@ -728,7 +728,7 @@ function dropTicker(it) {
 //  scan スキャン：光の線が走り、通ったところから走査線と色ずれを伴って字が実体化する
 // どの出かたも、輪郭だけで生まれて少しあとに色が満ちる。組版では元の2語から細い系統線が伸びる。
 const SVGNS = 'http://www.w3.org/2000/svg';
-const FZ_MOTIONS = ['collide', 'decode', 'shutter', 'converge', 'scan', 'ink'];
+const FZ_MOTIONS = ['collide', 'decode', 'shutter', 'converge', 'scan', 'ink', 'firework'];
 let fx = null;
 function fxLayer() {
   if (fx && fx.isConnected) return fx;
@@ -879,8 +879,11 @@ function fzDur(motion, k, n) {
   if (motion === 'converge') return (40 * m + 100 + 1100) * k;
   if (motion === 'scan') return 1400 * k;
   if (motion === 'ink') return (60 * half + 1000) * k;
+  if (motion === 'firework') return (FW_RISE + 40 * half + 900) * k;
   return (35 * half + 820) * k; // collide
 }
+
+const FW_RISE = 620; // 花火：光が昇りきるまで（この間、字はまだ出ない）
 
 // ---- 画面全体の演出
 // ピント送り：誕生のあいだ、ほかの言葉を少し沈めて新語に視線を集める
@@ -968,6 +971,42 @@ function inkBlot(c, size, k, color, rand) {
   }
   fxLayer().appendChild(g);
   setTimeout(() => g.remove(), 1900 * k);
+}
+
+// 花火：画面の下から光の玉が昇り、新語の位置で弾ける。火花は重力で垂れながら、またたいて消える
+function firework(c, size, k, color, rand) {
+  const H = stage.clientHeight, g = svg('g', { class: 'fz-burst' });
+  if (color) g.style.setProperty('--fzs', color);
+  // 1) 昇る光（尾を引く）
+  const y0 = H + 20, rise = FW_RISE * k;
+  const tail = svg('line', { x1: c.x, y1: y0, x2: c.x, y2: c.y, pathLength: '1', class: 'fz-rocket' });
+  const head = svg('circle', { cx: c.x, cy: y0, r: Math.max(2, size * 0.018), class: 'fz-dot fz-spark' });
+  g.append(tail, head);
+  head.animate([{ transform: 'translate(0px, 0px)', opacity: 1 }, { transform: `translate(0px, ${c.y - y0}px)`, opacity: 1, offset: 0.98 }, { transform: `translate(0px, ${c.y - y0}px)`, opacity: 0 }],
+    { duration: rise, easing: 'cubic-bezier(.2,.6,.35,1)', fill: 'both' });
+  // 尾：長さ0.2の光の線が、光の玉を追って下から上へ移る（pathLength=1 で長さをそろえる）
+  tail.animate([{ strokeDasharray: '0.2 1', strokeDashoffset: 0.2, opacity: 0.9 }, { strokeDasharray: '0.2 1', strokeDashoffset: -0.8, opacity: 0.7, offset: 0.98 }, { strokeDasharray: '0.2 1', strokeDashoffset: -0.8, opacity: 0 }],
+    { duration: rise + 120 * k, easing: 'cubic-bezier(.2,.6,.35,1)', fill: 'both' }).onfinish = () => tail.remove();
+  // 2) 弾ける：大きな輪の火花と、少し遅れて小さな2つの花
+  const bursts = [{ x: c.x, y: c.y, n: 44, reach: size * 1.05, d: rise }];
+  for (let i = 0; i < 2; i++) bursts.push({ x: c.x + (rand() - 0.5) * size * 1.4, y: c.y + (rand() - 0.6) * size * 0.7, n: 18, reach: size * 0.45, d: rise + (260 + i * 220) * k });
+  for (const b of bursts) {
+    for (let i = 0; i < b.n; i++) {
+      const a = (i / b.n) * Math.PI * 2 + rand() * 0.25, sp = b.reach * (0.65 + rand() * 0.45);
+      const dot = svg('circle', { cx: b.x, cy: b.y, r: 1 + rand() * 2.2, class: 'fz-dot' + (i % 3 ? '' : ' fz-spark') });
+      g.appendChild(dot);
+      const kf = [];
+      for (let j = 0; j <= 6; j++) {
+        const t = j / 6, e = 1 - (1 - t) ** 3; // 速く広がって、ゆっくり止まる
+        const x = Math.cos(a) * sp * e, y = Math.sin(a) * sp * e + size * 0.35 * t * t; // 重力で垂れる
+        kf.push({ offset: t, transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`, opacity: t < 0.6 ? 1 : (j % 2 ? 0.35 : 0.9) * (1 - t) * 2.5 });
+      }
+      dot.animate(kf, { duration: (1100 + rand() * 500) * k, delay: b.d, easing: 'linear', fill: 'both' });
+    }
+  }
+  setTimeout(() => flash(c, color, k, 0.45), rise); // 弾けた瞬間に光る
+  fxLayer().appendChild(g);
+  setTimeout(() => g.remove(), rise + 2400 * k);
 }
 
 // ---- 1字ずつの登場。戻り値は登場が終わるまでの時間（ミリ秒）
@@ -1095,6 +1134,21 @@ function fzAnimate(it, motion, k, d0 = 0) {
     return end;
   }
 
+  if (motion === 'firework') {
+    // 花火：光が昇りきって弾けた瞬間、火花の中心から字が花開くように広がり、きらめいて止まる
+    const cx = it.inner.offsetLeft + it.inner.offsetWidth / 2, d1 = d0 + step(FW_RISE);
+    parts.forEach((p, i) => {
+      const dx = cx - (p.offsetLeft + p.offsetWidth / 2);
+      p.animate([
+        { transform: `translate(${dx}px, 0) scale(0)`, opacity: 0, filter: 'brightness(3) blur(4px)' },
+        { transform: `translate(${-dx * 0.06}px, -.04em) scale(1.18)`, opacity: 1, filter: 'brightness(2.2) blur(0px)', offset: 0.42 },
+        { filter: 'brightness(1.6)', offset: 0.6 }, { filter: 'brightness(1)', offset: 0.7 }, { filter: 'brightness(1.5)', offset: 0.8 },
+        { transform: 'none', opacity: 1, filter: 'none' },
+      ], { duration: step(900), delay: d1 + step(40) * rankFromCenter(i, n), easing: 'cubic-bezier(.2,.8,.25,1)', fill: 'backwards' });
+    });
+    return end;
+  }
+
   if (motion === 'ink') {
     // 墨：にじんだ墨の中から、中央の字から順に輪郭が浮かび上がる
     parts.forEach((p, i) => {
@@ -1144,6 +1198,8 @@ function fzStage(it, motion, k, ink) {
     bands(box, k, ink, rand);
   } else if (motion === 'shutter') {
     slits(box, k, ink);
+  } else if (motion === 'firework') {
+    firework(c, size, k, ink, rand);
   } else if (motion === 'ink') {
     inkBlot(c, size, k, ink, rand);
     particles(c, 22, size * 0.75, ink, k, rand, { min: 1, max: 6, life: 800 });

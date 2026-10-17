@@ -839,3 +839,5 @@ html[lang="en"] .coin-inline { grid-template-columns: 56px minmax(0, 1fr); }
   .steps { gap: 4px; }
   #paneLook { gap: 11px; }
 }
+/* タブの中身どうしには罫線を引かない（隠れているタブの「.sec」の次になっても線が出ないように） */
+.side-panes > .pane { border-top: 0; }

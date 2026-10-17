@@ -61,7 +61,7 @@ docs/            調査メモ
 - コミットメッセージは英語で、何を・なぜを短く。1 つのブランチに関係のない変更を混ぜない
 
 ## いまの状態（2026-10-17 時点）
-- 作業中：`fix/ticker-themes`（v1.5.1）テロップは一定の速さで流れる（`display.js` の tickerPlace / tickerStep。1語ずつ translateX、画面から出たら消す、右の外にたまったら速める。時間では消さない）。書体は 墨・やわらか・夜・ポップ（無料）／透過・筆・ドット（お手軽）。透過が使えないときは OBS の URL に theme=clear を付けない
+- 作業中：`fix/ticker-themes`（v1.5.1）新語の出かた「花火」（firework。光が昇る `FW_RISE` のあいだ字は出ない）。テロップは一定の速さで流れる（`display.js` の tickerPlace / tickerStep。1語ずつ translateX、画面から出たら消す、右の外にたまったら速める。時間では消さない）。書体は 墨・やわらか・夜・ポップ（無料）／透過・筆・ドット（お手軽）。透過が使えないときは OBS の URL に theme=clear を付けない
 - 本番：`main` = v1.5.0
   - タブは「表示」（書体・色・レイアウト・5段階の文字サイズ／表示時間／同時に出す語）「機能」（ブレストモード・話者）「設定」（背景・ロゴ・辞書・OBS）。タブの id は `look` / `feat` / `set`（以前の `coin` / `more` は読み替える）
   - 5段階の値は `settings.js` の `SIZE_STEPS` / `TTL_STEPS` / `WORD_STEPS`。保存値は `nearestStep` で近い段に寄せる。初めての人は墨・組版・中・8秒・24語
