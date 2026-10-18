@@ -1,14 +1,14 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
 import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, LOGO_SIZES, SIZE_STEPS, nearestStep, loadSettings,
-  CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, TICKER_SPEEDS, SIZE_KEY } from '../core/settings.js?v=202610180554';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610180554';
-import { createBus } from '../core/bus.js?v=202610180554';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610180554';
-import { runs } from '../core/extract.js?v=202610180554';
-import { EN, L, tr } from '../core/i18n.js?v=202610180554';
-import { createVJ } from './vj.js?v=202610180554';
-import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610180554';
+  CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY } from '../core/settings.js?v=202610180942';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610180942';
+import { createBus } from '../core/bus.js?v=202610180942';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610180942';
+import { runs } from '../core/extract.js?v=202610180942';
+import { EN, L, tr } from '../core/i18n.js?v=202610180942';
+import { createVJ } from './vj.js?v=202610180942';
+import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610180942';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -60,6 +60,8 @@ const refBase = () => S.baseSize * layoutK(); // 1280×720 換算の基準の大
 const basePx = () => refBase() * unit();
 // 育つまで：同じ言葉を何回くり返したら、ひと回り大きくなるか（組版・カンペ）
 const growEvery = () => +(S.layout === 'kanpe' ? S.kGrow : S.layout === 'compose' ? S.cGrow : 1) || 1;
+// 言葉が消えるまでの秒数（組版は「残る時間」で3段階。ほかのレイアウトは固定）
+const lifeSec = () => (S.layout === 'compose' && LIFE_STEPS[S.cLife] ? +S.cLife : S.ttl);
 // 組版の縦組みの量（古い設定の vertical: false は「なし」）
 const vertP = () => (S.vertical === false ? VERT_STEPS.off : VERT_STEPS[S.cVert] || VERT_STEPS.mid).p;
 // ---- 字幕ライン（画面の最下部）：文字の大きさ・行数と、言葉を置かずに空けておく高さ（どれも 1280×720 換算）
@@ -468,7 +470,7 @@ async function addWordAt(m, text, t0) {
   }
   node.style.fontSize = px + 'px';
   node.style.letterSpacing = TRACK[Math.min(3, lv + (echo >= 3 ? 1 : 0))] + 'em';
-  const ttl0 = S.ttl * 1000 * (kind === 'new' ? 1.25 : kind === 'fusion' ? 3 : 1) * (lv >= 2 ? 1.15 : 1); // 新語は余韻を残して長めに
+  const ttl0 = lifeSec() * 1000 * (kind === 'new' ? 1.25 : kind === 'fusion' ? 3 : 1) * (lv >= 2 ? 1.15 : 1); // 新語は余韻を残して長めに
   const ttl = echoMs() ? Math.min(echoMs(), ttl0 * echoLife(echo, fill)) : ttl0;
   const it = { key, text, kind, count: m.count || 1, lv, el: node, inner, parts, vertical,
     born: t0, ttl0, ttl, echo, expires: t0 + ttl, rect: null, leaving: false, aging: false, fz: m.fz, fzr: fzRand(m) };
@@ -1269,7 +1271,7 @@ async function fuseWordAt(m, text, look, rand, prev, t0) {
   colorize(node, parts, color, rand);
   node.style.fontSize = px + 'px';
   node.style.letterSpacing = TRACK[lv] + 'em';
-  const ttl = S.ttl * 1000 * 3.2; // 新語は余韻を残して長めに
+  const ttl = lifeSec() * 1000 * 3.2; // 新語は余韻を残して長めに
   const it = { key: text.toLowerCase(), text, kind: 'fusion', count: 1, lv, el: node, inner, parts, vertical: false,
     born: t0, ttl, expires: t0 + ttl, rect: null, leaving: false, aging: false, fz: look, fzr: fzRand(m) };
   let live = liveItems();
@@ -1801,7 +1803,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610180554').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610180942').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech', 'talk'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 

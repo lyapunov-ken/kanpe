@@ -204,6 +204,12 @@ export const VERT_STEPS = {
   mid: { label: '標準', labelEn: 'Mid', p: [0.22, 0.4], note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
   high: { label: '多め', labelEn: 'Lots', p: [0.4, 0.65], note: '縦組みを多くして、和のポスターのように', noteEn: 'Lots of vertical text, like a Japanese poster' },
 };
+// 組版：残る時間。言葉が出てから消えるまでの秒数
+export const LIFE_STEPS = {
+  5: { label: '5秒', labelEn: '5s', note: 'すぐ消える（テンポの速い話に）', noteEn: 'Gone quickly, for fast talk' },
+  8: { label: '8秒', labelEn: '8s', note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
+  30: { label: '30秒', labelEn: '30s', note: '長く残す（ブレストや講演で、出た言葉を眺めたいとき）', noteEn: 'Stays long, so ideas linger in brainstorms and talks' },
+};
 // テロップ：流れる速さ。sec は1語が画面を横切る秒数
 export const TICKER_SPEEDS = {
   slow: { label: 'ゆっくり', labelEn: 'Slow', sec: 12, note: 'ゆっくり流れる（読みやすい）', noteEn: 'Slow and easy to read' },
@@ -231,7 +237,7 @@ export const DEFAULTS = {
   theme: 'sumi',     // 初めての人は墨（明るい紙と朱）から
   layout: 'compose',
   baseSize: 34,      // 言葉の基準の大きさ（1280×720 換算の px）。コンソールでは変えず、レイアウトごとの倍率（cSize など）で変える。別窓の操作バーの「文字サイズ」はこの窓だけこれを変える
-  ttl: 8,            // 言葉が消えるまでの秒数（固定。テロップは tSpeed で流れる速さを決める）
+  ttl: 8,            // 言葉が消えるまでの秒数（固定。組版は cLife、テロップは tSpeed で決める）
   maxWords: 24,      // 同時に出す言葉の上限（固定。レイアウトごとの上限 MAXW もある）
   vertical: true,    // 縦組みを混ぜる（古い設定。いまは cVert。false なら縦組みなし）
   // レイアウトごとの設定（3段階）
@@ -242,6 +248,7 @@ export const DEFAULTS = {
   kGrow: 1,          // カンペ：育つまでのくり返し回数
   cJump: 'mid',      // 組版：大小の差（JUMP_STEPS）
   cVert: 'mid',      // 組版：縦組みの量（VERT_STEPS）
+  cLife: 8,          // 組版：残る時間（秒。LIFE_STEPS）
   tSpeed: 'mid',     // テロップ：流れる速さ（TICKER_SPEEDS）
   // 字幕ライン（画面の最下部に、聞き取った文を出す）
   caption: true,     // 字幕ラインを出す

@@ -6,8 +6,8 @@ export const CHANGELOG = [
     items: [
       { type: 'improve', ja: '「文字サイズ・表示時間・同時に出す行」は、画面の最下部に聞き取った文を出す「字幕ライン」の設定になりました。小さな画面の絵の付いたまとまりにまとめ、設定にふれるとプレビューで字幕の出る場所に枠が出ます', en: 'Text size, Display time and Lines now belong to the Caption line — the transcript at the very bottom of the screen. They sit together in their own panel, and touching them outlines the caption area in the preview' },
       { type: 'new', ja: '字幕ラインを最大3行に。少し前の文も残せて、字幕のように下から流れます。長い文は頭を「…」で省いて1行に収めます', en: 'The caption line can now show up to 3 lines, keeping earlier sentences like subtitles. Long sentences are shortened from the start to fit on one line' },
-      { type: 'new', ja: 'レイアウトごとの設定（3段階）：文字の大きさ（組版・カンペ・テロップそれぞれ）、育つまで（同じ言葉を何回くり返したら大きくなるか。組版・カンペ）、大小の差と縦組みの量（組版）、流れる速さ（テロップ）', en: 'Per-layout settings in three steps: text size (for Compose, Cue and Ticker separately), Grow after (how many repeats before a word gets bigger; Compose and Cue), size contrast and amount of vertical text (Compose), and scrolling speed (Ticker)' },
-      { type: 'improve', ja: '「動きを控えめに」はレイアウトの見出しの横に移しました。以前の文字サイズ・縦組みの設定は、新しい設定に引き継がれます', en: 'Reduce motion now sits next to the Layout heading. Your previous text size and vertical-text choices carry over to the new settings' },
+      { type: 'new', ja: 'レイアウトごとの設定（3段階）：文字の大きさ（組版・カンペ・テロップそれぞれ）、育つまで（同じ言葉を何回くり返したら大きくなるか。組版・カンペ）、大小の差・縦組みの量・残る時間（組版。5秒・8秒・30秒）、流れる速さ（テロップ）', en: 'Per-layout settings in three steps: text size (for Compose, Cue and Ticker separately), Grow after (how many repeats before a word gets bigger; Compose and Cue), size contrast, amount of vertical text and how long words stay (Compose: 5, 8 or 30 s), and scrolling speed (Ticker)' },
+      { type: 'improve', ja: '「動きを控えめに」はアクセントカラーの見出しの横に移しました。以前の文字サイズ・縦組みの設定は、新しい設定に引き継がれます', en: 'Reduce motion now sits next to the Accent color heading. Your previous text size and vertical-text choices carry over to the new settings' },
     ],
   },
   {

@@ -63,7 +63,7 @@ docs/            調査メモ
 ## いまの状態（2026-10-18 時点）
 - 作業中：`feat/caption-layout-opts`（v1.6.0）表示タブの組み直し
   - 「文字サイズ・表示時間・同時に出す行」は字幕ライン（最下部の聞き取った文）専用：`capSize`（s/m/l・`CAP_SIZES`）・`capTtl`（3/5/10秒）・`capLines`（1〜3行）。`display.js` の「字幕ライン」：1文1行で下から積み、入りきらない文は頭を「…」で省く（`fitCapLine`）。言葉は `capReserve()` の高さを空けて置く（CSS は `--cap` / `--cap-res`）。プレビューだけ `capPeek` で字幕の場所に点線の枠と見本の文
-  - レイアウトごとの3段階：`cSize`/`kSize`/`tSize`（`LAYOUT_SIZES` の倍率。`SIZE_KEY`）、`cGrow`/`kGrow`（育つまで。`level()` と `echoScale` を回数で割る）、`cJump`（`JUMP_STEPS`。組版の `ratio()`）、`cVert`（`VERT_STEPS`。古い `vertical:false` は「なし」扱い）、`tSpeed`（`TICKER_SPEEDS`）
+  - レイアウトごとの3段階：`cSize`/`kSize`/`tSize`（`LAYOUT_SIZES` の倍率。`SIZE_KEY`）、`cGrow`/`kGrow`（育つまで。`level()` と `echoScale` を回数で割る）、`cJump`（`JUMP_STEPS`。組版の `ratio()`）、`cVert`（`VERT_STEPS`。古い `vertical:false` は「なし」扱い）、`cLife`（組版の残る時間 5/8/30秒。`lifeSec()`）、`tSpeed`（`TICKER_SPEEDS`）
   - 言葉の `baseSize`（34）・`ttl`（8秒）・`maxWords`（24）はコンソールでは変えない固定値。別窓の操作バーの「文字サイズ」（`?size=`）はその窓だけ `baseSize` を変える。以前の保存値は `console.js` の `migrateSettings()` が1回だけ新しい設定へ移す
   - 表示タブは 1280×800 でスクロールなしに収めている（低い画面用の詰めは console.css の末尾 `max-height: 860px`）
 - 作業中：`fix/ticker-themes`（v1.5.1）新語の出かた「花火」（firework。光が昇る `FW_RISE` のあいだ字は出ない）。テロップは一定の速さで流れる（`display.js` の tickerPlace / tickerStep。1語ずつ translateX、画面から出たら消す、右の外にたまったら速める。時間では消さない）。書体は 墨・やわらか・夜・ポップ（無料）／透過・筆・ドット（お手軽）。透過が使えないときは OBS の URL に theme=clear を付けない

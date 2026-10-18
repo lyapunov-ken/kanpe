@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, TICKER_SPEEDS, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610180554';
-import { EN, L, tr } from '../core/i18n.js?v=202610180554';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610180554';
-import { createBus } from '../core/bus.js?v=202610180554';
-import { connectObs } from '../core/obs.js?v=202610180554';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610180554';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610180554';
-import { simulateSpeech } from './demo.js?v=202610180554';
-import { initHelp } from './help.js?v=202610180554';
-import { initNews } from './news.js?v=202610180554';
-import { createGuide, guideSeen } from './guide.js?v=202610180554';
-import { coinWord } from '../core/coin.js?v=202610180554';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610180554';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610180942';
+import { EN, L, tr } from '../core/i18n.js?v=202610180942';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610180942';
+import { createBus } from '../core/bus.js?v=202610180942';
+import { connectObs } from '../core/obs.js?v=202610180942';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610180942';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610180942';
+import { simulateSpeech } from './demo.js?v=202610180942';
+import { initHelp } from './help.js?v=202610180942';
+import { initNews } from './news.js?v=202610180942';
+import { createGuide, guideSeen } from './guide.js?v=202610180942';
+import { coinWord } from '../core/coin.js?v=202610180942';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610180942';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -50,7 +50,7 @@ function logEvent(m) {
   const t = performance.now();
   recent.push({ at: t, m });
   // 画面に残りうる時間（新語の余韻・間があいたときの延長・カンペの記憶）より古いものは忘れる
-  const keep = Math.max(S.ttl * 1000 * 3.2 * 2.6, (+S.echo || 0) * 60000) + 5000;
+  const keep = Math.max(lifeSec() * 1000 * 3.2 * 2.6, (+S.echo || 0) * 60000) + 5000;
   while (recent.length && (t - recent[0].at > keep || recent.length > 2000)) recent.shift();
 }
 function send(m) {
@@ -466,8 +466,10 @@ function pick(container, entries, key, id, def) {
 }
 
 // ---- レイアウトごとの設定（3段階）と、字幕ライン（画面の最下部）の設定 ----
-const NUM_KEYS = new Set(['cGrow', 'kGrow', 'capTtl', 'capLines']);
-const LAY_KEYS = new Set(['cSize', 'kSize', 'tSize', 'cGrow', 'kGrow', 'cJump', 'cVert', 'tSpeed', 'echo', 'vjStyle', 'vjFont']);
+const NUM_KEYS = new Set(['cGrow', 'kGrow', 'cLife', 'capTtl', 'capLines']);
+// 言葉が消えるまでの秒数（組版は「残る時間」。表示ビューの lifeSec と同じ）
+function lifeSec() { return S.layout === 'compose' && LIFE_STEPS[S.cLife] ? +S.cLife : S.ttl; }
+const LAY_KEYS = new Set(['cSize', 'kSize', 'tSize', 'cGrow', 'kGrow', 'cJump', 'cVert', 'cLife', 'tSpeed', 'echo', 'vjStyle', 'vjFont']);
 const CAP_KEYS = new Set(['capSize', 'capTtl', 'capLines']);
 // レイアウトの説明。いまのレイアウトだけに効く設定だと分かるように、名前を添える
 const COLON = L('：', ': ');
@@ -496,7 +498,7 @@ function renderLayOpts() {
   if (lay === 'vj') return;
   segButtons('#optSize', LAYOUT_SIZES, SIZE_KEY[lay]);
   if (lay === 'compose' || lay === 'kanpe') segButtons('#optGrow', GROW_STEPS, lay === 'kanpe' ? 'kGrow' : 'cGrow');
-  if (lay === 'compose') { segButtons('#optJump', JUMP_STEPS, 'cJump'); segButtons('#optVert', VERT_STEPS, 'cVert'); }
+  if (lay === 'compose') { segButtons('#optJump', JUMP_STEPS, 'cJump'); segButtons('#optVert', VERT_STEPS, 'cVert'); segButtons('#optLife', LIFE_STEPS, 'cLife'); }
   if (lay === 'kanpe') segButtons('#echoSpans', ECHO_SPANS, 'echo');
   if (lay === 'ticker') segButtons('#optSpeed', TICKER_SPEEDS, 'tSpeed');
 }
@@ -519,6 +521,7 @@ function migrateSettings() {
     S.cSize = S.kSize = S.tSize = sz;
     const ttl = +S.ttl || DEFAULTS.ttl;
     S.tSpeed = ttl <= 6 ? 'fast' : ttl >= 15 ? 'slow' : 'mid';
+    S.cLife = ttl <= 5 ? 5 : ttl >= 15 ? 30 : 8;
     S.cVert = S.vertical === false ? 'off' : 'mid';
   }
   S.baseSize = DEFAULTS.baseSize;
@@ -528,6 +531,7 @@ function migrateSettings() {
   for (const k of ['cGrow', 'kGrow']) S[k] = GROW_STEPS[S[k]] ? +S[k] : 1;
   if (!JUMP_STEPS[S.cJump]) S.cJump = 'mid';
   if (!VERT_STEPS[S.cVert]) S.cVert = 'mid';
+  S.cLife = LIFE_STEPS[S.cLife] ? +S.cLife : 8;
   S.vertical = S.cVert !== 'off'; // 古い窓（vertical を見る）とも合わせる
   if (!TICKER_SPEEDS[S.tSpeed]) S.tSpeed = 'mid';
   if (!CAP_SIZES[S.capSize]) S.capSize = 'm';
@@ -1081,7 +1085,7 @@ function remember(e) {
   if (seenWords.size > 60) seenWords.delete(seenWords.keys().next().value);
 }
 function fusePool() {
-  const t = performance.now(), keep = S.ttl * 1000 * 1.4; // 画面に残っていそうな言葉だけ
+  const t = performance.now(), keep = lifeSec() * 1000 * 1.4; // 画面に残っていそうな言葉だけ
   return [...seenWords].filter(([, at]) => t - at < keep).reverse().map(([w]) => w);
 }
 // 新語の見た目を1回ぶん決める（「ランダム」はここで1つ選ぶので、プレビューと別窓で同じ見た目になる）
