@@ -1,6 +1,6 @@
 // 使い方ガイド（アプリ内ヘルプ）。右上の「ヘルプ」、? キー、または app.html#help（#help-scenes など）で開く。
 // 文言は L('日本語', 'English') で持つので、英語版のコンソールでもそのまま使える。
-import { L } from '../core/i18n.js?v=202610180942';
+import { L } from '../core/i18n.js?v=202610190043';
 
 // シーン別のおすすめ設定（無料プランの機能だけで組む。アクセントカラーや背景などの好みは触らない）
 export const PRESETS = {
@@ -84,8 +84,8 @@ function html() {
           '<b>Typeface theme</b> sets the look of the letters and background; <b>Layout</b> sets where words go: Compose fills the screen, Cue stacks big words from the bottom, Ticker scrolls along the bottom, VJ draws words in glowing dots. Under the layout you’ll find settings for that layout only, each in three steps: <b>Text size</b> (separately for Compose, Cue and Ticker), <b>Grow after</b> (how many repeats before a word gets bigger; Compose and Cue), <b>Size contrast</b>, <b>Vertical</b> text and <b>Stays</b> (how long words stay; Compose) and <b>Speed</b> (Ticker).<br>The <b>Caption line</b> shows what you say, word for word, at the very bottom of the screen. Choose its <b>Text size</b>, <b>Display time</b> (how long it stays after you finish) and <b>Lines</b> (how many earlier sentences stay). Touch these settings and the preview outlines where the caption appears.<br>In Cue layout, <b>Topic memory</b> (5 min, 10 min or off) makes words you repeat within that time grow bigger and stay longer, so the more you stay on one topic, the more the screen fills with words.<br>Accent colors are free to change on any plan. Premium typefaces, backgrounds (image / camera), a custom logo and VJ are Plus features you can try free for one day.<br>Choose an image under <b>Logo</b> in the Settings tab and its center is cropped to a square and shown in the top-left corner (small, medium or large). In Compose layout words are placed around it, and it appears the same in pop-out windows and OBS.<br>In VJ mode you pick a style (1px, LED, Neon, Pixel) and a typeface (5 kinds). 1px is a delicate monochrome look built only from dots and lines. If letters are hard to read, choose Gothic or Mincho. “Reduce motion” stops the movement.<br>Turn on <b>Word mix</b> in Brainstorm mode and words on screen combine into brand-new words. Press “Mix now” or <kbd>M</kbd> any time; new words are kept above the transcript. Up to five new words stay on screen; keep mixing and the oldest fade out early. You can also pick the new word’s color (including rainbow and random), entrance (Collide, Decode, Shutter, Converge, Scan, Random) and speed.')}</dd>
         <dt>${L('話者（機能タブ）', 'Speakers (Features tab)')}</dt>
         <dd>${L(
-          '話している人ごとに名前と色を付けます（最大4人）。切り替えはボタンかキーボードの <kbd>1</kbd>〜<kbd>4</kbd>。PC では声の高さで自動切り替えもできます。お手軽プラン以上の機能です。',
-          'Give each person a name and color (up to 4). Switch with the buttons or keys <kbd>1</kbd>–<kbd>4</kbd>; on a computer it can also switch automatically by voice pitch. A Plus feature.')}</dd>
+          '話している人ごとに名前と色を付けます（最大4人）。切り替えはボタンかキーボードの <kbd>1</kbd>〜<kbd>4</kbd>。PC では「声で自動」で、声の高さと声色から発言ごとに色分けできます。5秒ほど話して声を登録しておくと確実です（登録しなくても新しい声を覚えます）。間違えたら <kbd>1</kbd>〜<kbd>4</kbd> で直すと、その声を覚えて次から当たりやすくなります。お手軽プラン以上の機能です。',
+          'Give each person a name and color (up to 4). Switch with the buttons or keys <kbd>1</kbd>–<kbd>4</kbd>. On a computer, “By voice” colors each utterance automatically from voice pitch and tone. Recording each voice for about 5 seconds makes it more reliable (new voices are learned even without it). If it gets one wrong, press <kbd>1</kbd>–<kbd>4</kbd> and it learns that voice for next time. A Plus feature.')}</dd>
         <dt>${L('辞書（設定タブ）', 'Dictionary (Settings tab)')}</dt>
         <dd>${L(
           '<b>登録キーワード</b>は優先して拾い、強調して表示します。人名・商品名・プロジェクト名など、自動では拾いにくい語を入れてください。<b>NG ワード</b>は画面にも字幕にも出しません。',

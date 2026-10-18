@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610180942';
-import { EN, L, tr } from '../core/i18n.js?v=202610180942';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610180942';
-import { createBus } from '../core/bus.js?v=202610180942';
-import { connectObs } from '../core/obs.js?v=202610180942';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610180942';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610180942';
-import { simulateSpeech } from './demo.js?v=202610180942';
-import { initHelp } from './help.js?v=202610180942';
-import { initNews } from './news.js?v=202610180942';
-import { createGuide, guideSeen } from './guide.js?v=202610180942';
-import { coinWord } from '../core/coin.js?v=202610180942';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610180942';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610190043';
+import { EN, L, tr } from '../core/i18n.js?v=202610190043';
+import { VoiceTracker, attachVoice, enroll, validModel, modelGap } from './speakers.js?v=202610190043';
+import { createBus } from '../core/bus.js?v=202610190043';
+import { connectObs } from '../core/obs.js?v=202610190043';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610190043';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610190043';
+import { simulateSpeech } from './demo.js?v=202610190043';
+import { initHelp } from './help.js?v=202610190043';
+import { initNews } from './news.js?v=202610190043';
+import { createGuide, guideSeen } from './guide.js?v=202610190043';
+import { coinWord } from '../core/coin.js?v=202610190043';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610190043';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -79,32 +79,32 @@ function pushSettings(save = true) {
   const { obsPassword, obsUrl, ...pub } = S; // eslint-disable-line no-unused-vars
   send({ t: 'settings', s: { ...pub, credit: !canUse('credit:hide') } });
 }
-function deliverWords(events) {
+function deliverWords(events, sp = speakerInfo()) {
   if (paused) return;
-  const sp = speakerInfo();
   for (const e of events) { send({ t: 'word', ...e, ...sp }); remember(e); }
 }
-function deliverCaption(raw, final) {
+function deliverCaption(raw, final, sp = speakerInfo()) {
   if (paused) return;
   const t = maskNg(cleanCaption(raw), ex.ng);
-  if (t) send({ t: 'caption', text: t, final, ...speakerInfo() });
+  if (t) send({ t: 'caption', text: t, final, ...sp });
 }
 
 function onInterim(id, text) {
   if (!uttStart.has(id)) uttStart.set(id, clock());
-  deliverWords(ex.interim(id, text));
-  deliverCaption(text, false);
+  const sp = speakerInfo(uttSpeaker(id));
+  deliverWords(ex.interim(id, text), sp);
+  deliverCaption(text, false, sp);
   $('#live').textContent = cleanCaption(text);
 }
 function onFinal(id, text) {
   const start = uttStart.has(id) ? uttStart.get(id) : clock();
   uttStart.delete(id);
-  deliverWords(ex.final(id, text));
-  deliverCaption(text, true);
+  const sp = speakerInfo(uttSpeaker(id, true));
+  deliverWords(ex.final(id, text), sp);
+  deliverCaption(text, true, sp);
   $('#live').textContent = '';
   const clean = cleanCaption(text);
   if (!clean) return;
-  const sp = speakerInfo();
   const item = { start, end: Math.max(start + 0.8, clock()), raw: text, clean, spn: sp.spn || '', spc: sp.spc || '' };
   transcript.push(item);
   appendTx(item);
@@ -318,7 +318,7 @@ document.addEventListener('visibilitychange', () => {
 if (IS_MOBILE) document.body.classList.add('is-mobile');
 
 // 入力レベル表示（音声認識とは別に、マイクが拾えているかの目安）
-let meterCtx = null, meterStream = null, meterRaf = 0, meterAnalyser = null;
+let meterCtx = null, meterStream = null, meterRaf = 0, meterAnalyser = null, meterSrc = null;
 async function startMeter() {
   try {
     // 音声処理（エコー除去など）を切ったストリームにする。macOS ではエコー除去つきのマイクを別に開くと、
@@ -329,12 +329,13 @@ async function startMeter() {
     if (meterCtx.state === 'suspended') meterCtx.resume().catch(() => {}); // 自動再生の制限で止まった状態で作られることがある
     const src = meterCtx.createMediaStreamSource(meterStream);
     const an = meterCtx.createAnalyser();
-    an.fftSize = 2048; // 声の高さ（話者の推定）にも使うので長めに取る
+    an.fftSize = 2048;
     src.connect(an);
-    meterAnalyser = an;
+    meterAnalyser = an; meterSrc = src;
+    syncVoice();
     const buf = new Float32Array(an.fftSize);
     const bar = $('#meter');
-    let frame = 0, lvlAt = 0;
+    let lvlAt = 0;
     const loop = () => {
       an.getFloatTimeDomainData(buf);
       let sum = 0;
@@ -346,11 +347,6 @@ async function startMeter() {
       const t = performance.now();
       // VJ モードには声の大きさを送る（イコライザー用・毎秒20回まで）
       if (S.layout === 'vj' && t - lvlAt > 50 && !paused) { lvlAt = t; send({ t: 'lvl', v: Math.min(1, v * 1.6) }); }
-      // 話者の自動推定（声の高さ）
-      if (S.speakerMode === 'auto' && speakersOn() && (frame++ & 1) === 0) {
-        const i = tracker.push(detectPitch(buf, meterCtx.sampleRate), t);
-        if (i !== curSp) setSpeaker(i, true);
-      }
       meterRaf = requestAnimationFrame(loop);
     };
     loop();
@@ -358,9 +354,10 @@ async function startMeter() {
 }
 function stopMeter() {
   cancelAnimationFrame(meterRaf);
+  stopVoice();
   try { meterStream && meterStream.getTracks().forEach((t) => t.stop()); } catch { /* noop */ }
   try { meterCtx && meterCtx.close(); } catch { /* noop */ }
-  meterStream = meterCtx = meterAnalyser = null;
+  meterStream = meterCtx = meterAnalyser = meterSrc = null;
   $('#meter').style.transform = 'scaleX(0)';
 }
 
@@ -381,7 +378,7 @@ $('#btnDemo').addEventListener('click', async () => {
   $('#btnDemo').textContent = L('デモを止める', 'Stop demo');
   setStatus('demo', L('デモ再生中', 'Demo playing'));
   // 話者の色分けがオンなら、デモでは話者を交互に切り替える
-  const demoFinal = (id, t) => { onFinal(id, t); if (speakersOn()) setSpeaker((curSp + 1) % S.speakerCount); };
+  const demoFinal = (id, t) => { onFinal(id, t); if (speakersOn()) setSpeaker((curSp + 1) % S.speakerCount, true); };
   await simulateSpeech({ lang: S.lang, onInterim, onFinal: demoFinal, shouldStop: () => !demoRunning, loop: true });
   stopDemo();
   setStatus('', L('待機中', 'Idle'));
@@ -945,33 +942,129 @@ updateMore();
 
 // ------------------------------------------------------------ 話者のラベルと色分け（お手軽プラン以上。無料プランは1日お試し）
 // 手動：ボタンかキーボードの 1〜4 で「いま話している人」を切り替える
-// 声で自動：登録した声の高さから推定する（PC のみ・簡易）。おトクプランではクラウド認識の話者分離で自動化する（近日公開）
+// 声で自動：声の高さと声色で推定する（PC のみ・speakers.js）。おトクプランではクラウド認識の話者分離で自動化する（近日公開）
+//   - 発言ごとに「その発言を話していた時間帯」の声で話者を決める（音声認識の結果は遅れて届くため、届いた瞬間の人では決めない）
+//   - 1〜4 で直すと、その発言の声でその人を覚える。登録していない枠は、新しい声が聞こえたら自動で埋める
 const SPEAKER_MODES = {
   off: { label: 'オフ', labelEn: 'Off', note: '話している人ごとに、名前のラベルと色を付けられます', noteEn: 'Give each speaker a name label and a color.' },
   manual: { label: '手動', labelEn: 'Manual', note: 'いま話している人を、下のボタンかキーボードの 1〜4 で切り替えます。いちばん確実です', noteEn: 'Switch the current speaker with the buttons below or keys 1–4. The most reliable option.' },
-  auto: { label: '声で自動', labelEn: 'By voice', note: '登録した声の高さから自動で切り替えます（PC のみ・簡易）。声の高さが近い人どうしは、ボタンで直してください', noteEn: 'Switches automatically by voice pitch (desktop only, basic). Correct it with the buttons when voices are similar.' },
+  auto: { label: '声で自動', labelEn: 'By voice', note: '声の高さと声色で、発言ごとに自動で色分けします（PC のみ）。登録しなくても新しい声を覚えます。間違えたら 1〜4 で直すと、その声を覚えます', noteEn: 'Colors each utterance automatically by voice pitch and tone (desktop only). New voices are learned even without recording. If it’s wrong, press 1–4 and it learns that voice.' },
 };
 const SPEAKER_COUNTS = { 2: { label: '2人', labelEn: '2' }, 3: { label: '3人', labelEn: '3' }, 4: { label: '4人', labelEn: '4' } };
 S.speakers = DEFAULT_SPEAKERS.map((d, i) => ({ ...d, ...((Array.isArray(S.speakers) && S.speakers[i]) || {}) }));
 // 名前が初期値のままなら、表示中の言語の初期値にそろえる
 S.speakers.forEach((sp, i) => { const d = DEFAULT_SPEAKERS[i]; if (sp.name === d.name || sp.name === d.nameEn) sp.name = EN ? d.nameEn : d.name; });
+// 以前の版の登録（声の高さだけ）は使えないので外す（登録し直してもらう）
+S.speakers.forEach((sp) => { if (!validModel(sp.v)) { delete sp.v; sp.f0 = 0; } });
 S.speakerCount = Math.min(MAX_SPEAKERS, Math.max(2, +S.speakerCount || 2));
 if (!SPEAKER_MODES[S.speakerMode]) S.speakerMode = 'off';
 if (S.speakerMode === 'auto' && IS_MOBILE) S.speakerMode = 'manual';
 let curSp = 0;
-const tracker = new SpeakerTracker();
+const tracker = new VoiceTracker();
 const speakersOn = () => S.speakerMode !== 'off' && !plusLocked('speaker:labels');
-function speakerInfo() {
+const autoOn = () => S.speakerMode === 'auto' && speakersOn();
+const spName = (i) => (S.speakers[i].name || '').trim() || L(`話者${i + 1}`, `Speaker ${i + 1}`);
+function speakerInfo(i = curSp) {
   if (!speakersOn()) return {};
-  const sp = S.speakers[curSp] || S.speakers[0];
-  return { sp: curSp, spn: (sp.name || '').trim() || L(`話者${curSp + 1}`, `Speaker ${curSp + 1}`), spc: sp.color };
+  if (!(i >= 0 && i < S.speakerCount)) i = curSp;
+  return { sp: i, spn: spName(i), spc: (S.speakers[i] || S.speakers[0]).color };
 }
-function syncProfiles() { tracker.setProfiles(S.speakers.slice(0, S.speakerCount).map((x) => x.f0 || 0)); }
+
+// 発言ごとの話者（声で自動のとき）。id ごとに、最初と最後に途中結果が届いた時刻を覚えておく
+const UTT_LEAD = 1500, UTT_TAIL = 150; // 最初の途中結果は話し始めより遅れて届くので、少し前から見る
+const MANUAL_LEAD = 600;               // 手動：ボタンを押すのは話し始めより少し遅れるので、そのぶん前から見る
+const utts = new Map();
+let lastUtt = null;
+// 手動で切り替えた記録 { t, i }。発言の時間帯で一番長く選ばれていた人をその発言の話者にする
+let spLog = [];
+function manualVote(t0, t1) {
+  const dur = new Array(S.speakerCount).fill(0);
+  for (let k = 0; k < spLog.length; k++) {
+    const a = Math.max(t0, spLog[k].t), b = Math.min(t1, k + 1 < spLog.length ? spLog[k + 1].t : Infinity);
+    if (b > a && spLog[k].i < dur.length) dur[spLog[k].i] += b - a;
+  }
+  const best = dur.indexOf(Math.max(...dur));
+  return dur[best] > 0 ? best : curSp;
+}
+function uttSpeaker(id, final = false) {
+  const now = performance.now();
+  let u = utts.get(id);
+  if (!u) { u = { t0: now, t1: now, sp: -1, forced: false }; utts.set(id, u); }
+  if (!final) u.t1 = now;
+  if (!autoOn()) u.sp = speakersOn() ? manualVote(u.t0 - MANUAL_LEAD, u.t1 + UTT_TAIL) : curSp;
+  else if (!u.forced) {
+    const v = tracker.vote(u.t0 - UTT_LEAD, u.t1 + UTT_TAIL);
+    // 途中で色が変わりすぎないよう、決まった後は差がはっきりしたときだけ変える
+    if (v && (u.sp < 0 || (v.i !== u.sp && v.margin > 0.5))) u.sp = v.i;
+    if (u.sp < 0) u.sp = curSp;
+  }
+  lastUtt = u;
+  if (final) { utts.delete(id); if (utts.size > 50) utts.clear(); }
+  return u.sp;
+}
+
+// マイクの声の特徴を受け取る（レベル表示と同じマイク。AudioWorklet で計算するので、タブが裏でも動く）
+let voiceStop = null, voiceStarting = false;
+const voiceTaps = new Set(); // 声の登録中など、特徴を一緒に受け取りたいところ
+function onVoice(fr, t) {
+  for (const fn of voiceTaps) fn(fr, t);
+  if (!autoOn()) return;
+  const i = tracker.frame(fr, t);
+  if (i !== curSp) setSpeaker(i, true);
+}
+async function syncVoice() {
+  const want = !!meterSrc && (autoOn() || voiceTaps.size > 0);
+  if (want && !voiceStop && !voiceStarting) {
+    voiceStarting = true;
+    const ctx = meterCtx, src = meterSrc;
+    const stop = await attachVoice(ctx, src, onVoice);
+    voiceStarting = false;
+    if (meterSrc === src) voiceStop = stop; else stop();
+    syncVoice();
+  } else if (!want && voiceStop) stopVoice();
+}
+function stopVoice() { if (voiceStop) { voiceStop(); voiceStop = null; } }
+
+// 覚えた声を保存する（育てたときは少し間を置いてまとめて保存）
+let saveVoiceTimer = 0;
+function storeModel(i, md, later = false) {
+  if (!md || !S.speakers[i]) return;
+  S.speakers[i].v = md; S.speakers[i].f0 = md.f0;
+  clearTimeout(saveVoiceTimer);
+  if (later) saveVoiceTimer = setTimeout(() => saveSettings(S), 5000);
+  else { saveSettings(S); renderSpeakers(); }
+}
+tracker.onEnroll = (i, md) => {
+  storeModel(i, md);
+  toast(L(`新しい声を「${spName(i)}」として覚えました。違う人なら 1〜4 で直してください`, `Learned a new voice as “${spName(i)}”. If that’s wrong, press 1–4 to correct it.`), 5000);
+};
+tracker.onAdapt = (i, md) => storeModel(i, md, true);
+function syncProfiles() { tracker.setModels(S.speakers.slice(0, S.speakerCount).map((x) => x.v), S.speakerCount); }
+
 function setSpeaker(i, fromAuto = false) {
   if (i < 0 || i >= S.speakerCount) return;
+  const t = performance.now();
+  if (i !== curSp || !spLog.length) {
+    spLog.push({ t, i });
+    if (spLog.length > 200) spLog = spLog.filter((x, k) => k === spLog.length - 1 || t - x.t < 60000);
+  }
   curSp = i;
-  if (!fromAuto) tracker.set(i);
+  if (!fromAuto) tracker.set(i, t);
   for (const b of document.querySelectorAll('#spNow button')) b.setAttribute('aria-pressed', String(+b.dataset.i === i));
+}
+// ボタンかキーボードで選んだとき。声で自動なら、直前の発言の声でその人を覚える
+function pickSpeaker(i) {
+  if (i < 0 || i >= S.speakerCount) return;
+  if (autoOn()) {
+    const u = [...utts.values()].pop() || lastUtt;
+    const md = u ? tracker.learn(i, u.t0 - UTT_LEAD, u.t1 + UTT_TAIL) : tracker.learn(i);
+    if (u) { u.sp = i; u.forced = true; }
+    if (md) {
+      storeModel(i, md);
+      toast(L(`「${spName(i)}」の声を覚えました`, `Learned ${spName(i)}’s voice`), 2200);
+    }
+  }
+  setSpeaker(i);
 }
 function renderSpeakers() {
   segButtons('#spModes', SPEAKER_MODES, 'speakerMode');
@@ -1009,9 +1102,10 @@ function renderSpeakers() {
       const reg = document.createElement('button');
       reg.type = 'button';
       reg.className = 'btn small sp-reg';
-      reg.textContent = sp.f0 ? `${sp.f0}Hz` : L('声を登録', 'Record voice');
-      reg.title = sp.f0 ? L('登録し直す', 'Record again') : L('3秒ほど話して声の高さを登録します', 'Talk for about 3 seconds to record your voice pitch');
-      reg.classList.toggle('done', !!sp.f0);
+      const has = validModel(sp.v);
+      reg.textContent = !has ? L('声を登録', 'Record voice') : sp.v.auto ? L('自動で覚えた', 'Auto-learned') : L('登録済み', 'Recorded');
+      reg.title = has ? L('もう一度登録する（5秒）', 'Record again (5 seconds)') : L('5秒ほど話して声を登録します。登録しなくても、新しい声は自動で覚えます', 'Talk for about 5 seconds to record a voice. New voices are also learned automatically.');
+      reg.classList.toggle('done', has);
       reg.addEventListener('click', () => registerVoice(i, reg));
       li.appendChild(reg);
     }
@@ -1019,6 +1113,7 @@ function renderSpeakers() {
   });
   renderNow();
   syncProfiles();
+  syncVoice();
 }
 function renderNow() {
   const now = $('#spNow');
@@ -1032,33 +1127,42 @@ function renderNow() {
     b.innerHTML = '<kbd></kbd><span></span>';
     b.firstChild.textContent = String(i + 1);
     b.lastChild.textContent = (sp.name || '').trim() || L(`話者${i + 1}`, `Speaker ${i + 1}`);
-    b.addEventListener('click', () => setSpeaker(i));
+    b.addEventListener('click', () => pickSpeaker(i));
     now.appendChild(b);
   });
 }
+// 声の登録：5秒ほど話してもらい、声の高さと声色を覚える。聞き取り中ならそのマイクを使い、止まっていれば一時的に開く
 let registering = false;
 async function registerVoice(i, btn) {
   if (registering) return;
   if (IS_MOBILE) { toast(L('スマホでは「声で自動」は使えません。手動で切り替えてください', 'Voice-based switching isn’t available on phones. Please switch speakers manually.')); return; }
   registering = true;
-  let an = meterAnalyser, temp = null;
-  try {
-    if (!an) {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const ctx = new AudioContext();
-      an = ctx.createAnalyser();
-      an.fftSize = 2048;
-      ctx.createMediaStreamSource(stream).connect(an);
-      temp = { stream, ctx };
+  let temp = null;
+  const subscribe = async (fn) => {
+    if (meterSrc) {
+      voiceTaps.add(fn);
+      await syncVoice();
+      return () => { voiceTaps.delete(fn); syncVoice(); };
     }
-    const rate = (temp ? temp.ctx : meterCtx).sampleRate;
-    const f0 = await calibrate(an, rate, 3000, (k) => { btn.textContent = L(`話してください… ${Math.max(1, Math.ceil(3 - k * 3))}`, `Keep talking… ${Math.max(1, Math.ceil(3 - k * 3))}`); });
-    if (f0 > 0) {
-      S.speakers[i].f0 = Math.round(f0);
+    // レベル表示と同じく、音声処理（エコー除去など）を切ったマイクで聞く（本番と同じ条件で覚えるため）
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    const ctx = new AudioContext();
+    temp = { stream, ctx, stop: () => {} };
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    temp.stop = await attachVoice(ctx, ctx.createMediaStreamSource(stream), fn);
+    return () => temp.stop();
+  };
+  try {
+    const md = await enroll(subscribe, 5000, (k) => { btn.textContent = L(`話してください… ${Math.max(1, Math.ceil(5 - k * 5))}`, `Keep talking… ${Math.max(1, Math.ceil(5 - k * 5))}`); });
+    if (md) {
+      storeModel(i, md);
       pushSettings();
-      toast(L(`${S.speakers[i].name || `話者${i + 1}`}の声を登録しました（${Math.round(f0)}Hz）`, `Voice recorded for ${S.speakers[i].name || `Speaker ${i + 1}`} (${Math.round(f0)}Hz)`));
+      // ほかの人と声が近いときは知らせる
+      const near = S.speakers.slice(0, S.speakerCount).map((x, j) => (j !== i && validModel(x.v) && modelGap(md, x.v) < 0.3 ? j : -1)).filter((j) => j >= 0);
+      if (near.length) toast(L(`「${spName(i)}」の声を登録しました。「${near.map(spName).join('」「')}」と声が近いので、間違えたら 1〜4 で直してください（直すたびに覚えます）`, `Recorded ${spName(i)}’s voice. It’s close to ${near.map(spName).join(', ')}, so correct mistakes with 1–4 — it learns each time.`), 7000);
+      else toast(L(`「${spName(i)}」の声を登録しました`, `Recorded ${spName(i)}’s voice`));
     } else {
-      toast(L('声をうまく拾えませんでした。マイクに近づいて、ふだんの声で3秒ほど話してください', 'Couldn’t pick up your voice. Move closer to the mic and talk normally for about 3 seconds.'));
+      toast(L('声をうまく拾えませんでした。マイクに近づいて、ふだんの声で5秒ほど話してください', 'Couldn’t pick up your voice. Move closer to the mic and talk normally for about 5 seconds.'));
     }
   } catch {
     toast(L('マイクを使えませんでした。ブラウザのマイクの許可を確認してください', 'Couldn’t use the microphone. Check your browser’s microphone permission.'));
@@ -1465,7 +1569,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key === '?') { e.preventDefault(); help.open(); return; }
   if (e.key === 'p' || e.key === 'P') { e.preventDefault(); togglePause(); }
   if (e.key === 'Escape') { e.preventDefault(); clearAll(); }
-  if (/^[1-4]$/.test(e.key) && speakersOn() && +e.key <= S.speakerCount) { e.preventDefault(); setSpeaker(+e.key - 1); }
+  if (/^[1-4]$/.test(e.key) && speakersOn() && +e.key <= S.speakerCount) { e.preventDefault(); pickSpeaker(+e.key - 1); }
   if (e.key === 'm' || e.key === 'M') { e.preventDefault(); fuse(true); }
 });
 

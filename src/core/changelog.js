@@ -2,6 +2,15 @@
 // type：new＝新機能 / improve＝改善 / fix＝修正。文言は短く、利用者向けのやさしい言葉で（日本語と英語）。
 export const CHANGELOG = [
   {
+    v: '1.6.1', date: '2026-10-19',
+    items: [
+      { type: 'improve', ja: '話者の「声で自動」を作り直しました。声の高さに加えて声色（声の響き）でも聞き分けるので、声の高さが近い人どうしでも分けやすくなりました', en: 'Rebuilt “By voice” speaker detection. It now listens to voice tone as well as pitch, so people with similar pitch are easier to tell apart' },
+      { type: 'fix', ja: '話者の色が、次に話し始めた人の色になってしまうことがあった不具合。発言ごとに、その発言を話していた時間帯の声で話者を決めるようにしました（手動で切り替えたときも同じ）', en: 'Words could take the color of whoever spoke next. Each utterance is now matched to the voice heard while it was spoken (also when switching manually)' },
+      { type: 'new', ja: '声で自動のとき、1〜4 で直すとその声を覚えて、次から当たりやすくなります。登録していない人の声も、新しい声として自動で覚えます。声の登録は5秒に', en: 'With “By voice”, correcting with 1–4 teaches it that voice for next time. Unregistered voices are learned automatically as new speakers. Voice recording now takes 5 seconds' },
+      { type: 'fix', ja: 'コンソールのタブが裏に回ると、声での自動切り替えが止まっていた不具合', en: 'Automatic switching by voice stopped while the console tab was in the background' },
+    ],
+  },
+  {
     v: '1.6.0', date: '2026-10-18',
     items: [
       { type: 'improve', ja: '「文字サイズ・表示時間・同時に出す行」は、画面の最下部に聞き取った文を出す「字幕ライン」の設定になりました。小さな画面の絵の付いたまとまりにまとめ、設定にふれるとプレビューで字幕の出る場所に枠が出ます', en: 'Text size, Display time and Lines now belong to the Caption line — the transcript at the very bottom of the screen. They sit together in their own panel, and touching them outlines the caption area in the preview' },
