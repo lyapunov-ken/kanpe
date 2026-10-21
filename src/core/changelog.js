@@ -2,6 +2,13 @@
 // type：new＝新機能 / improve＝改善 / fix＝修正。文言は短く、利用者向けのやさしい言葉で（日本語と英語）。
 export const CHANGELOG = [
   {
+    v: '1.6.1', date: '2026-10-22',
+    items: [
+      { type: 'fix', ja: '1時間ほど続けて使うと、コンソールが重くなって固まり、言葉が画面に出なくなることがあった不具合。文字起こしの一覧には新しい200件を出し、それより前は省くようにしました（TXT・SRT にはすべて入ります）', en: 'After about an hour of use, the console could slow down and freeze, and words stopped appearing. The transcript list now shows the latest 200 lines and hides older ones (TXT and SRT still include everything)' },
+      { type: 'fix', ja: '消えかけの言葉をもう一度話すと、古い方が見えないまま画面に残り続け、長く使うほど重くなっていた不具合（カンペでは言葉の入る場所が少しずつ減っていました）', en: 'Saying a word again while it was fading out left the old copy invisibly on screen, making long sessions slower (in Cue layout it gradually took up space for new words)' },
+    ],
+  },
+  {
     v: '1.6.0', date: '2026-10-18',
     items: [
       { type: 'improve', ja: '「文字サイズ・表示時間・同時に出す行」は、画面の最下部に聞き取った文を出す「字幕ライン」の設定になりました。小さな画面の絵の付いたまとまりにまとめ、設定にふれるとプレビューで字幕の出る場所に枠が出ます', en: 'Text size, Display time and Lines now belong to the Caption line — the transcript at the very bottom of the screen. They sit together in their own panel, and touching them outlines the caption area in the preview' },

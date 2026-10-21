@@ -1,14 +1,14 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
 import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, LOGO_SIZES, SIZE_STEPS, nearestStep, loadSettings,
-  CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY } from '../core/settings.js?v=202610180942';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610180942';
-import { createBus } from '../core/bus.js?v=202610180942';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610180942';
-import { runs } from '../core/extract.js?v=202610180942';
-import { EN, L, tr } from '../core/i18n.js?v=202610180942';
-import { createVJ } from './vj.js?v=202610180942';
-import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610180942';
+  CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY } from '../core/settings.js?v=202610220228';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610220228';
+import { createBus } from '../core/bus.js?v=202610220228';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610220228';
+import { runs } from '../core/extract.js?v=202610220228';
+import { EN, L, tr } from '../core/i18n.js?v=202610220228';
+import { createVJ } from './vj.js?v=202610220228';
+import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610220228';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -41,6 +41,15 @@ const cap = document.getElementById('caption');
 const hint = document.getElementById('hint');
 if (EN && hint) { hint.textContent = 'Start talking and your words appear here'; document.documentElement.lang = 'en'; }
 const items = new Map();
+// 消えかけのうちに同じ言葉がもう一度来ると、items には新しい方が入る。古い方は消え終わる時刻まで
+// ここで覚えておいて外す（以前は外されないまま透明な要素がたまり、長く使うほど重く・言葉が出にくくなっていた）
+const fading = new Set();
+const allItems = () => [...items.values(), ...fading];
+function track(it) {
+  const old = items.get(it.key);
+  if (old && old !== it && !old.removed) { if (!old.leaving) expire(old); fading.add(old); }
+  items.set(it.key, it);
+}
 let host = stage;
 let lastWordAt = performance.now();
 let vj = null; // VJ モードの描画エンジン
@@ -236,8 +245,8 @@ function fontReady(text, px, wait = 120) {
 
 // ---------------------------------------------------------------- レイアウト
 function setupLayout() {
-  for (const it of items.values()) it.el.remove();
-  items.clear();
+  for (const it of allItems()) it.el.remove();
+  items.clear(); fading.clear();
   if (vj) { vj.destroy(); vj = null; }
   stage.replaceChildren();
   heard.clear(); lastFill = -1; echoK = 1;
@@ -351,7 +360,7 @@ function place(w, h, lv, self, rand = Math.random) {
   const t = clockAt();
   const lr = logoRef(); // ロゴには絶対に重ねない（新語と同じ扱い）
   if (lr) others.push({ r: { x: lr.pad, y: lr.pad, w: lr.size, h: lr.size }, leaving: false, fz: true });
-  for (const it of items.values()) {
+  for (const it of allItems()) {
     if (it === self || !it.rect || (it.leaving && it.goneAt <= t)) continue;
     others.push({ r: { x: it.rect.x / s, y: it.rect.y / s, w: it.rect.w / s, h: it.rect.h / s }, leaving: it.leaving, fz: it.kind === 'fusion' });
   }
@@ -497,7 +506,7 @@ async function addWordAt(m, text, t0) {
     host.appendChild(node);
     tickerPlace(it);
   }
-  items.set(key, it);
+  track(it);
   if (kind === 'fusion') capFusion(it);
   updateHint();
   enter(it);
@@ -626,10 +635,10 @@ function echoTick(t) {
   if (room >= -2) return;
   flip(() => {
     // 退場中でまだ流れの中にいる語から外し、それでもあふれていれば、くり返しの少ない・古い語から
-    const fading = [...items.values()].filter((it) => it.leaving && it.el.parentNode === host);
+    const gone = allItems().filter((it) => it.leaving && it.el.parentNode === host);
     let live = liveItems();
     while (host.scrollHeight - stage.clientHeight > 2) {
-      if (fading.length) { lift(fading.shift()); continue; }
+      if (gone.length) { lift(gone.shift()); continue; }
       if (live.length <= 1) break;
       const it = evictee(live);
       if ((it.echo || 1) >= 2 && echoK > 0.3) { echoK *= 0.88; resizeEcho(); continue; } // 残りがくり返しの語だけなら、そろって縮む
@@ -664,6 +673,7 @@ function expire(it, at = clockAt()) {
 function removeItem(it) {
   if (it.removed) return;
   it.removed = true;
+  fading.delete(it);
   const doRemove = () => {
     it.el.remove();
     if (items.get(it.key) === it) items.delete(it.key);
@@ -685,7 +695,7 @@ function clearAll() {
 // カンペ：並びが変わるときに位置差分だけを補間（FLIP）
 function flip(mutate) {
   const before = new Map();
-  for (const it of items.values()) if (it.el.isConnected) before.set(it, it.el.getBoundingClientRect());
+  for (const it of allItems()) if (it.el.isConnected) before.set(it, it.el.getBoundingClientRect());
   mutate();
   if (S.reduceMotion || replaying) return;
   for (const [it, b] of before) {
@@ -1289,7 +1299,7 @@ async function fuseWordAt(m, text, look, rand, prev, t0) {
   const y = r.y + tagH;
   it.dy = tagH;
   node.style.transform = `translate(${r.x}px, ${y}px)`;
-  items.set(it.key, it);
+  track(it);
   capFusion(it);
   updateHint();
   const c = { x: r.x + node.offsetWidth / 2, y: y + node.offsetHeight / 2 };
@@ -1374,7 +1384,7 @@ setInterval(() => { const t = now(); if (!pending) tick(t - 60); echoTick(t); },
 // コンソールが「これまでの流れ」（最近の言葉と、それぞれ何ミリ秒前か）を送ってくるので、
 // 時計を巻き戻して同じ順番・同じ種でなぞり直す。プレビューと同じ画面ができあがる。
 function sweepGone(t = now()) {
-  for (const it of [...items.values()]) if (it.leaving && it.goneAt && it.goneAt <= t) removeItem(it);
+  for (const it of allItems()) if (it.leaving && it.goneAt && it.goneAt <= t) removeItem(it);
 }
 async function replay(msg, recvAt) {
   if (vj || S.layout === 'ticker') return; // VJ・テロップは流れの演出なので、途中からでも困らない
@@ -1803,7 +1813,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610180942').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610220228').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech', 'talk'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 

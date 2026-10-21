@@ -228,6 +228,7 @@ export class Extractor {
   interim(id, text) {
     const st = this.utt.get(id) || { prev: new Set(), emitted: new Set() };
     this.utt.set(id, st);
+    if (this.utt.size > 50) this.utt.delete(this.utt.keys().next().value); // 確定が来なかった文はためこまない
     const cur = new Set(this.extract(text));
     const out = [];
     for (const w of cur) {

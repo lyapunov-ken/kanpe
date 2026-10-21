@@ -217,7 +217,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px va
 .live { min-height: 1.5em; margin: 10px 0 6px; color: var(--sub); }
 .tx-note { margin-top: 6px; }
 .tx { list-style: none; margin: 0; padding: 0; overflow: auto; flex: 1; }
-.tx li { display: flex; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); }
+.tx li { display: flex; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); content-visibility: auto; contain-intrinsic-size: auto 34px; } /* 見えていない行は組まない */
+.tx-more { margin: 8px 0 0; }
 .tx time { color: var(--faint); font-variant-numeric: tabular-nums; font-size: 12px; padding-top: 1px; }
 
 .toast { position: fixed; left: 50%; bottom: 24px; translate: -50% 12px; background: var(--raise2); border: 1px solid var(--line2); color: var(--ink);
