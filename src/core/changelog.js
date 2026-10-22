@@ -2,6 +2,12 @@
 // type：new＝新機能 / improve＝改善 / fix＝修正。文言は短く、利用者向けのやさしい言葉で（日本語と英語）。
 export const CHANGELOG = [
   {
+    v: '1.6.2', date: '2026-10-22',
+    items: [
+      { type: 'new', ja: '組版に「文字の重なり」（オン・オフ）。オンにすると言葉の上に言葉が重なって、にぎやかに組まれます。オフ（初めの値）なら、これまでどおり重ならずに空いている場所へ言葉が増えていきます。ロゴと新語ミックスの新語には重なりません', en: 'New Overlap option for Compose. Turn it on and words stack on top of each other for a busier look; off (the default) keeps words apart, filling the empty space as before. Words never cover your logo or a mixed new word' },
+    ],
+  },
+  {
     v: '1.6.1', date: '2026-10-22',
     items: [
       { type: 'fix', ja: '1時間ほど続けて使うと、コンソールが重くなって固まり、言葉が画面に出なくなることがあった不具合。文字起こしの一覧には新しい200件を出し、それより前は省くようにしました（TXT・SRT にはすべて入ります）', en: 'After about an hour of use, the console could slow down and freeze, and words stopped appearing. The transcript list now shows the latest 200 lines and hides older ones (TXT and SRT still include everything)' },

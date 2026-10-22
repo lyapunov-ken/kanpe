@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610220228';
-import { EN, L, tr } from '../core/i18n.js?v=202610220228';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610220228';
-import { createBus } from '../core/bus.js?v=202610220228';
-import { connectObs } from '../core/obs.js?v=202610220228';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610220228';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610220228';
-import { simulateSpeech } from './demo.js?v=202610220228';
-import { initHelp } from './help.js?v=202610220228';
-import { initNews } from './news.js?v=202610220228';
-import { createGuide, guideSeen } from './guide.js?v=202610220228';
-import { coinWord } from '../core/coin.js?v=202610220228';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610220228';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, OVERLAP_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610221431';
+import { EN, L, tr } from '../core/i18n.js?v=202610221431';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610221431';
+import { createBus } from '../core/bus.js?v=202610221431';
+import { connectObs } from '../core/obs.js?v=202610221431';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610221431';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610221431';
+import { simulateSpeech } from './demo.js?v=202610221431';
+import { initHelp } from './help.js?v=202610221431';
+import { initNews } from './news.js?v=202610221431';
+import { createGuide, guideSeen } from './guide.js?v=202610221431';
+import { coinWord } from '../core/coin.js?v=202610221431';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610221431';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -472,7 +472,7 @@ function pick(container, entries, key, id, def) {
 const NUM_KEYS = new Set(['cGrow', 'kGrow', 'cLife', 'capTtl', 'capLines']);
 // 言葉が消えるまでの秒数（組版は「残る時間」。表示ビューの lifeSec と同じ）
 function lifeSec() { return S.layout === 'compose' && LIFE_STEPS[S.cLife] ? +S.cLife : S.ttl; }
-const LAY_KEYS = new Set(['cSize', 'kSize', 'tSize', 'cGrow', 'kGrow', 'cJump', 'cVert', 'cLife', 'tSpeed', 'echo', 'vjStyle', 'vjFont']);
+const LAY_KEYS = new Set(['cSize', 'kSize', 'tSize', 'cGrow', 'kGrow', 'cJump', 'cVert', 'cOverlap', 'cLife', 'tSpeed', 'echo', 'vjStyle', 'vjFont']);
 const CAP_KEYS = new Set(['capSize', 'capTtl', 'capLines']);
 // レイアウトの説明。いまのレイアウトだけに効く設定だと分かるように、名前を添える
 const COLON = L('：', ': ');
@@ -501,7 +501,7 @@ function renderLayOpts() {
   if (lay === 'vj') return;
   segButtons('#optSize', LAYOUT_SIZES, SIZE_KEY[lay]);
   if (lay === 'compose' || lay === 'kanpe') segButtons('#optGrow', GROW_STEPS, lay === 'kanpe' ? 'kGrow' : 'cGrow');
-  if (lay === 'compose') { segButtons('#optJump', JUMP_STEPS, 'cJump'); segButtons('#optVert', VERT_STEPS, 'cVert'); segButtons('#optLife', LIFE_STEPS, 'cLife'); }
+  if (lay === 'compose') { segButtons('#optJump', JUMP_STEPS, 'cJump'); segButtons('#optVert', VERT_STEPS, 'cVert'); segButtons('#optOverlap', OVERLAP_STEPS, 'cOverlap'); segButtons('#optLife', LIFE_STEPS, 'cLife'); }
   if (lay === 'kanpe') segButtons('#echoSpans', ECHO_SPANS, 'echo');
   if (lay === 'ticker') segButtons('#optSpeed', TICKER_SPEEDS, 'tSpeed');
 }
@@ -534,6 +534,7 @@ function migrateSettings() {
   for (const k of ['cGrow', 'kGrow']) S[k] = GROW_STEPS[S[k]] ? +S[k] : 1;
   if (!JUMP_STEPS[S.cJump]) S.cJump = 'mid';
   if (!VERT_STEPS[S.cVert]) S.cVert = 'mid';
+  if (!OVERLAP_STEPS[S.cOverlap]) S.cOverlap = 'off';
   S.cLife = LIFE_STEPS[S.cLife] ? +S.cLife : 8;
   S.vertical = S.cVert !== 'off'; // 古い窓（vertical を見る）とも合わせる
   if (!TICKER_SPEEDS[S.tSpeed]) S.tSpeed = 'mid';

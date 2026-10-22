@@ -204,6 +204,12 @@ export const VERT_STEPS = {
   mid: { label: '標準', labelEn: 'Mid', p: [0.22, 0.4], note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
   high: { label: '多め', labelEn: 'Lots', p: [0.4, 0.65], note: '縦組みを多くして、和のポスターのように', noteEn: 'Lots of vertical text, like a Japanese poster' },
 };
+// 組版：文字の重なり。オフは空いている場所に言葉が増えていく（空きがなければ、その場所の語が早めに退く）。
+// オンは言葉の上に言葉を重ねてよい（ロゴと新語ミックスの新語には重ねない）
+export const OVERLAP_STEPS = {
+  off: { label: 'オフ', labelEn: 'Off', note: '重ねない。空いている場所に言葉が増えていく（初めの値）', noteEn: 'No overlap: new words fill the empty space (default)' },
+  on: { label: 'オン', labelEn: 'On', note: '言葉の上に言葉を重ねて、にぎやかに組む', noteEn: 'Words may stack on top of each other for a busier look' },
+};
 // 組版：残る時間。言葉が出てから消えるまでの秒数
 export const LIFE_STEPS = {
   5: { label: '5秒', labelEn: '5s', note: 'すぐ消える（テンポの速い話に）', noteEn: 'Gone quickly, for fast talk' },
@@ -248,6 +254,7 @@ export const DEFAULTS = {
   kGrow: 1,          // カンペ：育つまでのくり返し回数
   cJump: 'mid',      // 組版：大小の差（JUMP_STEPS）
   cVert: 'mid',      // 組版：縦組みの量（VERT_STEPS）
+  cOverlap: 'off',   // 組版：文字の重なり（OVERLAP_STEPS。on なら言葉の上に言葉を重ねてよい）
   cLife: 8,          // 組版：残る時間（秒。LIFE_STEPS）
   tSpeed: 'mid',     // テロップ：流れる速さ（TICKER_SPEEDS）
   // 字幕ライン（画面の最下部に、聞き取った文を出す）
