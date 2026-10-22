@@ -1,14 +1,14 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
 import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, LOGO_SIZES, SIZE_STEPS, nearestStep, loadSettings,
-  CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY } from '../core/settings.js?v=202610220228';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610220228';
-import { createBus } from '../core/bus.js?v=202610220228';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610220228';
-import { runs } from '../core/extract.js?v=202610220228';
-import { EN, L, tr } from '../core/i18n.js?v=202610220228';
-import { createVJ } from './vj.js?v=202610220228';
-import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610220228';
+  CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY } from '../core/settings.js?v=202610221431';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610221431';
+import { createBus } from '../core/bus.js?v=202610221431';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610221431';
+import { runs } from '../core/extract.js?v=202610221431';
+import { EN, L, tr } from '../core/i18n.js?v=202610221431';
+import { createVJ } from './vj.js?v=202610221431';
+import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610221431';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -356,6 +356,9 @@ function place(w, h, lv, self, rand = Math.random) {
   const gap = refBase() * 0.3;
   const cx = W / 2, cy = (H - reserve) / 2;
   const centerWeight = w * h * (lv >= 3 ? 1.4 : lv === 2 ? 0.8 : lv === 1 ? 0.25 : 0.08);
+  // 文字の重なりがオン：ほかの言葉の上にも置く（ロゴと新語ミックスの新語は避ける）。
+  // 中央に寄りすぎないよう、3か所だけ試して選ぶ（新語ミックスの新語そのものは、いつも重ねない）
+  const stack = S.cOverlap === 'on' && !(self && self.kind === 'fusion');
   const others = [];
   const t = clockAt();
   const lr = logoRef(); // ロゴには絶対に重ねない（新語と同じ扱い）
@@ -366,6 +369,7 @@ function place(w, h, lv, self, rand = Math.random) {
   }
   let best = null;
   for (let i = 0; i < 120; i++) {
+    if (stack && i >= 3 && best.score < 1e12) break;
     const x = Math.min(maxX, pad + Math.round((rand() * (maxX - pad)) / col) * col);
     const y = Math.min(maxY, pad + Math.round((rand() * (maxY - pad)) / row) * row);
     let ov = 0, fade = 0, fz = 0;
@@ -375,8 +379,8 @@ function place(w, h, lv, self, rand = Math.random) {
     }
     const dc = Math.hypot((x + w / 2 - cx) / W, (y + h / 2 - cy) / H);
     // 新語には絶対に重ねない（ほかの語を退かせてでも空ける）。次にほかの語と重ならないこと、退場中の語を避け、最後に中央寄せ
-    const score = (fz > 0 ? 1e12 + fz : 0) + (ov > 0 ? 1e9 + ov : 0) + (fade > 0 ? 1e6 + fade : 0) + dc * centerWeight;
-    if (!best || score < best.score) best = { x, y, w, h, ov, score };
+    const score = (fz > 0 ? 1e12 + fz : 0) + (stack ? 0 : (ov > 0 ? 1e9 + ov : 0) + (fade > 0 ? 1e6 + fade : 0)) + dc * centerWeight * (stack ? 0.35 : 1);
+    if (!best || score < best.score) best = { x, y, w, h, ov: stack ? 0 : ov, score }; // 重ねるときは、その場所の語を退かせない
   }
   // 実際の窓の大きさに戻す
   return { x: best.x * s, y: best.y * s, w: best.w * s, h: best.h * s, ov: best.ov, score: best.score };
@@ -1813,7 +1817,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610220228').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610221431').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech', 'talk'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 

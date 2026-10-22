@@ -855,6 +855,7 @@ html[lang="en"] .coin-inline { grid-template-columns: 56px minmax(0, 1fr); }
 .opt > .lbl { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .opt .step-seg button { height: 24px; font-size: 11.5px; padding: 0 1px; }
 .opt .step-seg.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.opt .step-seg.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 /* VJ：見出しを左、ボタンを右に（「VJ：…」の説明が上にあるので、見出しは短く） */
 .lay-opts .vj-opts { padding: 0; border: 0; background: none; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 5px 8px; }
 .lay-opts .vj-opts[hidden] { display: none; }

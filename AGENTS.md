@@ -61,7 +61,9 @@ docs/            調査メモ
 - コミットメッセージは英語で、何を・なぜを短く。1 つのブランチに関係のない変更を混ぜない
 
 ## いまの状態（2026-10-22 時点）
-- 作業中：`fix/long-session-freeze`（v1.6.1）1時間ほどで固まる・言葉が出なくなる不具合
+- 作業中：`feat/compose-overlap`（v1.6.2）組版の「文字の重なり」（`cOverlap`：off / on。`OVERLAP_STEPS`）。縦組みの右に置く（`#optOverlap`、2つ並びは `.step-seg.two`）
+  - `display.js` の `place()`：on のときは重なりを点数に入れず（`stack`）、3か所だけ試して中央寄せも弱める（中央に固まらないように）。`ov` を 0 で返すので `clearSpot` でほかの語を退かせない。ロゴと新語（kind: fusion）はいつも避け、新語そのものの置き場所は on でも重ねない
+- 本番：`main` = v1.6.1（2026-10-22 公開。`fix/long-session-freeze`）1時間ほどで固まる・言葉が出なくなる不具合の修正
   - コンソールの文字起こし一覧は新しい `TX_SHOW`（200）件だけ DOM に出す（`trimTx`。`#txMore` に省いた件数）。全件は `transcript` に残り TXT・SRT に入る。localStorage への保存は `saveTranscriptSoon` で15秒ごとにまとめる（pagehide と言語切替の前にも保存）
   - `display.js`：消えかけの語と同じ語が来て items が上書きされたとき、古い方を `fading` で覚えて goneAt に外す（`track()` / `allItems()`）。items を直接 `set` しないこと
   - 長時間の確認は、偽の音声認識＋CDP の仮想時間で早回しして測った（90分で、修正前は透明な残骸が20〜30個・5分あたりの処理時間が約2倍に。修正後は残骸0・ほぼ横ばい）
@@ -76,7 +78,7 @@ docs/            調査メモ
 - 作業中：`feat/lp-noface`（`fix/ticker-themes` の上に重ねた LP の変更）
   - 「顔出しなし」は特徴の節の中のコンパクトな帯（`.nf-band#noface`。ヘッダーのメニューには入れない）。デモの台本 `script=talk`（`demo.js` の SCRIPTS）。「こんな場面で」の「ひとり雑談」・FAQ・meta description にも
   - LP のレスポンシブ：1024px 以下は見本（`.show`）を「画面｜説明」の横並び、760px 以下で縦積み。料金は 961px 以上で3枚並び。900px 以下で節の見出しのラベルを上に。見出しは `line-break: strict`（句読点を行頭に出さない。`word-break` を個別に上書きしない）。`:has()` は使わず `.uses li.link`。`overflow-x: clip` が無いブラウザは html で横のはみ出しを隠す
-- 本番：`main` = v1.5.0
+- v1.5.0
   - タブは「表示」（書体・色・レイアウト・5段階の文字サイズ／表示時間／同時に出す語 ※v1.6.0 で字幕ライン専用とレイアウトごとの3段階に組み直し）「機能」（ブレストモード・話者）「設定」（背景・ロゴ・辞書・OBS）。タブの id は `look` / `feat` / `set`（以前の `coin` / `more` は読み替える）
   - 5段階の値は `settings.js` の `SIZE_STEPS` / `TTL_STEPS` / `WORD_STEPS`。保存値は `nearestStep` で近い段に寄せる。初めての人は墨・組版・中・8秒・24語
   - 新語の誕生（`display.js` の fzAnimate / fzStage / fzBirth）：予兆 → 誕生 → 余韻。演出の乱数は `fzRand(m)`（種から作る）なので、プレビューと別窓で同じ動きになる。長さを変えたら `fzDur` も合わせる（元の2語が退く時刻の計算に使う）
