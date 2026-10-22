@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610180942';
-import { EN, L, tr } from '../core/i18n.js?v=202610180942';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610180942';
-import { createBus } from '../core/bus.js?v=202610180942';
-import { connectObs } from '../core/obs.js?v=202610180942';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610180942';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610180942';
-import { simulateSpeech } from './demo.js?v=202610180942';
-import { initHelp } from './help.js?v=202610180942';
-import { initNews } from './news.js?v=202610180942';
-import { createGuide, guideSeen } from './guide.js?v=202610180942';
-import { coinWord } from '../core/coin.js?v=202610180942';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610180942';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610220228';
+import { EN, L, tr } from '../core/i18n.js?v=202610220228';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610220228';
+import { createBus } from '../core/bus.js?v=202610220228';
+import { connectObs } from '../core/obs.js?v=202610220228';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610220228';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610220228';
+import { simulateSpeech } from './demo.js?v=202610220228';
+import { initHelp } from './help.js?v=202610220228';
+import { initNews } from './news.js?v=202610220228';
+import { createGuide, guideSeen } from './guide.js?v=202610220228';
+import { coinWord } from '../core/coin.js?v=202610220228';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610220228';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -91,7 +91,10 @@ function deliverCaption(raw, final) {
 }
 
 function onInterim(id, text) {
-  if (!uttStart.has(id)) uttStart.set(id, clock());
+  if (!uttStart.has(id)) {
+    uttStart.set(id, clock());
+    if (uttStart.size > 100) uttStart.delete(uttStart.keys().next().value); // 確定が来なかった文の印をためこまない
+  }
   deliverWords(ex.interim(id, text));
   deliverCaption(text, false);
   $('#live').textContent = cleanCaption(text);
@@ -108,7 +111,7 @@ function onFinal(id, text) {
   const item = { start, end: Math.max(start + 0.8, clock()), raw: text, clean, spn: sp.spn || '', spc: sp.spc || '' };
   transcript.push(item);
   appendTx(item);
-  saveTranscript();
+  saveTranscriptSoon();
 }
 
 // ------------------------------------------------------------ 音声認識
@@ -1512,6 +1515,25 @@ const srtTime = (s) => {
   const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = Math.floor(s % 60), ms = Math.round((s % 1) * 1000);
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
 };
+// 画面の一覧に出すのは新しいものから TX_SHOW 件まで（全部は transcript に残り、TXT・SRT に入る）。
+// 一覧が長くなるほど、話している途中の文が変わるたびに一覧ぜんぶを組み直すことになり、
+// 1時間ほど話し続けるとコンソールが重くなって固まっていたため
+const TX_SHOW = 200;
+function trimTx() {
+  const ol = $('#tx');
+  while (ol.childElementCount > TX_SHOW) ol.lastElementChild.remove();
+  let more = $('#txMore');
+  const hiddenN = transcript.length - ol.childElementCount;
+  if (hiddenN <= 0) { if (more) more.hidden = true; return; }
+  if (!more) {
+    more = document.createElement('p');
+    more.id = 'txMore';
+    more.className = 'hint tx-more';
+    ol.after(more);
+  }
+  more.hidden = false;
+  more.textContent = L(`これより前の ${hiddenN} 件は一覧から省いています（TXT・SRT にはすべて入ります）`, `${hiddenN} earlier lines are hidden here (TXT and SRT include everything)`);
+}
 function appendTx(item) {
   const li = document.createElement('li');
   li.innerHTML = `<time>${fmt(item.start)}</time><span></span>`;
@@ -1526,6 +1548,7 @@ function appendTx(item) {
     body.textContent = item.clean;
   }
   $('#tx').prepend(li);
+  trimTx();
 }
 const who = (t) => (t.spn ? `${t.spn}：` : '');
 // 言語を切り替えて開き直したときだけ、直前の文字起こしを引き継ぐ（時刻も続きから数える）
@@ -1538,7 +1561,14 @@ function restoreCarry() {
     if (arr.length) t0 = performance.now() - arr[arr.length - 1].end * 1000;
   } catch { /* noop */ }
 }
-function saveTranscript() { try { localStorage.setItem(TXKEY, JSON.stringify(transcript.slice(-2000))); } catch { /* noop */ } }
+// 保存は数秒ぶんまとめて行う（話すたびに大きな文字列を書き込むと、長く話すほど重くなるため）
+let saveTxTimer = 0;
+function saveTranscript() {
+  clearTimeout(saveTxTimer); saveTxTimer = 0;
+  try { localStorage.setItem(TXKEY, JSON.stringify(transcript.slice(-2000))); } catch { /* noop */ }
+}
+function saveTranscriptSoon() { if (!saveTxTimer) saveTxTimer = setTimeout(saveTranscript, 15000); }
+window.addEventListener('pagehide', () => { if (saveTxTimer) saveTranscript(); });
 function download(name, text) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
@@ -1551,7 +1581,7 @@ $('#dlTxt').addEventListener('click', () => download(`kanpe-${stamp()}.txt`, tra
   (coined.length ? `\n\n${L('■ 生まれた新語', '■ New words')}\n` + coined.slice().reverse().map((c) => `${c.text}（${c.a} × ${c.b}）`).join('\n') : '')));
 $('#dlSrt').addEventListener('click', () => download(`kanpe-${stamp()}.srt`,
   transcript.map((t, i) => `${i + 1}\n${srtTime(t.start)} --> ${srtTime(t.end)}\n${who(t)}${t.clean}\n`).join('\n')));
-$('#clrTx').addEventListener('click', () => { transcript.length = 0; $('#tx').replaceChildren(); saveTranscript(); ex.reset(); coined.length = 0; seenWords.clear(); renderCoins(); });
+$('#clrTx').addEventListener('click', () => { transcript.length = 0; $('#tx').replaceChildren(); trimTx(); saveTranscript(); ex.reset(); coined.length = 0; seenWords.clear(); renderCoins(); });
 
 // ------------------------------------------------------------ 表示まわりの小物
 function setStatus(kind, text) { $('#dot').className = 'dot ' + kind; $('#statusText').textContent = text; }

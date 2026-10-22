@@ -60,7 +60,11 @@ docs/            調査メモ
 - 機能とプランの対応は `src/core/plan.js` の `REQUIRES`（free / plus / pro）で管理する
 - コミットメッセージは英語で、何を・なぜを短く。1 つのブランチに関係のない変更を混ぜない
 
-## いまの状態（2026-10-18 時点）
+## いまの状態（2026-10-22 時点）
+- 作業中：`fix/long-session-freeze`（v1.6.1）1時間ほどで固まる・言葉が出なくなる不具合
+  - コンソールの文字起こし一覧は新しい `TX_SHOW`（200）件だけ DOM に出す（`trimTx`。`#txMore` に省いた件数）。全件は `transcript` に残り TXT・SRT に入る。localStorage への保存は `saveTranscriptSoon` で15秒ごとにまとめる（pagehide と言語切替の前にも保存）
+  - `display.js`：消えかけの語と同じ語が来て items が上書きされたとき、古い方を `fading` で覚えて goneAt に外す（`track()` / `allItems()`）。items を直接 `set` しないこと
+  - 長時間の確認は、偽の音声認識＋CDP の仮想時間で早回しして測った（90分で、修正前は透明な残骸が20〜30個・5分あたりの処理時間が約2倍に。修正後は残骸0・ほぼ横ばい）
 - 作業中：`feat/caption-layout-opts`（v1.6.0）表示タブの組み直し
   - 「文字サイズ・表示時間・同時に出す行」は字幕ライン（最下部の聞き取った文）専用：`capSize`（s/m/l・`CAP_SIZES`）・`capTtl`（3/5/10秒）・`capLines`（1〜3行）。`display.js` の「字幕ライン」：1文1行で下から積み、入りきらない文は頭を「…」で省く（`fitCapLine`）。言葉は `capReserve()` の高さを空けて置く（CSS は `--cap` / `--cap-res`）。プレビューだけ `capPeek` で字幕の場所に点線の枠と見本の文
   - レイアウトごとの3段階：`cSize`/`kSize`/`tSize`（`LAYOUT_SIZES` の倍率。`SIZE_KEY`）、`cGrow`/`kGrow`（育つまで。`level()` と `echoScale` を回数で割る）、`cJump`（`JUMP_STEPS`。組版の `ratio()`）、`cVert`（`VERT_STEPS`。古い `vertical:false` は「なし」扱い）、`cLife`（組版の残る時間 5/8/30秒。`lifeSec()`）、`tSpeed`（`TICKER_SPEEDS`）
