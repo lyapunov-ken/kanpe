@@ -1,15 +1,15 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
 import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, LOGO_SIZES, SIZE_STEPS, nearestStep, loadSettings,
-  CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, MOTION_TASTES, SIZE_KEY } from '../core/settings.js?v=202610250319';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610250319';
-import { createBus } from '../core/bus.js?v=202610250319';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610250319';
-import { runs } from '../core/extract.js?v=202610250319';
-import { EN, L, tr } from '../core/i18n.js?v=202610250319';
-import { createVJ } from './vj.js?v=202610250319';
-import { createMotion } from './motion.js?v=202610250319';
-import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610250319';
+  CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, MOTION_TASTES, MOTION_SOUND, SIZE_KEY } from '../core/settings.js?v=202610250347';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610250347';
+import { createBus } from '../core/bus.js?v=202610250347';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610250347';
+import { runs } from '../core/extract.js?v=202610250347';
+import { EN, L, tr } from '../core/i18n.js?v=202610250347';
+import { createVJ } from './vj.js?v=202610250347';
+import { createMotion } from './motion.js?v=202610250347';
+import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610250347';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -294,7 +294,7 @@ function configureMotion() {
   if (!mo) return;
   const th = THEMES[S.theme] || THEMES[DEFAULT_THEME];
   const lr = logoRef();
-  mo.configure({ calm: !!S.reduceMotion, sizeK: layoutK() * (S.baseSize / DEFAULTS.baseSize), taste: MOTION_TASTES[S.mTaste] ? S.mTaste : 'mix', hud: S.mHud !== 'off',
+  mo.configure({ calm: !!S.reduceMotion, sizeK: layoutK() * (S.baseSize / DEFAULTS.baseSize), taste: MOTION_TASTES[S.mTaste] ? S.mTaste : 'mix', hud: S.mHud !== 'off', sound: MOTION_SOUND[S.mSound] ? S.mSound : 'voice',
     transparent: th.bg === 'transparent' || !!S.bgImage || !!camStream, bg: th.bg === 'transparent' ? '#000000' : th.bg, ink: th.ink, accent: S.accent || th.accent, accent2: th.accent2,
     logo: lr ? { pad: lr.pad, size: lr.size } : null, credit: S.credit !== false });
 }
@@ -1497,6 +1497,7 @@ function onMessage(m) {
   else if (m.t === 'capPeek') capPeek();
   else if (m.t === 'clear') clearAll();
   else if (m.t === 'lvl') { if (vj) vj.level(m.v); if (mo) mo.level(m.v); }
+  else if (m.t === 'aud') { if (mo) mo.audio(m); } // 周りの音（帯域・拍・テンポ）
   else if (m.t === 'settings') applySettings(m.s);
   else if (m.t === 'sync') {
     const recvAt = performance.now();
@@ -1788,7 +1789,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610250319').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610250347').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech', 'talk'].includes(P.get('script')) ? P.get('script') : '' }));
 }
 

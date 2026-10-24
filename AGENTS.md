@@ -35,7 +35,8 @@ src/core/    changelog.js（更新履歴・いまのバージョン）plan.js（
 src/console/ console.js（操作・設定・新語ミックスの発火）recognizer.js speakers.js demo.js
              help.js（ヘルプ・シーン別プリセット）guide.js（初回の3ステップガイド）news.js（更新情報）
 src/display/ display.js（組版描画・新語の誕生演出・依存ゼロ）vj.js（VJ モード：1px / LED / ネオン / ピクセル）
-             motion.js（モーション：文が1字ずつ現れ、図形が動くモーショングラフィックス）
+             motion.js（モーション：文が1字ずつ現れ、図形が動くモーショングラフィックス）dust.js（1px の粒子）
+src/console/ audio-tap.js（AudioWorklet：周りの音の帯域・拍・BPM）
 src/lp/ src/ui/  LP のデモ・アクセス解析（analytics.js）、言語切替、表示モード、スマホのメニュー
 functions/api/   checkout.js license.js license-email.js portal.js stripe-webhook.js dev.js（開発者モード）_lib.js
 tools/           bump-version.sh make-headers.py make-sitemap.py make-en-app.py make-legal.py stripe-setup.mjs test-api.mjs og/
@@ -69,6 +70,10 @@ docs/            調査メモ
   - キーワード（word）は `kws` に覚え、場面の行の中で見つけた場所に飾り（`kwStyle`：色・塗りの箱・枠・下線・数）。3回くり返した語は背景に巨大な輪郭の字（`bigGlyph`）。新語ミックス（fuse）は割り込みの場面（A×B → 新語の箱と集中線）
   - 同期：コンソールが caption に文ごとの種 `useed` を付ける（`capSeed`。前の文が final なら新しい種）。場面の乱数は `useed` と場面の番号から作るので、プレビューと別窓で同じ組み・同じ図形。あとから開いた窓の追いつき（replay）はしない（VJ と同じ）
   - 設定：`mSize`（文字の大きさ。`SIZE_KEY.motion`）・`mTaste`（cool / mix / pop。`MOTION_TASTES`）・`mHud`（四隅の計器 on / off。`MOTION_HUD`）。字幕ラインはモーションでは出さない（`#caption` を隠し、コンソールの字幕ラインの枠は `.is-motion` で薄くする）。声の大きさ `lvl` は VJ とモーションのときに送る
+  - 1px の粒子は `src/display/dust.js`（`createDust(root)`。canvas 1枚、上限 9000 粒、30fps を切るフレームが続くと粒を半分に）。disperse（字形を点に起こして散らす）／assemble（集まって字になる）／spark（火花）／drift（周りの音で漂う）。描画は motion.js の rAF から `dust.step(t)`
+  - 字の出かた10通り（`STYLE_W`：blur slide pop drop dust flip scan glitch stretch spin）、場面の切り替え6通り（`TRANS_W`：pan drop dust zoom fall wipe。dust・zoom・fall は同じ場所に重ねて入れ替え、wipe は帯に隠れたところでカメラが飛ぶ）。新しい字は `s.enterAt`（粒子は `s.settleAt`）まで待つ。暗転の板は pan / drop では inset、wipe は隠れたときに切り替え、ほかは駅から円で広がる
+  - 飾りの図形12通り（`addFiller`：bars frame plus ring matrix tri arc ／ blob squiggle zigzag confetti pill）。30秒黙ると場面は粒になって消える（`dustScene`）。消去（Esc）も粒になる
+  - 音に反応 `mSound`（voice / room / off。`MOTION_SOUND`）。room はコンソールの `src/console/audio-tap.js`（AudioWorklet。2048 点 FFT・14 帯域・低音の立ち上がりで拍・拍の間隔の中央値で BPM）→ `{t:'aud', l, b, beat, bpm}`（拍はすぐ、ほかは毎秒16回まで）。表示は `onBeat`（画面が脈打つ・駅が光る・点から火花・キーワードが跳ねる）、計器はスペクトラムと BPM。デモ中は `fakeBeat` が 120 BPM の疑似ビートを送る。ONE_SHOT（スマホ・Mac の Safari）とレベル表示を止めている端末では使えない（`soundHint` で案内）
   - テロップ（ticker）は削除。保存値・URL の `layout=ticker` は `motion` に読み替える（console.js の `migrateSettings`、display.js の `fixLayout`）。`tSize` は `mSize` に引き継ぐ
 - 作業中：`feat/compose-overlap`（v1.6.2）組版の「文字の重なり」（`cOverlap`：off / on。`OVERLAP_STEPS`）。縦組みの右に置く（`#optOverlap`、2つ並びは `.step-seg.two`）
   - `display.js` の `place()`：on のときは重なりを点数に入れず（`stack`）、3か所だけ試して中央寄せも弱める（中央に固まらないように）。`ov` を 0 で返すので `clearSpot` でほかの語を退かせない。ロゴと新語（kind: fusion）はいつも避け、新語そのものの置き場所は on でも重ねない

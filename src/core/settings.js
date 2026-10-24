@@ -227,6 +227,12 @@ export const MOTION_HUD = {
   on: { label: 'あり', labelEn: 'On', note: '四隅に経過時間・話す速さ・声の大きさ・場面の番号を出す（初めの値）', noteEn: 'Shows time, speaking pace, voice level and scene number in the corners (default)' },
   off: { label: 'なし', labelEn: 'Off', note: '計器を出さず、言葉と図形だけにする', noteEn: 'Hides the readouts: just words and shapes' },
 };
+// モーション：音に反応（声の大きさ／周りの音の帯域と拍／反応しない）
+export const MOTION_SOUND = {
+  voice: { label: '声', labelEn: 'Voice', note: '声の大きさで計器が揺れ、大きな声で火花が散る（初めの値）', noteEn: 'Meters follow your voice, and a loud voice throws sparks (default)' },
+  room: { label: '周りの音', labelEn: 'Room', note: 'BGM や会場の音の拍で画面が脈打ち、計器はスペクトラムと BPM に。音はこの端末の中だけで使います', noteEn: 'The screen pulses to the beat of music or the room; meters show a spectrum and BPM. Audio never leaves this device' },
+  off: { label: 'オフ', labelEn: 'Off', note: '音には反応しない', noteEn: 'Don’t react to sound' },
+};
 // レイアウトごとの文字の大きさは、どの設定に入っているか
 export const SIZE_KEY = { compose: 'cSize', kanpe: 'kSize', motion: 'mSize' };
 
@@ -263,6 +269,7 @@ export const DEFAULTS = {
   cLife: 8,          // 組版：残る時間（秒。LIFE_STEPS）
   mTaste: 'mix',     // モーション：テイスト（MOTION_TASTES）
   mHud: 'on',        // モーション：四隅の計器（MOTION_HUD）
+  mSound: 'voice',   // モーション：音に反応（MOTION_SOUND）
   // 字幕ライン（画面の最下部に、聞き取った文を出す）
   caption: true,     // 字幕ラインを出す
   capSize: 'm',      // 文字サイズ（CAP_SIZES）

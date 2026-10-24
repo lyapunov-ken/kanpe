@@ -4,11 +4,15 @@
 //   打ち消し → 取り消し線／問い → 大きな「？」／強調 → 集中線と揺れ／流れ → 矢印でつながる箱／
 //   逆接 → 仕切り線／要点 → 四隅の枠／笑い → 跳ねる字と星／声・音 → 波形／数 → 数え上げと棒
 // - キーワード（コンソールが拾った語）は色・塗りの箱・下線で目立たせる。同じ語をくり返すと背景に巨大な字が出る
+// - 字の出かたは10通り（ぼかし・横すべり・弾む・落ちる・粒子・めくれる・走査・グリッチ・伸び・回転）、
+//   場面の切り替えは6通り（横へ・下へ・粒子になって散る・押し込みズーム・字が落ちる・帯でワイプ）。1px の粒子は dust.js
 // - 画面の四隅に小さな計器（経過時間・話す速さ・声の大きさ・場面の番号）
+// - 音に反応：声（声の大きさ）／周りの音（BGM や会場の音の帯域と拍。拍で画面が脈打ち、計器はスペクトラムと BPM に）／オフ
 // - 乱数は場面ごとの種から作る（コンソールが文ごとに種を付けて送る）ので、プレビューと別窓で同じ組み・同じ図形になる
 // 依存ゼロ。動かすのは transform / opacity（字の現れとカメラの残像だけ filter）。消えた要素はすぐ外す。
-import { charScript } from '../core/extract.js?v=202610250319';
-import { tuneColor, parseColor, contrast } from '../core/color.js?v=202610250319';
+import { charScript } from '../core/extract.js?v=202610250347';
+import { tuneColor, parseColor, contrast } from '../core/color.js?v=202610250347';
+import { createDust } from './dust.js?v=202610250347';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const REF_W = 1280, REF_H = 720;
@@ -115,6 +119,18 @@ const NEG_SKIP = /^(?:少な|危な|切な|幼な|はかな|汚な|つまらな|
 const NEG_EN_AFTER = /^\s*(?:\S+\s+){0,2}?(?:is|are|was|were|do|does|did)?\s*(?:not|n't|never|no longer)\b/i;
 const NEG_EN_BEFORE = /\b(?:not|no|never|without|n't)\s+(?:\S+\s+)?$/i;
 
+// 字の出かた・場面の切り替えの選びやすさ（テイストごと）
+const STYLE_W = {
+  cool: [['blur', 4], ['slide', 2], ['scan', 2.5], ['dust', 2], ['glitch', 1.5], ['flip', 1.5]],
+  mix: [['blur', 3], ['slide', 1.5], ['pop', 2], ['drop', 2], ['dust', 2], ['flip', 1.5], ['scan', 1.5], ['glitch', 1.2], ['stretch', 1.5], ['spin', 1.2]],
+  pop: [['pop', 4], ['drop', 3], ['spin', 2], ['stretch', 2.5], ['dust', 1.5], ['flip', 1]],
+};
+const TRANS_W = {
+  cool: [['pan', 4], ['drop', 1.4], ['dust', 2.2], ['zoom', 1.6], ['wipe', 1.4]],
+  mix: [['pan', 3.5], ['drop', 1.2], ['dust', 1.8], ['zoom', 1.4], ['fall', 1.4], ['wipe', 1.4]],
+  pop: [['pan', 3], ['drop', 1], ['fall', 2.4], ['wipe', 2], ['zoom', 1.4], ['dust', 1]],
+};
+
 // ---------------------------------------------------------------- 本体
 export function createMotion(stage) {
   const root = div('mo');
@@ -132,14 +148,19 @@ export function createMotion(stage) {
   filt.appendChild(blurN);
   defs.appendChild(filt);
   world.appendChild(track);
-  view.append(plate, grid, big, world, hud);
+  // 拍で画面全体（板と計器を除く）が少しだけ脈打つように、カメラの外側にもう1枚かぶせる
+  const camBox = div('mo-cam');
+  camBox.append(grid, big, world);
+  const wipe = div('mo-wipe'); // 帯でワイプする切り替え
+  view.append(plate, camBox, wipe, hud);
   root.append(defs, view);
   stage.appendChild(root);
+  const dust = createDust(root); // 1px の粒子（いちばん手前）
 
   const head = svgEl('circle', { r: '7', class: 'mo-head' }); // 線の上を進む点
   track.appendChild(head);
 
-  let cfg = { calm: false, sizeK: 1, taste: 'mix', hud: true, transparent: false, bg: '#000', ink: '#fff', accent: '#f60', accent2: '#0af',
+  let cfg = { calm: false, sizeK: 1, taste: 'mix', hud: true, sound: 'voice', transparent: false, bg: '#000', ink: '#fff', accent: '#f60', accent2: '#0af',
     logo: null, credit: false };
   let k = 1, VW = REF_W, VH = REF_H;
   let destroyed = false;
@@ -161,6 +182,7 @@ export function createMotion(stage) {
   let lastKw = '';
   let beat = 0;
   let level = 0, levelAt = 0, levelHist = new Array(14).fill(0);
+  let bands = new Array(14).fill(0), bandsAt = 0, bpm = 0, beatAt = 0, shoutAt = 0; // 周りの音（帯域・拍・テンポ）
   const paceLog = [];           // { t, n } 話す速さ（1分あたりの字数）
   let paceShown = 0;
 
@@ -174,6 +196,7 @@ export function createMotion(stage) {
     view.style.transform = `scale(${k})`;
     if (sc) { cam(sc.x, sc.y); layout(sc, false); }
     placeHud();
+    dust.resize();
   }
   const fs0 = () => 92 * cfg.sizeK;
   const lineMax = () => (cfg.sizeK >= 1.2 ? 9 : cfg.sizeK <= 0.85 ? 13 : 11);
@@ -216,7 +239,7 @@ export function createMotion(stage) {
     return [a, { x: a.x + dx * 0.32, y: a.y }, { x: a.x + dx * 0.62, y: b.y }, b];
   }
   const ptsAttr = (pts) => pts.map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ');
-  function drawRail(s, prev) {
+  function drawRail(s, prev, dur = PAN_MS) {
     const node = { x: s.x + s.nodeX, y: s.y + s.trackY };
     s.node = node;
     const from = prev && prev.node ? prev.node : { x: s.x - 60, y: node.y };
@@ -230,7 +253,7 @@ export function createMotion(stage) {
     track.insertBefore(ring, head);
     track.insertBefore(dot, head);
     s.rail = [seg, lead, ring, dot];
-    const d = cfg.calm ? 0 : PAN_MS;
+    const d = cfg.calm ? 0 : dur;
     if (prev && prev.rail) prev.rail[1].remove(); // 前の場面の「先へ伸びる線」は、この線に置き換わる
     if (!cfg.calm) {
       seg.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: d || 500, easing: SWING, fill: 'both' });
@@ -268,14 +291,14 @@ export function createMotion(stage) {
     s.inv = canInv && (entry.fz ? !(prev && prev.inv) : prev && prev.inv ? false : rand() < (cfg.taste === 'pop' ? 0.3 : cfg.taste === 'cool' ? 0.18 : 0.24));
     // 組み方
     s.comp = entry.fz ? 'center' : pickW(rand, [['left', 4], ['step', 3], ['center', 2], ['right', 1.4], ['bigsmall', 1.6]]);
-    s.style = cfg.taste === 'cool' ? pickW(rand, [['blur', 5], ['slide', 2]])
-      : cfg.taste === 'pop' ? pickW(rand, [['pop', 5], ['drop', 4], ['blur', 1]])
-        : pickW(rand, [['blur', 4], ['pop', 2.5], ['drop', 2.5], ['slide', 1.5]]);
-    // 場所：たいていは右へ、ときどき下へ
-    const vertical = prev && !s.inv === !prev.inv && rand() < 0.16;
-    s.x = prev ? (vertical ? prev.x : prev.x + VW) : camX;
-    s.y = prev ? (vertical ? prev.y + VH : prev.y) : camY;
-    s.vertical = !!vertical;
+    // 字の出かた（10通り）と、場面の切り替え（6通り）。テイストで選びやすさを変える
+    s.style = pickW(rand, STYLE_W[cfg.taste] || STYLE_W.mix);
+    s.tr = !prev ? 'none' : entry.fz ? 'zoom' : pickW(rand, TRANS_W[cfg.taste] || TRANS_W.mix);
+    // 場所：横へ＝右隣、下へ＝真下、帯でワイプ＝右隣（帯に隠れたところで飛ぶ）、ほか（粒子・ズーム・落ちる）＝同じ場所に重ねて入れ替える
+    const same = ['dust', 'zoom', 'fall'].includes(s.tr);
+    s.x = !prev ? camX : same || s.tr === 'drop' ? prev.x : prev.x + VW;
+    s.y = !prev ? camY : s.tr === 'drop' ? prev.y + VH : prev.y;
+    s.vertical = s.tr === 'drop';
     // 文字の大きさと、2行のかたまりの高さ（行が増えても動かないよう、最初に決めておく）
     const f = fs0();
     s.fs = s.comp === 'bigsmall' ? [f * 0.62, f * 1.12] : entry.fz ? [f * 0.5, f * 1.15] : [f, f];
@@ -306,8 +329,10 @@ export function createMotion(stage) {
     const u = entry.u;
     return u.lines.slice(entry.j * 2, entry.j * 2 + 2);
   }
-  function syncLines(s, animate = true) {
+  // 字をそろえる（変わったところから後ろを入れ替える）。新しく出た字の列を返す（置き場所を決めてから enterChars で動かす）
+  function syncLines(s) {
     const want = linesFor(s.entry);
+    const fresh = [];
     for (let i = 0; i < 2; i++) {
       const text = want[i] || '';
       let ln = s.lines[i];
@@ -323,30 +348,45 @@ export function createMotion(stage) {
       let c = 0;
       while (c < a.length && c < b.length && a[c] === b[c]) c++;
       for (const x of ln.chars.splice(c)) x.remove();
-      const fresh = [];
       for (let j = c; j < b.length; j++) {
         const ch = b[j];
         const scr = ch === ' ' ? 'sp' : charScript(ch);
         const e = span(`mo-c s-${scr}`, ch === ' ' ? ' ' : ch);
+        e._i = j;
         ln.el.appendChild(e);
         ln.chars.push(e);
         fresh.push(e);
       }
       ln.text = text;
-      if (animate) enterChars(s, fresh, c);
     }
+    return fresh;
   }
-  function enterChars(s, chars, from) {
+  // 字の出かた（10通り）。場面の切り替えの最中は、切り替えが終わるのを待ってから（s.enterAt / s.settleAt）
+  function enterChars(s, chars) {
     if (!chars.length) return;
     const calm = cfg.calm;
+    const t = performance.now();
     const stagger = calm ? 0 : clamp(380 / chars.length, 18, 44);
+    if (s.style === 'dust' && !calm) {
+      // 粒子：散らばった 1px の点が集まって字の形になり、そこで字が現れる（カメラが止まってから）
+      for (const e of chars) e.style.opacity = '0';
+      const wait = Math.max(0, (s.settleAt || 0) - t);
+      after(wait, () => chars.forEach((e, i) => {
+        if (!e.isConnected) return;
+        const d = dust.assemble(e, { dl: i * stagger * 1.2, dur: 520, radius: 90 + s.rand() * 120 });
+        e.style.opacity = '';
+        e.animate([{ opacity: 0, filter: 'blur(3px)' }, { opacity: 1, filter: 'blur(0px)' }], { duration: 260, delay: Math.max(0, d - 150), easing: 'ease-out', fill: 'backwards' });
+      }));
+      return;
+    }
+    const base = Math.max(0, (s.enterAt || 0) - t);
     chars.forEach((e, i) => {
-      const scr = e.className;
-      const kanji = scr.includes('s-k');
+      const kanji = e.className.includes('s-k');
+      const k = e._i || 0;
       let kf, dur = 520, easing = EXPO;
       if (calm) kf = [{ opacity: 0 }, { opacity: 1 }];
       else if (s.style === 'pop') {
-        const r = ((from + i) % 2 ? 1 : -1) * (6 + s.rand() * 10);
+        const r = (k % 2 ? 1 : -1) * (6 + s.rand() * 10);
         kf = [{ opacity: 0, transform: `translateY(.45em) scale(.15) rotate(${r}deg)` },
           { opacity: 1, transform: `translateY(-.12em) scale(1.18) rotate(${-r / 3}deg)`, offset: 0.55 },
           { transform: 'translateY(0) scale(.96) rotate(0deg)', offset: 0.8 }, { opacity: 1, transform: 'none' }];
@@ -358,12 +398,32 @@ export function createMotion(stage) {
       } else if (s.style === 'slide') {
         kf = [{ opacity: 0, transform: 'translateX(1.2em) skewX(-14deg)', filter: 'blur(6px)' }, { opacity: 1, transform: 'none', filter: 'blur(0px)' }];
         dur = 460;
+      } else if (s.style === 'scan') { // 下から走査されるように立ち上がる
+        kf = [{ opacity: 0, clipPath: 'inset(100% 0 0 0)', transform: 'translateY(.3em)' }, { opacity: 1, clipPath: 'inset(0% 0 0 0)', transform: 'none' }];
+        dur = 520;
+      } else if (s.style === 'glitch') { // 色がずれて、ちらついて決まる
+        kf = [{ opacity: 0, transform: 'translateX(-.25em) skewX(20deg)', textShadow: '-.07em 0 var(--acc), .07em 0 rgba(0,220,255,.7)' },
+          { opacity: 1, transform: 'translateX(.15em)', offset: 0.2 }, { opacity: 0.2, transform: 'translateX(-.08em) skewX(-10deg)', offset: 0.36 },
+          { opacity: 1, transform: 'translateX(.05em)', offset: 0.55 }, { opacity: 0.55, offset: 0.7 },
+          { opacity: 1, transform: 'none', textShadow: '0 0 transparent, 0 0 transparent' }];
+        dur = 440; easing = 'linear';
+      } else if (s.style === 'flip') { // 下を軸に、手前へめくれて起き上がる
+        e.style.transformOrigin = '50% 100%';
+        kf = [{ opacity: 0, transform: 'perspective(500px) rotateX(-100deg)' }, { opacity: 1, transform: 'perspective(500px) rotateX(14deg)', offset: 0.7 }, { opacity: 1, transform: 'perspective(500px) rotateX(0deg)' }];
+        dur = 640;
+      } else if (s.style === 'stretch') { // 横に伸びて、ゴムのように戻る
+        e.style.transformOrigin = '0 70%';
+        kf = [{ opacity: 0, transform: 'scaleX(0) skewX(-20deg)' }, { opacity: 1, transform: 'scaleX(1.35) skewX(6deg)', offset: 0.55 }, { transform: 'scaleX(.93)', offset: 0.8 }, { opacity: 1, transform: 'none' }];
+        dur = 540; easing = 'ease-out';
+      } else if (s.style === 'spin') { // くるっと回って飛び込む
+        kf = [{ opacity: 0, transform: 'rotate(-220deg) scale(0)' }, { opacity: 1, transform: 'rotate(18deg) scale(1.18)', offset: 0.65 }, { transform: 'rotate(-4deg) scale(.97)', offset: 0.85 }, { opacity: 1, transform: 'none' }];
+        dur = 620; easing = 'ease-out';
       } else {
         kf = kanji ? [{ opacity: 0, transform: 'scale(1.35)', filter: 'blur(12px)' }, { opacity: 1, transform: 'none', filter: 'blur(0px)' }]
           : [{ opacity: 0, transform: 'translateX(.28em)', filter: 'blur(9px)' }, { opacity: 1, transform: 'none', filter: 'blur(0px)' }];
         dur = kanji ? 640 : 480;
       }
-      e.animate(kf, { duration: dur, delay: i * stagger, easing, fill: 'backwards' });
+      e.animate(kf, { duration: dur, delay: base + i * stagger, easing, fill: 'backwards' });
     });
   }
 
@@ -464,7 +524,9 @@ export function createMotion(stage) {
     const ln = s.lines[r.li];
     const chars = ln.chars.slice(r.i0, r.i1 + 1);
     const d = { key, type, li: r.li, i0: r.i0, i1: r.i1, chars, el: null };
-    const delay = cfg.calm ? 0 : 120 + Math.min(500, (performance.now() - s.born < 400 ? r.i1 * 30 : 0));
+    // 字が出る前に飾りだけ見えないよう、場面の切り替えで字の出を待っているあいだは、飾りも待つ
+    const wait = Math.max(0, ((s.style === 'dust' ? s.settleAt : s.enterAt) || 0) - performance.now()) + (s.style === 'dust' ? 520 : 0);
+    const delay = cfg.calm ? 0 : wait + 120 + Math.min(500, (performance.now() - s.born < 400 ? r.i1 * 30 : 0));
     if (type === 'strike') {
       d.el = div('mo-strike' + (chars.some((c) => c.classList.contains('on-fill')) ? ' on-fill' : ''));
       ln.el.appendChild(d.el);
@@ -485,6 +547,11 @@ export function createMotion(stage) {
             : [{ transform: 'scaleX(0)' }, { transform: 'none' }], { duration: pop ? 480 : 520, delay, easing: pop ? 'ease-out' : EXPO, fill: 'backwards' });
         }
         if (type === 'num' && !cfg.calm) countUp(chars);
+        if (type === 'fill' && !cfg.calm) after(delay + 420, () => { // 箱が塗り終わった右端から火花
+          if (!d.el.isConnected) return;
+          const r = d.el.getBoundingClientRect(), q = dust.toLocal(r);
+          dust.spark(q.x + q.w, q.y + q.h / 2, { count: cfg.taste === 'pop' ? 34 : 20, color: getComputedStyle(d.el).backgroundColor, speed: 3.4 });
+        });
       } else {
         d.el = span('mo-nil'); // 色だけ（飾りの要素はない。色は CSS の transition で変わる）
       }
@@ -556,6 +623,12 @@ export function createMotion(stage) {
     return spots.sort((a, b) => b.w * b.h - a.w * a.h);
   }
   const sceneText = (s) => s.lines.map((l) => (l ? l.text : '')).join('');
+  // 場面の座標（1280×720 基準）→ 粒子の canvas の座標
+  function toScreen(s, x, y) {
+    const q = dust.toLocal(s.el.getBoundingClientRect());
+    return { x: q.x + x * k, y: q.y + y * k };
+  }
+  const acc = () => (sc ? getComputedStyle(sc.el).getPropertyValue('--acc').trim() : '') || getComputedStyle(root).getPropertyValue('--mo-acc').trim() || cfg.accent;
   function evaluate(s, final) {
     if (!s || s.entry.fz) return;
     const t = sceneText(s);
@@ -628,6 +701,7 @@ export function createMotion(stage) {
       }
       g.style.transformOrigin = `${cx}px ${cy}px`;
       put(s, g, 0, 0);
+      if (!cfg.calm) after(140, () => { if (!g.isConnected) return; const q = toScreen(s, cx, cy); dust.spark(q.x, q.y, { count: cfg.taste === 'cool' ? 40 : 70, color: acc(), speed: 5.5, life: 800 }); });
       if (!cfg.calm) {
         g.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.03)' }, { transform: 'scale(1)' }], { duration: 520, iterations: 3, delay: 420, easing: 'ease-in-out' });
         s.linesEl.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-7px,3px)' }, { transform: 'translate(6px,-4px)' }, { transform: 'translate(-3px,2px)' }, { transform: 'translate(0,0)' }],
@@ -733,8 +807,9 @@ export function createMotion(stage) {
     const sp = spots[0];
     if (!sp) return null;
     const rand = s.rand;
-    const cool = ['bars', 'frame', 'plus', 'ring'], pop = ['blob', 'squiggle', 'bars', 'ring'];
-    const kind = (cfg.taste === 'cool' ? cool : cfg.taste === 'pop' ? pop : [...cool, 'blob', 'squiggle'])[Math.floor(rand() * (cfg.taste === 'mix' ? 6 : 4))];
+    const cool = ['bars', 'frame', 'plus', 'ring', 'matrix', 'tri', 'arc'], pop = ['blob', 'squiggle', 'zigzag', 'confetti', 'pill', 'bars', 'ring'];
+    const list = cfg.taste === 'cool' ? cool : cfg.taste === 'pop' ? pop : [...new Set([...cool, ...pop])];
+    const kind = list[Math.floor(rand() * list.length)];
     const box = div('mo-prop');
     if (kind === 'bars') {
       const n = 3, wmax = clamp(sp.w * 0.7, 140, 320);
@@ -787,6 +862,81 @@ export function createMotion(stage) {
       popIn(b, 120, 'scale(0)');
       if (!cfg.calm) after(800, () => b.classList.add('jelly'));
       put(s, box, sp.x + rand() * Math.max(0, sp.w - r * 2), sp.y + sp.h / 2 - r);
+    } else if (kind === 'matrix') { // 1px の点の格子が、順に灯って消える
+      const cols = 10, rows = 4, gap = 14;
+      for (let i = 0; i < cols * rows; i++) {
+        const c = span('mo-px' + (rand() < 0.14 ? ' acc' : ''));
+        c.style.left = (i % cols) * gap + 'px'; c.style.top = Math.floor(i / cols) * gap + 'px';
+        box.appendChild(c);
+        if (!cfg.calm) c.animate([{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0.35 }], { duration: 900, delay: ((i % cols) + Math.floor(i / cols)) * 45, fill: 'backwards' });
+        else c.style.opacity = '.35';
+      }
+      put(s, box, sp.x + rand() * Math.max(0, sp.w - cols * gap), sp.y + sp.h / 2 - rows * gap / 2);
+    } else if (kind === 'tri') { // 輪郭の三角が回り込んで止まる
+      const r = clamp(Math.min(sp.w, sp.h) * 0.4, 40, 96);
+      const g = svgEl('svg', { width: r * 2.2, height: r * 2.2, class: 'mo-tri', viewBox: `0 0 ${r * 2.2} ${r * 2.2}` });
+      const c = r * 1.1;
+      const pts = [0, 1, 2].map((i) => { const a = -Math.PI / 2 + (i * Math.PI * 2) / 3; return `${(c + Math.cos(a) * r).toFixed(1)},${(c + Math.sin(a) * r).toFixed(1)}`; }).join(' ');
+      const poly = svgEl('polygon', { points: pts, pathLength: '1' });
+      g.appendChild(poly);
+      box.appendChild(g);
+      if (!cfg.calm) {
+        poly.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 800, easing: EXPO, fill: 'backwards' });
+        g.animate([{ transform: 'rotate(-120deg) scale(.6)' }, { transform: 'rotate(8deg) scale(1.04)', offset: 0.7 }, { transform: 'none' }], { duration: 900, easing: EXPO, fill: 'backwards' });
+        after(950, () => g.classList.add('drift'));
+      }
+      put(s, box, sp.x + rand() * Math.max(0, sp.w - r * 2.2), sp.y + sp.h / 2 - r * 1.1);
+    } else if (kind === 'arc') { // 同心の半円が、外から順に描かれる
+      const r = clamp(Math.min(sp.w * 0.5, sp.h) * 0.8, 50, 120);
+      const g = svgEl('svg', { width: r * 2 + 8, height: r + 8, class: 'mo-arc', viewBox: `-4 -4 ${r * 2 + 8} ${r + 8}` });
+      for (let i = 0; i < 4; i++) {
+        const rr = r - i * (r / 4.4);
+        const path = svgEl('path', { d: `M${r - rr},${r} A${rr},${rr} 0 0 1 ${r + rr},${r}`, pathLength: '1', class: i === 1 ? 'acc' : '' });
+        g.appendChild(path);
+        if (!cfg.calm) path.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 700, delay: i * 110, easing: EXPO, fill: 'backwards' });
+      }
+      box.appendChild(g);
+      put(s, box, sp.x + rand() * Math.max(0, sp.w - r * 2), sp.y + sp.h / 2 - r / 2);
+    } else if (kind === 'zigzag') { // ジグザグの矢印が、字の方を指してぴょこぴょこ
+      const w = clamp(sp.w * 0.5, 120, 240);
+      const g = svgEl('svg', { width: w + 30, height: 50, class: 'mo-zig', viewBox: `0 0 ${w + 30} 50` });
+      let d = 'M2,25';
+      for (let x = 2, i = 0; x < w; x += 22, i++) d += ` L${x + 11},${i % 2 ? 40 : 10}`;
+      d += ` L${w},25`;
+      const path = svgEl('path', { d, pathLength: '1' });
+      const tip = svgEl('path', { d: `M${w - 6},12 L${w + 16},25 L${w - 6},38`, class: 'tip' });
+      g.append(path, tip);
+      const toLeft = sp.side === 'R';
+      if (toLeft) g.style.transform = 'scaleX(-1)';
+      box.appendChild(g);
+      if (!cfg.calm) {
+        path.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 600, easing: EXPO, fill: 'backwards' });
+        tip.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: 450, fill: 'backwards' });
+        after(700, () => box.classList.add('nudge' + (toLeft ? '-l' : '')));
+      }
+      put(s, box, toLeft ? sp.x : sp.x + Math.max(0, sp.w - w - 30), sp.y + sp.h / 2 - 25);
+    } else if (kind === 'confetti') { // 紙ふぶき（粒子）が降って、小さな四角も弾む
+      const n = 7;
+      for (let i = 0; i < n; i++) {
+        const c = span('mo-conf' + (i % 3 === 0 ? ' ink' : ''));
+        c.style.left = rand() * Math.min(260, sp.w) + 'px'; c.style.top = rand() * 40 + 'px';
+        c.style.rotate = Math.round(rand() * 90) + 'deg';
+        box.appendChild(c);
+        popIn(c, 100 + i * 70, 'scale(0) translateY(-40px)');
+      }
+      put(s, box, sp.x + rand() * Math.max(0, sp.w - 260), sp.y + sp.h / 2 - 30);
+      if (!cfg.calm) after(300, () => { if (!box.isConnected) return; const q = dust.toLocal(box.getBoundingClientRect()); for (let i = 0; i < 3; i++) dust.spark(q.x + q.w * (0.2 + i * 0.3), q.y, { count: 16, color: i === 1 ? acc() : getComputedStyle(s.el).color, speed: 2.6, up: 1.4, gravity: 0.08, life: 1100 }); });
+    } else if (kind === 'pill') { // カプセルの中を点が行ったり来たり
+      const w = clamp(sp.w * 0.5, 130, 220);
+      const pill = div('mo-pill');
+      pill.style.width = w + 'px';
+      const dot = span('mo-pill-dot');
+      pill.appendChild(dot);
+      dot.style.setProperty('--run', w - 30 + 'px');
+      box.appendChild(pill);
+      popIn(pill, 100, 'scaleX(0)');
+      if (!cfg.calm) after(600, () => dot.classList.add('run'));
+      put(s, box, sp.x + rand() * Math.max(0, sp.w - w), sp.y + sp.h / 2 - 15);
     } else {
       const w = clamp(sp.w * 0.7, 160, 360);
       const g = svgEl('svg', { width: w, height: 60, class: 'mo-squiggle', viewBox: `0 0 ${w} 60` });
@@ -808,8 +958,11 @@ export function createMotion(stage) {
     if (/[!?！？]$/.test(ln.text)) return;
     const d = span('mo-end');
     ln.el.appendChild(d);
-    if (!cfg.calm) d.animate([{ transform: 'translateY(-1.2em) scale(.4)', opacity: 0 }, { transform: 'translateY(0) scale(1.3,.7)', opacity: 1, offset: 0.55 },
-      { transform: 'translateY(-.18em) scale(.9,1.1)', offset: 0.75 }, { transform: 'none', opacity: 1 }], { duration: 620, easing: 'ease-out', fill: 'backwards' });
+    if (!cfg.calm) {
+      d.animate([{ transform: 'translateY(-1.2em) scale(.4)', opacity: 0 }, { transform: 'translateY(0) scale(1.3,.7)', opacity: 1, offset: 0.55 },
+        { transform: 'translateY(-.18em) scale(.9,1.1)', offset: 0.75 }, { transform: 'none', opacity: 1 }], { duration: 620, easing: 'ease-out', fill: 'backwards' });
+      after(360, () => { if (!d.isConnected) return; const q = dust.toLocal(d.getBoundingClientRect()); dust.spark(q.x + q.w / 2, q.y + q.h, { count: 14, color: acc(), speed: 2.2, up: 1.2, gravity: 0.07 }); });
+    }
     layout(s);
   }
 
@@ -830,6 +983,9 @@ export function createMotion(stage) {
   }
 
   // ---------------------------------------------------------------- 場面の切り替え
+  // 場面の切り替えにかかる時間
+  const TR_MS = { none: 0, fade: 320, pan: PAN_MS, drop: PAN_MS, dust: 560, zoom: 640, fall: 600, wipe: 680 };
+  const NONE = 'inset(0 100% 0 0)', FULL = 'inset(0 0 0 0)';
   function show(i) {
     const entry = plan[i];
     if (!entry) return;
@@ -837,34 +993,83 @@ export function createMotion(stage) {
     p = i;
     if (entry.u && entry.u.final && entry.u.lines.length === 0) return;
     const s = makeScene(entry, prev);
+    if (cfg.calm && prev) s.tr = 'fade';
     sc = s;
-    shownAt = performance.now();
+    const t0 = performance.now();
+    shownAt = t0;
     idle = false;
-    syncLines(s, true);
+    const tr = s.tr, D = TR_MS[tr] || 0;
+    const moving = tr === 'pan' || tr === 'drop';
+    // 新しい字が出はじめる時刻（s.enterAt）と、カメラが止まる時刻（s.settleAt。粒子が集まる出かたはこれを待つ）
+    s.enterAt = t0 + (moving || tr === 'none' || tr === 'fade' ? 0 : tr === 'wipe' ? D * 0.5 : D * 0.5);
+    s.settleAt = t0 + (moving ? D : tr === 'wipe' ? D * 0.5 : D * 0.45);
+    const fresh = syncLines(s);
     layout(s, false);
     markKeywords(s);
-    drawRail(s, prev);
-    // 暗転の板：カメラと同じ速さで、新しい場面の側から差し込む／前の場面とともに抜けていく
-    const wasInv = prev ? prev.inv : root.classList.contains('is-inv');
-    if (s.inv !== wasInv && !cfg.transparent) {
-      const vert = s.vertical;
-      const hide = vert ? 'inset(100% 0 0 0)' : 'inset(0 0 0 100%)', full = 'inset(0 0 0 0)', gone = vert ? 'inset(0 0 100% 0)' : 'inset(0 100% 0 0)';
-      plate.style.clipPath = s.inv ? full : gone;
-      if (!cfg.calm && prev) plate.animate([{ clipPath: s.inv ? hide : full }, { clipPath: s.inv ? full : gone }], { duration: PAN_MS, easing: SWING });
-    }
-    root.classList.toggle('is-inv', !!s.inv);
+    if (prev && !cfg.calm) leave(prev, s, tr, D);
+    enterChars(s, fresh);
+    // カメラ
+    if (!prev) cam(s.x, s.y);
+    else if (moving) panTo(s.x, s.y, D);
+    else if (tr === 'wipe') after(D * 0.5, () => { if (sc === s) cam(s.x, s.y); });
+    else cam(s.x, s.y);
+    drawRail(s, prev, tr === 'wipe' ? D * 0.5 : D || PAN_MS);
+    plateSwap(prev, s, tr, D);
     if (prev) {
-      panTo(s.x, s.y, cfg.calm ? 0 : PAN_MS);
       const old = prev;
       if (cfg.calm) { old.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, fill: 'forwards' }).onfinish = () => old.el.remove(); s.el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320, fill: 'backwards' }); }
-      else after(PAN_MS + 60, () => old.el.remove());
+      else after((tr === 'wipe' ? D * 0.5 : D) + 80, () => old.el.remove());
       for (const g of [...big.children]) fadeOut(g, 500);
-    } else cam(s.x, s.y);
+    }
     // 前の場面から残っている場面（2つ以上前）は外す
     for (const e of [...world.querySelectorAll('.mo-scene')]) if (e !== s.el && (!prev || e !== prev.el)) e.remove();
     if (entry.fz) fzStage(s, entry.fz);
     else evaluate(s, entry.u.final);
     hud.querySelector('.mo-sc').textContent = `SC.${pad2(s.n)}`;
+  }
+  // 前の場面の退場（切り替えの種類ごと）
+  function leave(old, s, tr, D) {
+    const parts = [];
+    old.lines.forEach((ln) => { if (ln) parts.push(...ln.chars, ...ln.el.querySelectorAll('.mo-box, .mo-under, .mo-strike, .mo-end')); });
+    const T = `translate(${old.x}px, ${old.y}px)`;
+    if (tr === 'dust') { // 字の形のまま 1px の粒になって、風に流れる
+      dust.disperse(parts, { spread: 1.1, life: 1200, stagger: 6 });
+      for (const e of [old.propsEl, old.label, old.num]) fadeOut(e, 240);
+    } else if (tr === 'fall') { // 字がばらばらに落ちる（少し回りながら）
+      parts.forEach((e, j) => {
+        const rot = (old.rand() - 0.5) * 140, dx = (old.rand() - 0.5) * 60;
+        e.animate([{ transform: 'none' }, { transform: `translate(${dx}px, -18px) rotate(${rot * 0.1}deg)`, offset: 0.18 }, { transform: `translate(${dx * 2}px, ${VH * 0.95}px) rotate(${rot}deg)` }],
+          { duration: D + 120, delay: (j % 7) * 26, easing: 'cubic-bezier(.5,0,.9,.6)', fill: 'forwards' });
+      });
+      for (const e of [old.propsEl, old.label, old.num]) fadeOut(e, 300);
+    } else if (tr === 'zoom') { // 押し込むように大きく、ぼけて抜ける。新しい場面は奥から
+      old.el.animate([{ transform: T, opacity: 1, filter: 'blur(0px)' }, { transform: `${T} scale(1.7)`, opacity: 0, filter: 'blur(10px)' }], { duration: D, easing: 'cubic-bezier(.6,0,.9,.5)', fill: 'forwards' });
+      s.el.animate([{ transform: `translate(${s.x}px, ${s.y}px) scale(.72)`, opacity: 0 }, { transform: `translate(${s.x}px, ${s.y}px)`, opacity: 1 }], { duration: D, delay: D * 0.3, easing: EXPO, fill: 'backwards' });
+    } else if (tr === 'wipe') { // 帯が横切り、隠れたところで場面が替わる
+      wipe.animate([{ transform: 'translateX(-102%)', easing: 'cubic-bezier(.7,0,.9,.6)' }, { transform: 'translateX(0)', offset: 0.5, easing: 'cubic-bezier(.1,.4,.3,1)' }, { transform: 'translateX(102%)' }], { duration: D });
+    }
+  }
+  // 暗転の板：横・下へのときはカメラと同じ速さで差し込む。帯は隠れたところで切り替え、ほかは駅から円が広がる／縮む
+  function plateSwap(prev, s, tr, D) {
+    const wasInv = prev ? prev.inv : root.classList.contains('is-inv');
+    const set = () => { plate.style.clipPath = s.inv ? FULL : NONE; root.classList.toggle('is-inv', !!s.inv); };
+    if (cfg.transparent) { plate.style.clipPath = NONE; root.classList.remove('is-inv'); return; }
+    if (s.inv === wasInv) { root.classList.toggle('is-inv', !!s.inv); return; }
+    if (!prev || cfg.calm) { set(); return; }
+    if (tr === 'pan' || tr === 'drop') {
+      const vert = tr === 'drop';
+      const hide = vert ? 'inset(100% 0 0 0)' : 'inset(0 0 0 100%)', gone = vert ? 'inset(0 0 100% 0)' : NONE;
+      plate.style.clipPath = s.inv ? FULL : gone;
+      plate.animate([{ clipPath: s.inv ? hide : FULL }, { clipPath: s.inv ? FULL : gone }], { duration: D, easing: SWING });
+      root.classList.toggle('is-inv', !!s.inv);
+    } else if (tr === 'wipe') after(D * 0.5, set);
+    else {
+      const at = `at ${((s.nodeX / VW) * 100).toFixed(1)}% ${((s.trackY / VH) * 100).toFixed(1)}%`;
+      const small = `circle(0% ${at})`, large = `circle(150% ${at})`;
+      plate.style.clipPath = s.inv ? large : small;
+      plate.animate([{ clipPath: s.inv ? small : large }, { clipPath: s.inv ? large : small }], { duration: D * 1.15, easing: SWING });
+      after(D * 0.5, () => { plate.style.clipPath = s.inv ? FULL : NONE; root.classList.toggle('is-inv', !!s.inv); });
+    }
   }
   // 見せる長さ：たまっているほど短く（話すのが速いときに追いつく）
   function holdFor(entry, backlog) {
@@ -916,8 +1121,9 @@ export function createMotion(stage) {
     for (let i = plan.length - 1; i > p; i--) if (plan[i].u === utt && plan[i].j >= need) plan.splice(i, 1);
     trimPlan();
     if (sc && sc.entry.u === utt) {
-      syncLines(sc, true);
+      const fresh = syncLines(sc);
       layout(sc);
+      enterChars(sc, fresh);
       markKeywords(sc);
       evaluate(sc, utt.final);
     }
@@ -966,17 +1172,71 @@ export function createMotion(stage) {
     bigGlyph(m.text);
   }
 
-  function setLevel(v) { level = Math.max(level * 0.6, clamp(+v || 0, 0, 1)); levelAt = performance.now(); }
+  // ---------------------------------------------------------------- 音に反応
+  // 声：声の大きさで計器が揺れ、大きな声を出すと線の上の点から火花が散る
+  // 周りの音：BGM や会場の音の帯域（計器がスペクトラムに）と拍（画面が脈打ち、点から火花・駅が光る・キーワードが跳ねる）・BPM
+  let beatN = 0;
+  function setLevel(v) {
+    if (cfg.sound === 'off') return;
+    level = Math.max(level * 0.6, clamp(+v || 0, 0, 1));
+    levelAt = performance.now();
+    if (cfg.sound === 'voice' && level > 0.82 && levelAt - shoutAt > 900 && sc && !cfg.calm) { shoutAt = levelAt; burstAtHead(cfg.taste === 'cool' ? 24 : 40); shakeScene(4); }
+  }
+  function audio(m) {
+    if (cfg.sound !== 'room') return;
+    const t = performance.now();
+    if (Array.isArray(m.b)) { bands = m.b.slice(0, 14).map((v) => clamp((+v || 0) / 100, 0, 1)); bandsAt = t; }
+    if (Number.isFinite(m.l)) { level = Math.max(level * 0.7, clamp(m.l, 0, 1)); levelAt = t; }
+    bpm = +m.bpm || 0;
+    if (m.beat) onBeat(t);
+  }
+  function headPos() {
+    const r = head.getBoundingClientRect();
+    const q = dust.toLocal(r);
+    return { x: q.x + q.w / 2, y: q.y + q.h / 2 };
+  }
+  function burstAtHead(n) { const q = headPos(); dust.spark(q.x, q.y, { count: n, color: acc(), speed: 3.6 }); }
+  function shakeScene(px) {
+    if (!sc) return;
+    sc.linesEl.animate([{ transform: 'none' }, { transform: `translate(${-px}px, ${px / 2}px)` }, { transform: `translate(${px * 0.8}px, ${-px / 2}px)` }, { transform: 'none' }], { duration: 220, easing: 'linear' });
+  }
+  function onBeat(t) {
+    if (t - beatAt < 200) return;
+    beatAt = t;
+    beatN++;
+    if (cfg.calm) return;
+    const down = beatN % 4 === 1; // 小節の頭は強く
+    const pop = cfg.taste === 'pop';
+    camBox.animate([{ transform: `scale(${down ? (pop ? 1.024 : 1.012) : (pop ? 1.012 : 1.006)})` }, { transform: 'scale(1)' }], { duration: 260, easing: 'cubic-bezier(.2,.7,.3,1)' });
+    grid.animate([{ opacity: down ? 1 : 0.85 }, { opacity: 0.5 }], { duration: 320, easing: 'ease-out' });
+    if (sc && sc.rail) sc.rail[2].animate([{ transform: 'scale(1.7)', strokeWidth: 1.5 }, { transform: 'scale(1)' }], { duration: 360, easing: EXPO });
+    burstAtHead(down ? (pop ? 34 : 22) : (pop ? 16 : 10));
+    if (sc && (pop || cfg.taste === 'mix')) { // キーワードが拍で跳ねる
+      for (const d of sc.decos.values()) {
+        if (d.type === 'strike') continue;
+        d.chars.forEach((c, i) => c.isConnected && c.animate([{ transform: 'none' }, { transform: `translateY(${pop ? -0.12 : -0.06}em) scale(1.04)`, offset: 0.35 }, { transform: 'none' }], { duration: 240, delay: i * 18, easing: 'ease-out' }));
+      }
+    }
+    for (const g of big.children) g.animate([{ transform: 'scale(1.035)' }, { transform: 'scale(1)' }], { duration: 300, easing: 'ease-out' });
+  }
 
+  // 消す：いまの場面は字の形のまま粒になって散る
   function clear() {
+    if (sc && !cfg.calm) dustScene(sc);
     plan.length = 0; p = -1; utt = null; kws.clear();
     for (const e of [...world.querySelectorAll('.mo-scene')]) fadeOut(e, 300);
     for (const e of [...track.children]) if (e !== head) e.remove();
     for (const e of [...big.children]) fadeOut(e, 300);
     sc = null; firstAt = 0; paceLog.length = 0; lastKw = '';
-    plate.style.clipPath = 'inset(0 100% 0 0)';
+    plate.style.clipPath = NONE;
     root.classList.remove('is-inv');
     hud.querySelector('.mo-sc').textContent = 'SC.00';
+  }
+  function dustScene(s) {
+    const parts = [];
+    s.lines.forEach((ln) => { if (ln) parts.push(...ln.chars, ...ln.el.querySelectorAll('.mo-box, .mo-under, .mo-strike, .mo-end')); });
+    dust.disperse(parts, { spread: 0.9, life: 1600, up: 0.8, stagger: 10 });
+    for (const e of [s.propsEl, s.label, s.num]) fadeOut(e, 500);
   }
 
   // ---------------------------------------------------------------- 計器（四隅）
@@ -989,7 +1249,7 @@ export function createMotion(stage) {
     for (let i = 0; i < 4; i++) beatEl.appendChild(span('mo-sq'));
     const meter = span('mo-meter');
     for (let i = 0; i < levelHist.length; i++) meter.appendChild(span('mo-mb'));
-    bl.append(meter, span('mo-h-s', 'INPUT — VOICE'));
+    bl.append(meter, span('mo-h-s mo-in', 'INPUT — VOICE'));
     br.append(span('mo-sc', 'SC.00'), span('mo-kw', ''));
     hud.append(tl, tr, bl, br);
   }
@@ -999,43 +1259,60 @@ export function createMotion(stage) {
     const tl = hud.querySelector('.tl');
     if (tl) tl.style.left = lg ? lg.pad * 2 + lg.size + 'px' : '';
     hud.classList.toggle('credit', !!cfg.credit);
+    hud.classList.toggle('room', cfg.sound === 'room');
+    const inp = hud.querySelector('.mo-in');
+    if (inp) inp.textContent = cfg.sound === 'room' ? 'INPUT — ROOM' : cfg.sound === 'off' ? 'INPUT — OFF' : 'INPUT — VOICE';
   }
-  let hudAt = 0;
+  let hudAt = 0, trailAt = 0;
   function loop(t) {
     if (destroyed) return;
     requestAnimationFrame(loop);
-    // カメラの残像：動き始めと終わりは弱く、真ん中で強く（横方向だけ）
+    // カメラの残像：動き始めと終わりは弱く、真ん中で強く（横方向だけ）。動いている間、線の上の点から 1px の尾を引く
     if (panning) {
       const q = (t - panning.t0) / panning.dur;
       if (q >= 1) { panning = null; blurN.setAttribute('stdDeviation', '0 0'); world.style.filter = ''; }
-      else { const b = (Math.pow(Math.sin(q * Math.PI), 2) * 12).toFixed(1); blurN.setAttribute('stdDeviation', panning.vert ? `0 ${b}` : `${b} 0`); }
+      else {
+        const b = (Math.pow(Math.sin(q * Math.PI), 2) * 12).toFixed(1);
+        blurN.setAttribute('stdDeviation', panning.vert ? `0 ${b}` : `${b} 0`);
+        if (t - trailAt > 16) { trailAt = t; const h = headPos(); dust.spark(h.x, h.y, { count: 3, color: acc(), speed: 0.8, life: 500, gravity: 0 }); }
+      }
     }
+    dust.step(t);
     if (t - hudAt < 66) return;
     hudAt = t;
+    const room = cfg.sound === 'room' && t - bandsAt < 1500;
     // 声の大きさ（届かないときは、話している間だけそれらしく揺らす）
     if (t - levelAt > 600) level *= 0.86;
-    levelHist.push(clamp(level + (t - lastCapAt < 900 ? Math.random() * 0.18 : 0), 0, 1));
+    const fake = cfg.sound !== 'off' && t - levelAt > 1200 && t - lastCapAt < 900 ? Math.random() * 0.18 : 0;
+    levelHist.push(cfg.sound === 'off' ? 0 : clamp(level + fake, 0, 1));
     levelHist.shift();
+    // 周りの音が鳴っているあいだ、話していなくても粒がゆっくり漂う
+    if (room && !cfg.calm && level > 0.08) dust.drift(Math.min(1, level * 1.4), acc());
+    if (sc && sc.wave) sc.wave.style.setProperty('--amp', (0.35 + (room ? (bands[1] + bands[3] + bands[6]) / 3 : level) * 0.9).toFixed(2));
     if (!cfg.hud) return;
-    const bars = hud.querySelectorAll('.mo-mb');
-    bars.forEach((b, i) => { b.style.transform = `scaleY(${(0.08 + levelHist[i] * 0.92).toFixed(2)})`; });
-    if (sc && sc.wave) sc.wave.style.setProperty('--amp', (0.35 + level * 0.9).toFixed(2));
+    const show = room ? bands : levelHist; // 周りの音ではスペクトラム（低い音→高い音）、声では声の大きさの移り変わり
+    hud.querySelectorAll('.mo-mb').forEach((b, i) => { b.style.transform = `scaleY(${(0.08 + (show[i] || 0) * 0.92).toFixed(2)})`; });
     const tm = hud.querySelector('.mo-time');
     if (tm) { const sec = firstAt ? Math.floor((t - firstAt) / 1000) : 0; tm.textContent = `${pad2(Math.floor(sec / 60) % 100)}:${pad2(sec % 60)}`; }
-    // 話す速さ：直近20秒の字数を1分あたりに
+    // 右上：周りの音でテンポが取れていれば BPM、ほかは話す速さ（直近20秒の字数を1分あたりに）
     while (paceLog.length && t - paceLog[0].t > 20000) paceLog.shift();
     const span20 = firstAt ? Math.min(20000, Math.max(4000, t - firstAt)) : 20000;
-    const target = paceLog.reduce((a, b) => a + b.n, 0) * (60000 / span20);
-    paceShown += (target - paceShown) * 0.2;
+    const showBpm = room && bpm > 0;
+    const target = showBpm ? bpm : paceLog.reduce((a, b) => a + b.n, 0) * (60000 / span20);
+    paceShown += (target - paceShown) * (showBpm ? 0.35 : 0.2);
     const pe = hud.querySelector('.mo-pace');
     if (pe) pe.textContent = String(Math.round(paceShown)).padStart(3, '0');
     const unit = hud.querySelector('.tr .mo-h-s');
-    if (unit) unit.textContent = utt && utt.en ? 'WPM' : 'CPM';
-    hud.querySelectorAll('.mo-sq').forEach((q, i) => q.classList.toggle('on', i === beat % 4));
+    if (unit) unit.textContent = showBpm ? 'BPM' : utt && utt.en ? 'WPM' : 'CPM';
+    const bi = room ? (beatN + 3) % 4 : beat % 4;
+    hud.querySelectorAll('.mo-sq').forEach((q, i) => q.classList.toggle('on', i === bi));
     const kwEl = hud.querySelector('.mo-kw');
     if (kwEl && kwEl.textContent !== lastKw) kwEl.textContent = lastKw ? `/ ${lastKw}` : '';
-    // 長く黙っていたら、場面を薄くする（次に話すと新しい場面から）
-    if (sc && !idle && utt && utt.final && t - lastCapAt > 30000) { idle = true; sc.el.classList.add('idle'); }
+    // 長く黙っていたら、場面は字の形のまま粒になって消える（次に話すと新しい場面から）
+    if (sc && !idle && utt && utt.final && t - lastCapAt > 30000) {
+      idle = true;
+      if (cfg.calm) sc.el.classList.add('idle'); else dustScene(sc);
+    }
   }
 
   buildHud();
@@ -1044,27 +1321,26 @@ export function createMotion(stage) {
 
   return {
     configure(c) {
-      const prevTaste = cfg.taste;
       cfg = { ...cfg, ...c };
       root.classList.toggle('calm', !!cfg.calm);
       root.classList.toggle('clear', !!cfg.transparent);
       root.dataset.taste = cfg.taste;
       applyColors();
       placeHud();
-      if (cfg.transparent) { plate.style.clipPath = 'inset(0 100% 0 0)'; root.classList.remove('is-inv'); }
+      if (cfg.transparent) { plate.style.clipPath = NONE; root.classList.remove('is-inv'); }
       if (sc) {
         const f = fs0();
         const want = sc.comp === 'bigsmall' ? [f * 0.62, f * 1.12] : sc.entry.fz ? [f * 0.5, f * 1.15] : [f, f];
         if (want[0] !== sc.fs[0] || want[1] !== sc.fs[1]) { sc.fs = want; sc.lines.forEach((ln, i) => ln && (ln.el.style.fontSize = want[i] + 'px')); }
         layout(sc, false);
       }
-      void prevTaste;
     },
-    caption, word, fuse, level: setLevel, clear, resize,
+    caption, word, fuse, audio, level: setLevel, clear, resize,
     count: () => (sc ? 1 : 0),
     destroy() {
       destroyed = true;
       clearTimeout(pumpTimer);
+      dust.destroy();
       root.remove();
     },
   };

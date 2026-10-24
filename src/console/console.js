@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, OVERLAP_STEPS, LIFE_STEPS, MOTION_TASTES, MOTION_HUD, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610250319';
-import { EN, L, tr } from '../core/i18n.js?v=202610250319';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610250319';
-import { createBus } from '../core/bus.js?v=202610250319';
-import { connectObs } from '../core/obs.js?v=202610250319';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610250319';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610250319';
-import { simulateSpeech } from './demo.js?v=202610250319';
-import { initHelp } from './help.js?v=202610250319';
-import { initNews } from './news.js?v=202610250319';
-import { createGuide, guideSeen } from './guide.js?v=202610250319';
-import { coinWord } from '../core/coin.js?v=202610250319';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610250319';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, OVERLAP_STEPS, LIFE_STEPS, MOTION_TASTES, MOTION_HUD, MOTION_SOUND, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610250347';
+import { EN, L, tr } from '../core/i18n.js?v=202610250347';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610250347';
+import { createBus } from '../core/bus.js?v=202610250347';
+import { connectObs } from '../core/obs.js?v=202610250347';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610250347';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610250347';
+import { simulateSpeech } from './demo.js?v=202610250347';
+import { initHelp } from './help.js?v=202610250347';
+import { initNews } from './news.js?v=202610250347';
+import { createGuide, guideSeen } from './guide.js?v=202610250347';
+import { coinWord } from '../core/coin.js?v=202610250347';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610250347';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -339,6 +339,7 @@ async function startMeter() {
     an.fftSize = 2048; // 声の高さ（話者の推定）にも使うので長めに取る
     src.connect(an);
     meterAnalyser = an;
+    startTap(meterCtx, src);
     const buf = new Float32Array(an.fftSize);
     const bar = $('#meter');
     let frame = 0, lvlAt = 0;
@@ -365,10 +366,56 @@ async function startMeter() {
 }
 function stopMeter() {
   cancelAnimationFrame(meterRaf);
+  try { tapNode && tapNode.disconnect(); } catch { /* noop */ }
+  tapNode = null;
   try { meterStream && meterStream.getTracks().forEach((t) => t.stop()); } catch { /* noop */ }
   try { meterCtx && meterCtx.close(); } catch { /* noop */ }
   meterStream = meterCtx = meterAnalyser = null;
   $('#meter').style.transform = 'scaleX(0)';
+}
+
+// ---- 周りの音（モーションの「音に反応：周りの音」）
+// マイクの音を AudioWorklet（audio-tap.js）で聞き分け、帯域・拍・テンポを表示ビューへ送る。
+// 音声の処理スレッドで動くので、コンソールが裏に回っていても止まらない。音はこの端末の中だけで使い、どこにも送らない
+let tapNode = null, audAt = 0, fakeAud = 0;
+async function startTap(ctx, src) {
+  try {
+    if (!ctx.audioWorklet) return;
+    await ctx.audioWorklet.addModule(new URL('./audio-tap.js' + new URL(import.meta.url).search, import.meta.url));
+    if (meterCtx !== ctx) return; // 待っている間にマイクが止まった
+    tapNode = new AudioWorkletNode(ctx, 'kanpe-tap', { numberOfOutputs: 1 });
+    const mute = ctx.createGain();
+    mute.gain.value = 0; // 解析のためだけにつなぐ（音は鳴らさない）
+    src.connect(tapNode);
+    tapNode.connect(mute);
+    mute.connect(ctx.destination);
+    tapNode.port.onmessage = (e) => sendAud(e.data);
+  } catch { /* 周りの音への反応は任意 */ }
+}
+function sendAud(d) {
+  if (S.layout !== 'motion' || S.mSound !== 'room' || paused || !d) return;
+  const t = performance.now();
+  if (!d.beat && t - audAt < 60) return; // 拍はすぐ、ほかは毎秒16回まで
+  audAt = t;
+  send({ t: 'aud', l: Math.round((d.l || 0) * 1000) / 1000, b: (d.b || []).map((v) => Math.round(v * 100)), beat: !!d.beat, bpm: d.bpm || 0 });
+}
+// デモ中はマイクを使わないので、120 BPM の疑似ビートで見た目を確かめられるように
+function fakeBeat() {
+  if (S.layout !== 'motion' || S.mSound !== 'room' || meterAnalyser) return;
+  const t = performance.now(), ph = (t % 500) / 500, kick = Math.pow(1 - ph, 3);
+  const b = Array.from({ length: 14 }, (_, i) => Math.max(0, Math.min(1, (i < 3 ? 0.35 + kick * 0.6 : 0.55 - i * 0.025) + (Math.random() - 0.5) * 0.18 + Math.sin(t / 900 + i) * 0.06)));
+  const beat = ph < fakeBeat.last; // 拍の頭を通りすぎた
+  fakeBeat.last = ph;
+  sendAud({ l: 0.25 + kick * 0.45, b, beat, bpm: 120 });
+}
+fakeBeat.last = 1;
+// 「周りの音」を選んだときの案内
+function soundHint() {
+  if (ONE_SHOT || meterOff()) {
+    toast(L('この端末では音声認識とマイクを同時に開けないため、周りの音には反応できません（デモでは疑似ビートで見た目を確かめられます）', 'On this device the mic can’t be shared with speech recognition, so room sound can’t be used (the demo shows it with a simulated beat).'), 7000);
+  } else if (!rec.wanted && !demoRunning) {
+    toast(L('マイクを始めると、BGM や会場の音の拍に合わせて画面が脈打ちます。マイクに音楽が聞こえる場所で使ってください（音はこの端末の中だけで使います）', 'Start the mic and the screen pulses to the beat of music or room sound. Make sure the mic can hear the music (audio stays on this device).'), 7000);
+  }
 }
 
 $('#meterOn').addEventListener('click', () => {
@@ -380,11 +427,13 @@ syncMeterNote();
 
 // ------------------------------------------------------------ デモとテキスト入力
 let demoRunning = false;
-function stopDemo() { demoRunning = false; $('#btnDemo').textContent = L('デモを流す', 'Play demo'); }
+function stopDemo() { demoRunning = false; clearInterval(fakeAud); fakeAud = 0; $('#btnDemo').textContent = L('デモを流す', 'Play demo'); }
 $('#btnDemo').addEventListener('click', async () => {
   if (demoRunning) { stopDemo(); return; }
   if (rec.wanted) { rec.stop(); setMic(false); stopMeter(); }
   demoRunning = true;
+  clearInterval(fakeAud);
+  fakeAud = setInterval(fakeBeat, 50); // 「周りの音」のときだけ疑似ビートを送る（ほかは何もしない）
   $('#btnDemo').textContent = L('デモを止める', 'Stop demo');
   setStatus('demo', L('デモ再生中', 'Demo playing'));
   // 話者の色分けがオンなら、デモでは話者を交互に切り替える
@@ -460,6 +509,7 @@ function pick(container, entries, key, id, def) {
     toast(L('スマホでは「声で自動」は使えません。手動で切り替えてください', 'Voice-based switching isn’t available on phones. Please switch speakers manually.'));
     return;
   }
+  if (key === 'mSound' && id === 'room') soundHint();
   if (key === 'speakerCount') { S[key] = +id; renderSpeakers(); pushSettings(); return; }
   if (key === 'speakerMode') { S[key] = id; renderSpeakers(); updateTrial(); pushSettings(); return; }
   S[key] = NUM_KEYS.has(key) ? +id : id; // 回数・秒数・行数は数で持つ
@@ -476,7 +526,7 @@ function pick(container, entries, key, id, def) {
 const NUM_KEYS = new Set(['cGrow', 'kGrow', 'cLife', 'capTtl', 'capLines']);
 // 言葉が消えるまでの秒数（組版は「残る時間」。表示ビューの lifeSec と同じ）
 function lifeSec() { return S.layout === 'compose' && LIFE_STEPS[S.cLife] ? +S.cLife : S.ttl; }
-const LAY_KEYS = new Set(['cSize', 'kSize', 'mSize', 'cGrow', 'kGrow', 'cJump', 'cVert', 'cOverlap', 'cLife', 'mTaste', 'mHud', 'echo', 'vjStyle', 'vjFont']);
+const LAY_KEYS = new Set(['cSize', 'kSize', 'mSize', 'cGrow', 'kGrow', 'cJump', 'cVert', 'cOverlap', 'cLife', 'mTaste', 'mHud', 'mSound', 'echo', 'vjStyle', 'vjFont']);
 const CAP_KEYS = new Set(['capSize', 'capTtl', 'capLines']);
 // レイアウトの説明。いまのレイアウトだけに効く設定だと分かるように、名前を添える
 const COLON = L('：', ': ');
@@ -508,7 +558,7 @@ function renderLayOpts() {
   if (lay === 'compose' || lay === 'kanpe') segButtons('#optGrow', GROW_STEPS, lay === 'kanpe' ? 'kGrow' : 'cGrow');
   if (lay === 'compose') { segButtons('#optJump', JUMP_STEPS, 'cJump'); segButtons('#optVert', VERT_STEPS, 'cVert'); segButtons('#optOverlap', OVERLAP_STEPS, 'cOverlap'); segButtons('#optLife', LIFE_STEPS, 'cLife'); }
   if (lay === 'kanpe') segButtons('#echoSpans', ECHO_SPANS, 'echo');
-  if (lay === 'motion') { segButtons('#optTaste', MOTION_TASTES, 'mTaste'); segButtons('#optHud', MOTION_HUD, 'mHud'); }
+  if (lay === 'motion') { segButtons('#optTaste', MOTION_TASTES, 'mTaste'); segButtons('#optHud', MOTION_HUD, 'mHud'); segButtons('#optSound', MOTION_SOUND, 'mSound'); }
 }
 function renderCapOpts() {
   segButtons('#capSizes', CAP_SIZES, 'capSize');
@@ -547,6 +597,7 @@ function migrateSettings() {
   S.vertical = S.cVert !== 'off'; // 古い窓（vertical を見る）とも合わせる
   if (!MOTION_TASTES[S.mTaste]) S.mTaste = 'mix';
   if (!MOTION_HUD[S.mHud]) S.mHud = 'on';
+  if (!MOTION_SOUND[S.mSound]) S.mSound = 'voice';
   if (!CAP_SIZES[S.capSize]) S.capSize = 'm';
   S.capTtl = CAP_TTLS[S.capTtl] ? +S.capTtl : 5;
   S.capLines = CAP_LINES[S.capLines] ? +S.capLines : 1;

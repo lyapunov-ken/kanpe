@@ -338,7 +338,12 @@ body {
 .mo-big { position: absolute; inset: 0; pointer-events: none; }
 .mo-giant { position: absolute; line-height: 1; font-weight: var(--w-strong); color: transparent; white-space: nowrap;
   -webkit-text-stroke: 2px color-mix(in srgb, var(--hud-sub) 70%, transparent); opacity: .55; transform-origin: 40% 50%; }
+.mo-cam { position: absolute; inset: 0; transform-origin: 50% 50%; }
 .mo-world { position: absolute; left: 0; top: 0; will-change: transform; }
+.mo-wipe { position: absolute; inset: 0; transform: translateX(-102%); pointer-events: none;
+  background: linear-gradient(90deg, var(--ink) 0 5px, var(--mo-acc) 5px calc(100% - 5px), var(--ink) calc(100% - 5px)); }
+.mo.clear .mo-wipe { display: none; }
+.mo-dust { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .mo-track { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
 .mo-rail { fill: none; stroke: var(--rail); stroke-width: 2.4; stroke-dasharray: 1 1; stroke-linejoin: round; transition: stroke .4s ease; }
 .mo-rail.lead { opacity: .5; }
@@ -348,7 +353,7 @@ body {
 .mo.is-inv .mo-node-in, .mo.is-inv .mo-head { fill: var(--mo-acc-inv); }
 .mo.clear .mo-node { fill: rgba(0, 0, 0, .55); }
 
-.mo-scene { position: absolute; left: 0; top: 0; color: var(--ink); --acc: var(--mo-acc); --on: var(--mo-on-acc); transition: opacity 1.5s ease; }
+.mo-scene { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; color: var(--ink); --acc: var(--mo-acc); --on: var(--mo-on-acc); transition: opacity 1.5s ease; }
 .mo-scene.inv { color: var(--bg); --acc: var(--mo-acc-inv); --on: var(--mo-on-acc-inv); }
 .mo-scene.fz { --acc: var(--fz, var(--mo-acc2)); }
 .mo-scene.idle { opacity: .22; }
@@ -421,6 +426,27 @@ body {
 .mo-blob.jelly { animation: mo-jelly 1.6s ease-in-out infinite; }
 @keyframes mo-jelly { 0%, 100% { transform: scale(1, 1); } 25% { transform: scale(1.12, .88); } 50% { transform: scale(.92, 1.08); } 75% { transform: scale(1.04, .97); } }
 .mo-squiggle path { fill: none; stroke: var(--acc); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 1 1; }
+.mo-px { position: absolute; width: 3px; height: 3px; background: currentColor; }
+.mo-px.acc { background: var(--acc); }
+.mo-tri polygon { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-dasharray: 1 1; stroke-linejoin: round; }
+.mo-tri { overflow: visible; }
+.mo-tri.drift { animation: mo-spin 14s linear infinite; }
+.mo-arc { overflow: visible; }
+.mo-arc path { fill: none; stroke: currentColor; stroke-width: 3; stroke-dasharray: 1 1; opacity: .75; }
+.mo-arc path.acc { stroke: var(--acc); opacity: 1; stroke-width: 5; }
+.mo-zig { overflow: visible; }
+.mo-zig path { fill: none; stroke: var(--acc); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; }
+.mo-zig path.tip { stroke-dasharray: none; }
+.mo-prop.nudge { animation: mo-nudge .9s ease-in-out infinite; }
+.mo-prop.nudge-l { animation: mo-nudge-l .9s ease-in-out infinite; }
+@keyframes mo-nudge { 50% { translate: 10px 0; } }
+@keyframes mo-nudge-l { 50% { translate: -10px 0; } }
+.mo-conf { position: absolute; width: 14px; height: 22px; background: var(--acc); }
+.mo-conf.ink { background: currentColor; width: 10px; height: 10px; }
+.mo-pill { position: relative; height: 30px; box-sizing: border-box; border: 3px solid currentColor; border-radius: 15px; transform-origin: 0 50%; }
+.mo-pill-dot { position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--acc); }
+.mo-pill-dot.run { animation: mo-run 1.4s cubic-bezier(.65,0,.35,1) infinite alternate; }
+@keyframes mo-run { to { transform: translateX(var(--run)); } }
 /* 四隅の計器 */
 .mo-hud { position: absolute; inset: 0; pointer-events: none; font: 600 12.5px/1 var(--mono); letter-spacing: .14em; color: var(--hud-sub); transition: color .4s ease; }
 .mo-hud.off { display: none; }
@@ -447,4 +473,6 @@ body {
 .mo.clear .mo-hud { text-shadow: 0 0 3px rgba(0,0,0,.9); }
 .mo.clear .mo-rail { stroke: #fff; filter: drop-shadow(0 0 2px rgba(0,0,0,.8)); }
 /* 動きを控えめに */
-.mo.calm .mo-q.wobble, .mo.calm .mo-frame.breathe, .mo.calm .mo-star.twinkle, .mo.calm .orb.spin, .mo.calm .mo-blob.jelly, .mo.calm .mo-live { animation: none; }
+.mo.calm .mo-q.wobble, .mo.calm .mo-frame.breathe, .mo.calm .mo-star.twinkle, .mo.calm .orb.spin, .mo.calm .mo-blob.jelly, .mo.calm .mo-live,
+.mo.calm .mo-tri.drift, .mo.calm .mo-prop.nudge, .mo.calm .mo-prop.nudge-l, .mo.calm .mo-pill-dot.run { animation: none; }
+.mo-hud.room .mo-mb { transition: transform .08s linear; }
