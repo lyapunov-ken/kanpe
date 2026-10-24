@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97%20BGMPRcdefhilnotux%E3%82%AF%E3%82%B4%E3%82%B7%E3%83%83%E3%83%88%E3%83%89%E4%B8%B8%E5%A4%AA%E6%98%8E%E6%9C%9D%E6%A5%B5&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="../styles/console.css?v=202610221431">
+<link rel="stylesheet" href="../styles/console.css?v=202610250319">
 </head>
 <body>
 <header class="top">
@@ -125,7 +125,8 @@
               <div class="opt" data-lay="compose"><span class="lbl">Vertical</span><div id="optVert" class="segmented step-seg four" role="radiogroup" aria-label="Amount of vertical text"></div></div>
               <div class="opt" data-lay="compose"><span class="lbl" title="When on, words can stack on top of each other">Overlap</span><div id="optOverlap" class="segmented step-seg two" role="radiogroup" aria-label="Word overlap"></div></div>
               <div class="opt" data-lay="kanpe" id="kanpeOpts"><span class="lbl" title="Words repeated within this time grow bigger and stay longer">Topic memory</span><div id="echoSpans" class="segmented step-seg" role="radiogroup" aria-label="Topic memory"></div></div>
-              <div class="opt" data-lay="ticker"><span class="lbl">Speed</span><div id="optSpeed" class="segmented step-seg" role="radiogroup" aria-label="Scrolling speed"></div></div>
+              <div class="opt" data-lay="motion"><span class="lbl" title="How letters appear and which shapes are used">Taste</span><div id="optTaste" class="segmented step-seg" role="radiogroup" aria-label="Motion taste"></div></div>
+              <div class="opt" data-lay="motion"><span class="lbl" title="Time, speaking pace, voice level and scene number in the corners">Readouts</span><div id="optHud" class="segmented step-seg two" role="radiogroup" aria-label="Corner readouts"></div></div>
             </div>
             <div id="vjOpts" class="vj-opts" hidden>
               <span class="lbl">Style<em class="plus-mark" title="Plus plan feature"><b aria-hidden="true">+</b><span class="vh">(Plus plan feature)</span></em></span>
@@ -138,7 +139,7 @@
         <section id="capCard" class="cap-card" aria-labelledby="capH">
           <label class="cap-head">
             <span class="cap-ic" aria-hidden="true"><i></i></span>
-            <span class="cap-tt"><b id="capH">Caption line</b><small>Your words, at the bottom</small></span>
+            <span class="cap-tt"><b id="capH">Caption line</b><small>Your words, at the bottom</small><small class="cap-mo" title="In Motion, your words themselves are the star, so the caption line is hidden">Not used in Motion</small></span>
             <input id="caption" type="checkbox" role="switch" aria-describedby="capH">
           </label>
           <div id="capOpts" class="opt-grid three">
@@ -276,9 +277,9 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="../src/ui/lang.js?v=202610221431" defer></script>
-<script src="../src/ui/menu.js?v=202610221431" defer></script>
-<script src="../src/ui/mode.js?v=202610221431" defer></script>
-<script type="module" src="../src/console/console.js?v=202610221431"></script>
+<script src="../src/ui/lang.js?v=202610250319" defer></script>
+<script src="../src/ui/menu.js?v=202610250319" defer></script>
+<script src="../src/ui/mode.js?v=202610250319" defer></script>
+<script type="module" src="../src/console/console.js?v=202610250319"></script>
 </body>
 </html>

@@ -1,11 +1,11 @@
 // 使い方ガイド（アプリ内ヘルプ）。右上の「ヘルプ」、? キー、または app.html#help（#help-scenes など）で開く。
 // 文言は L('日本語', 'English') で持つので、英語版のコンソールでもそのまま使える。
-import { L } from '../core/i18n.js?v=202610221431';
+import { L } from '../core/i18n.js?v=202610250319';
 
 // シーン別のおすすめ設定（無料プランの機能だけで組む。アクセントカラーや背景などの好みは触らない）
 export const PRESETS = {
   stream: { label: L('ひとり雑談', 'Solo chat stream'), s: { theme: 'yoru', layout: 'compose', cSize: 'l', cGrow: 1, cJump: 'mid', cVert: 'mid', cOverlap: 'off', cLife: 8, caption: true, capSize: 'm', capTtl: 5, capLines: 1, fusion: false } },
-  game: { label: L('ゲーム実況', 'Gameplay commentary'), s: { theme: 'clear', layout: 'ticker', tSize: 'm', tSpeed: 'fast', caption: false, fusion: false } },
+  game: { label: L('ゲーム実況', 'Gameplay commentary'), s: { theme: 'clear', layout: 'motion', mSize: 's', mTaste: 'pop', mHud: 'off', caption: false, fusion: false } },
   brainstorm: { label: L('ブレスト会議', 'Brainstorming meeting'), s: { theme: 'sumi', layout: 'compose', cSize: 'm', cGrow: 1, cJump: 'high', cVert: 'off', cOverlap: 'off', cLife: 30, caption: false, fusion: true } },
   speech: { label: L('スピーチ・講演', 'Speech or talk'), s: { theme: 'yoru', layout: 'kanpe', kSize: 'l', kGrow: 1, caption: true, capSize: 'l', capTtl: 10, capLines: 2, fusion: false } },
 };
@@ -111,8 +111,8 @@ function html() {
           L('話題になった言葉が画面いっぱいに組まれ、話が続くきっかけになります。', 'Topics fill the screen as you talk, giving you something to riff on.'),
           [L('夜 × 組版・大きめの文字', 'Night × Compose, larger text'), L('縦組みを混ぜる', 'Mix in vertical text'), L('字幕ライン あり（1行）', 'Caption line on (1 line)')])}
         ${scene('game', L('配信', 'STREAMING'), false, L('ゲーム実況', 'Gameplay commentary'),
-          L('OBS に透過で重ね、画面下に細く流してゲーム画面の邪魔をしません。', 'Overlay it in OBS as a slim ticker that stays out of the gameplay.'),
-          [L('透過 × テロップ', 'Clear × Ticker'), L('速く流す', 'Fast scrolling'), L('字幕ライン なし', 'Caption line off')])}
+          L('OBS に透過で重ね、実況のひとことが弾むように現れて、盛り上がりを演出します。', 'Overlay it in OBS so your commentary pops onto the screen and hypes up the play.'),
+          [L('透過 × モーション（小さめの文字）', 'Clear × Motion (smaller text)'), L('テイストはポップ', 'Pop taste'), L('四隅の計器なし', 'Corner readouts off')])}
         ${scene('brainstorm', L('ビジネス', 'BUSINESS'), true, L('ブレスト会議', 'Brainstorming meeting'),
           L('会議室のディスプレイに映して、出た言葉を全員で眺めます。何度も出た言葉ほど大きく残るので、議論の中心が見えてきます。', 'Put it on the meeting-room display so everyone sees the ideas. Words that keep coming up grow bigger, so the heart of the discussion stands out.'),
           [L('墨 × 組版（明るい画面で見やすい）', 'Sumi × Compose (easy to read on a bright screen)'), L('残る時間 30 秒で長く残し、大小の差を大胆に', 'Words stay 30 s, with high size contrast'), L('新語ミックス あり（出た言葉を掛け合わせて新しい言葉を生む）', 'Word mix on (combines words into new ones)'), L('字幕ライン なし', 'Caption line off')])}

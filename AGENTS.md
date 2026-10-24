@@ -35,6 +35,7 @@ src/core/    changelog.js（更新履歴・いまのバージョン）plan.js（
 src/console/ console.js（操作・設定・新語ミックスの発火）recognizer.js speakers.js demo.js
              help.js（ヘルプ・シーン別プリセット）guide.js（初回の3ステップガイド）news.js（更新情報）
 src/display/ display.js（組版描画・新語の誕生演出・依存ゼロ）vj.js（VJ モード：1px / LED / ネオン / ピクセル）
+             motion.js（モーション：文が1字ずつ現れ、図形が動くモーショングラフィックス）
 src/lp/ src/ui/  LP のデモ・アクセス解析（analytics.js）、言語切替、表示モード、スマホのメニュー
 functions/api/   checkout.js license.js license-email.js portal.js stripe-webhook.js dev.js（開発者モード）_lib.js
 tools/           bump-version.sh make-headers.py make-sitemap.py make-en-app.py make-legal.py stripe-setup.mjs test-api.mjs og/
@@ -60,7 +61,15 @@ docs/            調査メモ
 - 機能とプランの対応は `src/core/plan.js` の `REQUIRES`（free / plus / pro）で管理する
 - コミットメッセージは英語で、何を・なぜを短く。1 つのブランチに関係のない変更を混ぜない
 
-## いまの状態（2026-10-22 時点）
+## いまの状態（2026-10-25 時点）
+- 作業中：`feat/motion-mode`（v1.7.0）テロップに代わる新レイアウト「モーション」（`layout: 'motion'`。`src/display/motion.js` の `createMotion(stage)`。VJ と同じく display.js から word / caption / fuse / level を渡す）
+  - 主役は字幕の文（caption）。文を行に区切り（和文は `lineifyJa`：長すぎたら行の中の最後の文節の切れ目で折る。伸びている最後の行だけが組み直されるので前の行は動かない。欧文は `lineifyEn`）、2行ずつの「場面」にする。場面は `plan` に積み、`holdFor` の間見せてから次へ（たまったら短く＝追いつく）
+  - 場面の切り替え：カメラ（`.mo-world` の translate）が右へ（ときどき下へ）動き、線路（`.mo-track` の polyline）の上を点が進む。動いている間だけ SVG の横（縦）ぼかし `#mo-hb`。明暗反転（`.inv`）は `.mo-plate` の clip-path をカメラと同じ速さで動かす。透過・背景画像・カメラでは反転しない
+  - 意味の図形（`RX`）：問い q（大きな「？」）／強調 ex（集中線と揺れ）／逆接 but（仕切り線）／流れ flow（キーワードを矢印でつないだ箱）／要点 focus（四隅の枠）／笑い fun（跳ねる字と星）／声・音 voice（波形）。なければ少し待って飾り（`addFiller`：棒・枠・十字・輪・丸・ぐにゃ線）。打ち消しはキーワードの後ろ数文字の `NEG_JA` などで取り消し線
+  - キーワード（word）は `kws` に覚え、場面の行の中で見つけた場所に飾り（`kwStyle`：色・塗りの箱・枠・下線・数）。3回くり返した語は背景に巨大な輪郭の字（`bigGlyph`）。新語ミックス（fuse）は割り込みの場面（A×B → 新語の箱と集中線）
+  - 同期：コンソールが caption に文ごとの種 `useed` を付ける（`capSeed`。前の文が final なら新しい種）。場面の乱数は `useed` と場面の番号から作るので、プレビューと別窓で同じ組み・同じ図形。あとから開いた窓の追いつき（replay）はしない（VJ と同じ）
+  - 設定：`mSize`（文字の大きさ。`SIZE_KEY.motion`）・`mTaste`（cool / mix / pop。`MOTION_TASTES`）・`mHud`（四隅の計器 on / off。`MOTION_HUD`）。字幕ラインはモーションでは出さない（`#caption` を隠し、コンソールの字幕ラインの枠は `.is-motion` で薄くする）。声の大きさ `lvl` は VJ とモーションのときに送る
+  - テロップ（ticker）は削除。保存値・URL の `layout=ticker` は `motion` に読み替える（console.js の `migrateSettings`、display.js の `fixLayout`）。`tSize` は `mSize` に引き継ぐ
 - 作業中：`feat/compose-overlap`（v1.6.2）組版の「文字の重なり」（`cOverlap`：off / on。`OVERLAP_STEPS`）。縦組みの右に置く（`#optOverlap`、2つ並びは `.step-seg.two`）
   - `display.js` の `place()`：on のときは重なりを点数に入れず（`stack`）、3か所だけ試して中央寄せも弱める（中央に固まらないように）。`ov` を 0 で返すので `clearSpot` でほかの語を退かせない。ロゴと新語（kind: fusion）はいつも避け、新語そのものの置き場所は on でも重ねない
 - 本番：`main` = v1.6.1（2026-10-22 公開。`fix/long-session-freeze`）1時間ほどで固まる・言葉が出なくなる不具合の修正

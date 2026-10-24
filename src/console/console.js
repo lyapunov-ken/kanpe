@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, OVERLAP_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610221431';
-import { EN, L, tr } from '../core/i18n.js?v=202610221431';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610221431';
-import { createBus } from '../core/bus.js?v=202610221431';
-import { connectObs } from '../core/obs.js?v=202610221431';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610221431';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610221431';
-import { simulateSpeech } from './demo.js?v=202610221431';
-import { initHelp } from './help.js?v=202610221431';
-import { initNews } from './news.js?v=202610221431';
-import { createGuide, guideSeen } from './guide.js?v=202610221431';
-import { coinWord } from '../core/coin.js?v=202610221431';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610221431';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, OVERLAP_STEPS, LIFE_STEPS, MOTION_TASTES, MOTION_HUD, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610250319';
+import { EN, L, tr } from '../core/i18n.js?v=202610250319';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610250319';
+import { createBus } from '../core/bus.js?v=202610250319';
+import { connectObs } from '../core/obs.js?v=202610250319';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610250319';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610250319';
+import { simulateSpeech } from './demo.js?v=202610250319';
+import { initHelp } from './help.js?v=202610250319';
+import { initNews } from './news.js?v=202610250319';
+import { createGuide, guideSeen } from './guide.js?v=202610250319';
+import { coinWord } from '../core/coin.js?v=202610250319';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610250319';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -45,6 +45,7 @@ const clock = () => { if (t0 === null) t0 = performance.now(); return (performan
 const recent = []; // { at, m }
 let layoutAt = performance.now(), lastLayout = S.layout; // レイアウトを切り替えた時刻（その窓は画面が作り直される）
 let caps = []; // 最近の字幕（話している途中の文と、少し前の文。あとから開いた窓に渡す）
+let capSeed = 0, capDone = true; // 文ごとの種（モーションの組み方・図形を、プレビューと別窓でそろえる）
 const newSeed = () => (Math.random() * 4294967296) >>> 0;
 function logEvent(m) {
   const t = performance.now();
@@ -57,6 +58,9 @@ function send(m) {
   if (m.t === 'word' || m.t === 'fuse') { m = { ...m, seed: newSeed(), ts: Date.now() }; logEvent(m); } // ts：言った時刻（どの窓も同じ時刻を使う）
   else if (m.t === 'clear') recent.length = 0;
   else if (m.t === 'caption') {
+    if (capDone) capSeed = newSeed(); // 新しい文が始まったら、新しい種
+    capDone = !!m.final;
+    m = { ...m, useed: capSeed };
     const last = caps[caps.length - 1];
     if (last && !last.m.final) caps.pop();
     caps.push({ at: performance.now(), m });
@@ -348,7 +352,7 @@ async function startMeter() {
       diagLevel(v);
       const t = performance.now();
       // VJ モードには声の大きさを送る（イコライザー用・毎秒20回まで）
-      if (S.layout === 'vj' && t - lvlAt > 50 && !paused) { lvlAt = t; send({ t: 'lvl', v: Math.min(1, v * 1.6) }); }
+      if ((S.layout === 'vj' || S.layout === 'motion') && t - lvlAt > 50 && !paused) { lvlAt = t; send({ t: 'lvl', v: Math.min(1, v * 1.6) }); }
       // 話者の自動推定（声の高さ）
       if (S.speakerMode === 'auto' && speakersOn() && (frame++ & 1) === 0) {
         const i = tracker.push(detectPitch(buf, meterCtx.sampleRate), t);
@@ -472,7 +476,7 @@ function pick(container, entries, key, id, def) {
 const NUM_KEYS = new Set(['cGrow', 'kGrow', 'cLife', 'capTtl', 'capLines']);
 // 言葉が消えるまでの秒数（組版は「残る時間」。表示ビューの lifeSec と同じ）
 function lifeSec() { return S.layout === 'compose' && LIFE_STEPS[S.cLife] ? +S.cLife : S.ttl; }
-const LAY_KEYS = new Set(['cSize', 'kSize', 'tSize', 'cGrow', 'kGrow', 'cJump', 'cVert', 'cOverlap', 'cLife', 'tSpeed', 'echo', 'vjStyle', 'vjFont']);
+const LAY_KEYS = new Set(['cSize', 'kSize', 'mSize', 'cGrow', 'kGrow', 'cJump', 'cVert', 'cOverlap', 'cLife', 'mTaste', 'mHud', 'echo', 'vjStyle', 'vjFont']);
 const CAP_KEYS = new Set(['capSize', 'capTtl', 'capLines']);
 // レイアウトの説明。いまのレイアウトだけに効く設定だと分かるように、名前を添える
 const COLON = L('：', ': ');
@@ -498,12 +502,13 @@ function renderLayOpts() {
   $('#vjOpts').hidden = lay !== 'vj';
   for (const o of document.querySelectorAll('#layGrid .opt[data-lay]')) o.hidden = !o.dataset.lay.split(' ').includes(lay);
   document.body.classList.toggle('is-vj', lay === 'vj'); // VJ では効かない設定を隠す
+  document.body.classList.toggle('is-motion', lay === 'motion'); // モーションでは字幕ラインを使わない
   if (lay === 'vj') return;
   segButtons('#optSize', LAYOUT_SIZES, SIZE_KEY[lay]);
   if (lay === 'compose' || lay === 'kanpe') segButtons('#optGrow', GROW_STEPS, lay === 'kanpe' ? 'kGrow' : 'cGrow');
   if (lay === 'compose') { segButtons('#optJump', JUMP_STEPS, 'cJump'); segButtons('#optVert', VERT_STEPS, 'cVert'); segButtons('#optOverlap', OVERLAP_STEPS, 'cOverlap'); segButtons('#optLife', LIFE_STEPS, 'cLife'); }
   if (lay === 'kanpe') segButtons('#echoSpans', ECHO_SPANS, 'echo');
-  if (lay === 'ticker') segButtons('#optSpeed', TICKER_SPEEDS, 'tSpeed');
+  if (lay === 'motion') { segButtons('#optTaste', MOTION_TASTES, 'mTaste'); segButtons('#optHud', MOTION_HUD, 'mHud'); }
 }
 function renderCapOpts() {
   segButtons('#capSizes', CAP_SIZES, 'capSize');
@@ -512,7 +517,8 @@ function renderCapOpts() {
   $('#capCard').classList.toggle('off', !S.caption);
 }
 // 以前の設定を、新しい設定に移す（1回だけ）。
-// 以前の「文字サイズ」は言葉全体の大きさだったので、各レイアウトの文字の大きさへ。「表示時間」はテロップの流れる速さへ。
+// 以前の「文字サイズ」は言葉全体の大きさだったので、各レイアウトの文字の大きさへ。
+// 「テロップ」はモーションに置き換わったので、テロップを選んでいた人はモーションへ（文字の大きさも引き継ぐ）。
 // 言葉の基準の大きさ・表示時間・同時に出す語は、コンソールからは変えない（固定の値に戻す）
 let migrated = false;
 function migrateSettings() {
@@ -521,23 +527,26 @@ function migrateSettings() {
   if (fromOld) {
     const old = +S.baseSize || DEFAULTS.baseSize;
     const sz = old <= 30 ? 's' : old >= 42 ? 'l' : 'm';
-    S.cSize = S.kSize = S.tSize = sz;
+    S.cSize = S.kSize = S.mSize = sz;
     const ttl = +S.ttl || DEFAULTS.ttl;
-    S.tSpeed = ttl <= 6 ? 'fast' : ttl >= 15 ? 'slow' : 'mid';
     S.cLife = ttl <= 5 ? 5 : ttl >= 15 ? 30 : 8;
     S.cVert = S.vertical === false ? 'off' : 'mid';
   }
+  if (S.layout === 'ticker') S.layout = 'motion';
+  if (S.tSize && !('mSize' in saved0)) S.mSize = S.tSize;
+  delete S.tSize; delete S.tSpeed;
   S.baseSize = DEFAULTS.baseSize;
   S.ttl = DEFAULTS.ttl;
   S.maxWords = DEFAULTS.maxWords;
-  for (const k of ['cSize', 'kSize', 'tSize']) if (!LAYOUT_SIZES[S[k]]) S[k] = 'm';
+  for (const k of ['cSize', 'kSize', 'mSize']) if (!LAYOUT_SIZES[S[k]]) S[k] = 'm';
   for (const k of ['cGrow', 'kGrow']) S[k] = GROW_STEPS[S[k]] ? +S[k] : 1;
   if (!JUMP_STEPS[S.cJump]) S.cJump = 'mid';
   if (!VERT_STEPS[S.cVert]) S.cVert = 'mid';
   if (!OVERLAP_STEPS[S.cOverlap]) S.cOverlap = 'off';
   S.cLife = LIFE_STEPS[S.cLife] ? +S.cLife : 8;
   S.vertical = S.cVert !== 'off'; // 古い窓（vertical を見る）とも合わせる
-  if (!TICKER_SPEEDS[S.tSpeed]) S.tSpeed = 'mid';
+  if (!MOTION_TASTES[S.mTaste]) S.mTaste = 'mix';
+  if (!MOTION_HUD[S.mHud]) S.mHud = 'on';
   if (!CAP_SIZES[S.capSize]) S.capSize = 'm';
   S.capTtl = CAP_TTLS[S.capTtl] ? +S.capTtl : 5;
   S.capLines = CAP_LINES[S.capLines] ? +S.capLines : 1;

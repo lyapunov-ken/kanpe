@@ -891,6 +891,11 @@ html[lang="en"] .coin-inline { grid-template-columns: 56px minmax(0, 1fr); }
 .cap-tt b { font-size: 12.5px; color: var(--ink); white-space: nowrap; }
 .cap-tt small { font-size: 11px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cap-card.off #capOpts { opacity: .4; pointer-events: none; }
+/* モーションでは字幕ラインを出さない（話した文そのものが画面の主役）。設定は残すが、薄くして触れないように */
+.cap-tt .cap-mo { display: none; }
+.is-motion .cap-tt small:not(.cap-mo) { display: none; }
+.is-motion .cap-tt .cap-mo { display: inline; }
+.is-motion .cap-card #capOpts, .is-motion .cap-card #caption { opacity: .4; pointer-events: none; }
 #capOpts { transition: opacity .2s; }
 /* 字幕ラインは3列なので、段の文字を少し詰める（「10秒」が収まるように） */
 #capOpts .step-seg button { font-size: 11px; letter-spacing: -.02em; }

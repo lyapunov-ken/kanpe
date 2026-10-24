@@ -2,6 +2,14 @@
 // type：new＝新機能 / improve＝改善 / fix＝修正。文言は短く、利用者向けのやさしい言葉で（日本語と英語）。
 export const CHANGELOG = [
   {
+    v: '1.7.0', date: '2026-10-25',
+    items: [
+      { type: 'new', ja: '新しいレイアウト「モーション」。話した文がその場で1字ずつ現れ、2行ずつの場面になって、線の上を走るカメラで次々と切り替わります。言葉の意味に合わせて図形が動きます（打ち消しには取り消し線、問いかけには大きな「？」、強調には集中線、「まず・次に」には矢印でつながる箱、「でも」には仕切り線など）。キーワードは色や塗りの箱で目立ち、同じ言葉をくり返すと背景に大きな字が浮かびます', en: 'New Motion layout. Your words appear letter by letter as you speak, set two lines at a time, and a camera glides along a line to each new scene. Shapes react to what you say: a strike-through when you say “not”, a big “?” for questions, speed lines for emphasis, arrow-linked boxes for “first… then…”, a divider for “but”, and more. Keywords stand out in color or filled boxes, and words you repeat loom large in the background' },
+      { type: 'new', ja: 'モーションの設定：テイスト（クール・ミックス・ポップ）と、四隅の計器（経過時間・話す速さ・声の大きさ・場面の番号）のあり・なし。ときどき画面が明暗反転して、場面にメリハリがつきます（透過の書体では反転しません）', en: 'Motion settings: Taste (Cool, Mix or Pop) and corner readouts (time, speaking pace, voice level, scene number) on or off. Scenes now and then flip to inverted colors for punch (not with the Clear typeface)' },
+      { type: 'improve', ja: '「テロップ」はモーションに置き換わりました。テロップを選んでいた方は、自動でモーションになります（文字の大きさは引き継ぎます。OBS の URL の layout=ticker もそのまま使えます）。シーン別設定の「ゲーム実況」も、透過 × モーションに変わりました', en: 'Ticker has been replaced by Motion. If you used Ticker, you’ll switch to Motion automatically (your text size carries over, and OBS URLs with layout=ticker still work). The Gameplay preset now uses Clear × Motion' },
+    ],
+  },
+  {
     v: '1.6.2', date: '2026-10-22',
     items: [
       { type: 'new', ja: '組版に「文字の重なり」（オン・オフ）。オンにすると言葉の上に言葉が重なって、にぎやかに組まれます。オフ（初めの値）なら、これまでどおり重ならずに空いている場所へ言葉が増えていきます。ロゴと新語ミックスの新語には重なりません', en: 'New Overlap option for Compose. Turn it on and words stack on top of each other for a busier look; off (the default) keeps words apart, filling the empty space as before. Words never cover your logo or a mixed new word' },

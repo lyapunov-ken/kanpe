@@ -66,7 +66,7 @@ export const ACCENTS = [
 export const LAYOUTS = {
   compose: { label: '組版', labelEn: 'Compose', note: '画面いっぱいに文字を組む', noteEn: 'Sets words across the whole screen' },
   kanpe: { label: 'カンペ', labelEn: 'Cue', note: '下から積み上がる大きな文字', noteEn: 'Big words stacking up from the bottom' },
-  ticker: { label: 'テロップ', labelEn: 'Ticker', note: '下部を横に流れる', noteEn: 'Scrolls along the bottom' },
+  motion: { label: 'モーション', labelEn: 'Motion', note: '話した文が1字ずつ現れ、図形が動くモーショングラフィックス', noteEn: 'Your words appear letter by letter, with shapes in motion' },
   vj: { label: 'VJ', labelEn: 'VJ', note: 'ドットアートで言葉を描く VJ 演出（お手軽プラン以上）', noteEn: 'VJ visuals that draw words in dot art (Plus and up)', pro: true },
 };
 
@@ -216,14 +216,19 @@ export const LIFE_STEPS = {
   8: { label: '8秒', labelEn: '8s', note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
   30: { label: '30秒', labelEn: '30s', note: '長く残す（ブレストや講演で、出た言葉を眺めたいとき）', noteEn: 'Stays long, so ideas linger in brainstorms and talks' },
 };
-// テロップ：流れる速さ。sec は1語が画面を横切る秒数
-export const TICKER_SPEEDS = {
-  slow: { label: 'ゆっくり', labelEn: 'Slow', sec: 12, note: 'ゆっくり流れる（読みやすい）', noteEn: 'Slow and easy to read' },
-  mid: { label: 'ふつう', labelEn: 'Mid', sec: 8, note: 'ふつう（初めの値）', noteEn: 'Normal (default)' },
-  fast: { label: '速い', labelEn: 'Fast', sec: 5, note: '速く流れる（テンポの速い話に）', noteEn: 'Fast, for quick talk' },
+// モーション：テイスト（字の現れかたと図形の選びかた）
+export const MOTION_TASTES = {
+  cool: { label: 'クール', labelEn: 'Cool', note: 'ぼかしから浮かぶ字と、線・枠・棒のすっきりした図形', noteEn: 'Letters sharpen out of a blur, with clean lines, frames and bars' },
+  mix: { label: 'ミックス', labelEn: 'Mix', note: 'クールとポップを場面ごとに混ぜる（初めの値）', noteEn: 'Mixes cool and pop scene by scene (default)' },
+  pop: { label: 'ポップ', labelEn: 'Pop', note: '字が弾んで跳ね、丸や星がぷるぷる動くコミカルな演出', noteEn: 'Bouncy letters with jiggly circles and stars, for a comic feel' },
+};
+// モーション：画面の四隅の計器（経過時間・話す速さ・声の大きさ・場面の番号）
+export const MOTION_HUD = {
+  on: { label: 'あり', labelEn: 'On', note: '四隅に経過時間・話す速さ・声の大きさ・場面の番号を出す（初めの値）', noteEn: 'Shows time, speaking pace, voice level and scene number in the corners (default)' },
+  off: { label: 'なし', labelEn: 'Off', note: '計器を出さず、言葉と図形だけにする', noteEn: 'Hides the readouts: just words and shapes' },
 };
 // レイアウトごとの文字の大きさは、どの設定に入っているか
-export const SIZE_KEY = { compose: 'cSize', kanpe: 'kSize', ticker: 'tSize' };
+export const SIZE_KEY = { compose: 'cSize', kanpe: 'kSize', motion: 'mSize' };
 
 export function nearestStep(steps, v) {
   const keys = Object.keys(steps).map(Number);
@@ -243,20 +248,21 @@ export const DEFAULTS = {
   theme: 'sumi',     // 初めての人は墨（明るい紙と朱）から
   layout: 'compose',
   baseSize: 34,      // 言葉の基準の大きさ（1280×720 換算の px）。コンソールでは変えず、レイアウトごとの倍率（cSize など）で変える。別窓の操作バーの「文字サイズ」はこの窓だけこれを変える
-  ttl: 8,            // 言葉が消えるまでの秒数（固定。組版は cLife、テロップは tSpeed で決める）
+  ttl: 8,            // 言葉が消えるまでの秒数（固定。組版は cLife で決める）
   maxWords: 24,      // 同時に出す言葉の上限（固定。レイアウトごとの上限 MAXW もある）
   vertical: true,    // 縦組みを混ぜる（古い設定。いまは cVert。false なら縦組みなし）
   // レイアウトごとの設定（3段階）
   cSize: 'm',        // 組版：文字の大きさ（LAYOUT_SIZES）
   kSize: 'm',        // カンペ：文字の大きさ
-  tSize: 'm',        // テロップ：文字の大きさ
+  mSize: 'm',        // モーション：文字の大きさ
   cGrow: 1,          // 組版：育つまでのくり返し回数（GROW_STEPS）
   kGrow: 1,          // カンペ：育つまでのくり返し回数
   cJump: 'mid',      // 組版：大小の差（JUMP_STEPS）
   cVert: 'mid',      // 組版：縦組みの量（VERT_STEPS）
   cOverlap: 'off',   // 組版：文字の重なり（OVERLAP_STEPS。on なら言葉の上に言葉を重ねてよい）
   cLife: 8,          // 組版：残る時間（秒。LIFE_STEPS）
-  tSpeed: 'mid',     // テロップ：流れる速さ（TICKER_SPEEDS）
+  mTaste: 'mix',     // モーション：テイスト（MOTION_TASTES）
+  mHud: 'on',        // モーション：四隅の計器（MOTION_HUD）
   // 字幕ライン（画面の最下部に、聞き取った文を出す）
   caption: true,     // 字幕ラインを出す
   capSize: 'm',      // 文字サイズ（CAP_SIZES）
