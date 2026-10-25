@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, OVERLAP_STEPS, LIFE_STEPS, MOTION_TASTES, MOTION_HUD, MOTION_SOUND, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610251056';
-import { EN, L, tr } from '../core/i18n.js?v=202610251056';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610251056';
-import { createBus } from '../core/bus.js?v=202610251056';
-import { connectObs } from '../core/obs.js?v=202610251056';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610251056';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610251056';
-import { simulateSpeech } from './demo.js?v=202610251056';
-import { initHelp } from './help.js?v=202610251056';
-import { initNews } from './news.js?v=202610251056';
-import { createGuide, guideSeen } from './guide.js?v=202610251056';
-import { coinWord } from '../core/coin.js?v=202610251056';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610251056';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, OVERLAP_STEPS, LIFE_STEPS, MOTION_TASTES, MOTION_HUD, MOTION_SOUND, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610251501';
+import { EN, L, tr } from '../core/i18n.js?v=202610251501';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610251501';
+import { createBus } from '../core/bus.js?v=202610251501';
+import { connectObs } from '../core/obs.js?v=202610251501';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610251501';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610251501';
+import { simulateSpeech } from './demo.js?v=202610251501';
+import { initHelp } from './help.js?v=202610251501';
+import { initNews } from './news.js?v=202610251501';
+import { createGuide, guideSeen } from './guide.js?v=202610251501';
+import { coinWord } from '../core/coin.js?v=202610251501';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610251501';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -438,7 +438,7 @@ $('#btnDemo').addEventListener('click', async () => {
   setStatus('demo', L('デモ再生中', 'Demo playing'));
   // 話者の色分けがオンなら、デモでは話者を交互に切り替える
   const demoFinal = (id, t) => { onFinal(id, t); if (speakersOn()) setSpeaker((curSp + 1) % S.speakerCount); };
-  await simulateSpeech({ lang: S.lang, onInterim, onFinal: demoFinal, shouldStop: () => !demoRunning, loop: true });
+  await simulateSpeech({ lang: S.lang, onInterim, onFinal: demoFinal, shouldStop: () => !demoRunning, loop: true, pace: () => (S.layout === 'motion' ? 2.2 : 1) });
   stopDemo();
   setStatus('', L('待機中', 'Idle'));
 });
@@ -1183,18 +1183,32 @@ function renderCoins() {
     const li = document.createElement('li');
     const b = document.createElement('button');
     b.type = 'button';
-    b.title = L(`${c.a} × ${c.b}（押すとコピー）`, `${c.a} × ${c.b} (click to copy)`);
+    b.className = 'coin-show';
+    b.title = L(`${c.a} × ${c.b}（押すと、もう一度画面に出します）`, `${c.a} × ${c.b} (click to show it again)`);
     b.innerHTML = '<b></b><small></small>';
     b.firstChild.textContent = c.text;
     b.lastChild.textContent = `${c.a}×${c.b}`;
-    b.addEventListener('click', async () => {
+    b.addEventListener('click', () => reshowCoin(c));
+    const cp = document.createElement('button'); // コピーは小さなボタンで
+    cp.type = 'button';
+    cp.className = 'coin-copy';
+    cp.textContent = '⧉';
+    cp.title = L(`「${c.text}」をコピー`, `Copy “${c.text}”`);
+    cp.setAttribute('aria-label', cp.title);
+    cp.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(c.text); toast(L(`「${c.text}」をコピーしました`, `Copied “${c.text}”`)); } catch { /* noop */ }
     });
-    li.appendChild(b);
+    li.append(b, cp);
     return li;
   }));
 }
 $('#btnFuse').addEventListener('click', () => fuse(true));
+// 「生まれた新語」を押したとき：同じ新語を、もう一度プレビュー（と別窓・OBS）に出す。見た目（出かた・色）はいまの設定で選び直す
+function reshowCoin(c) {
+  if (paused) { toast(L('表示を一時停止中です', 'The display is paused')); return; }
+  send({ t: 'fuse', text: c.text, a: c.a, b: c.b, replay: true, ...fusionLook() });
+  toast(L(`「${c.text}」をもう一度出しました`, `Showing “${c.text}” again`), 2200);
+}
 // 新語の色：標準・各色・虹・ランダム
 function renderFzColors() {
   const box = $('#fzColors');

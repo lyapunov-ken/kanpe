@@ -12,16 +12,16 @@
 // 依存ゼロ。動かすのは transform / opacity だけ（ブラウザが絵を描き直さずに動かせる）。消えた要素はすぐ外す。
 // 重くなる演出（画面全体のぼかし・字ごとのぼかし・clip-path や text-shadow のアニメ・SVG の中の要素の回転）は使わない。
 // 描画が重い端末では自動で軽い演出だけにする（lite）。
-import { charScript } from '../core/extract.js?v=202610251056';
-import { tuneColor, parseColor, contrast } from '../core/color.js?v=202610251056';
-import { createDust } from './dust.js?v=202610251056';
+import { charScript } from '../core/extract.js?v=202610251501';
+import { tuneColor, parseColor, contrast } from '../core/color.js?v=202610251501';
+import { createDust } from './dust.js?v=202610251501';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const REF_W = 1280, REF_H = 720;
 const EXPO = 'cubic-bezier(.16,1,.3,1)';
 const SWING = 'cubic-bezier(.7,0,.18,1)';      // カメラ：ため → 一気に → ぴたりと止まる
 const BACK = 'cubic-bezier(.34,1.56,.64,1)';   // 少し行き過ぎて戻る（コミカルな弾み）
-const PAN_MS = 620;
+const PAN_MS = 720;
 
 // ---------------------------------------------------------------- 小さな道具
 function seeded(seed) {
@@ -54,54 +54,112 @@ function svgEl(tag, attrs = {}) { const e = document.createElementNS(SVGNS, tag)
 const isCJK = (t) => /[぀-ヿ㐀-鿿豈-﫿]/.test(t);
 const after = (ms, fn) => setTimeout(fn, ms);
 
-// ---------------------------------------------------------------- 行に区切る（伸びていく途中の文でも、前の区切りが動かないように左から決める）
-// 和文：ひらがなの後ろに漢字・カタカナ・英数字が来るところ（文節の切れ目らしいところ）で切る。読点・句点も切れ目
-// 長すぎる行は、行の中でいちばん後ろの文節の切れ目で折り返す（伸びている最後の行だけが組み直されるので、前の行は動かない）
-const SMALL = /[ーっッゃゅょャュョぁぃぅぇぉァィゥェォ」』）)!?！？]/;
-function cutAt(a, min) {
-  for (let b = a.length - 1; b >= min; b--) {
-    if (a[b - 1] === ' ' || (charScript(a[b - 1]) === 'h' && charScript(a[b]) !== 'h' && a[b] !== ' ' && !SMALL.test(a[b]))) return b;
-  }
-  for (let b = a.length - 1; b >= min; b--) {
-    if (charScript(a[b - 1]) !== charScript(a[b]) && charScript(a[b]) !== 'h' && !SMALL.test(a[b])) return b;
-  }
-  return -1; // 切れ目がない（長いカタカナ語など）
-}
-function lineifyJa(text, min, max) {
-  const ch = [...text];
-  const lines = [];
-  let cur = [];
-  const flush = () => { const t = cur.join('').trim(); if (t) lines.push(t); cur = []; };
-  for (let i = 0; i < ch.length; i++) {
-    const c = ch[i], d = ch[i + 1];
-    if (/[、。，．,\u3000]/.test(c)) { flush(); continue; }
-    cur.push(c);
-    if (/[!?！？]/.test(c) && d !== undefined && !/[!?！？]/.test(d)) { flush(); continue; }
-    if (cur.length > max) {
-      let b = cutAt(cur, 3);
-      if (b < 0) { if (cur.length <= max * 1.6) continue; b = cur.length - 1; } // 1語が長いときは少しはみ出させて（あとで縮めて収める）
-      const rest = cur.slice(b);
-      cur = cur.slice(0, b);
-      flush();
-      cur = rest;
+// ---------------------------------------------------------------- 行に区切る
+// 和文は「文節」（言葉＋うしろに付く助詞・送りがな・助動詞）を単位にして、文節の途中では決して切らない。
+// 文節は、ブラウザの単語の区切り（Intl.Segmenter）を、かなだけの付属語を前につなげてまとめる。
+// - 読点・句点・！？のあとで改行する
+// - 行に入りきらないときは、その前の文節の切れ目で改行（1語が長いときだけ少しはみ出し、あとで縮めて収める）
+// - 接続詞（でも・だから・そして…）は行末に取り残さず、次の行の頭へ送る
+// - 話している途中の最後の文節は、まだ伸びるかもしれないので短めに見積もらない（前の行が行ったり来たりしにくい）
+// - 話し終えたら、最後の行が短すぎるとき（3字以下）は前の行に戻す
+const SEG = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter('ja', { granularity: 'word' }) : null;
+const SMALL = /^[ーっッゃゅょャュョぁぃぅぇぉァィゥェォ」』）)］】〉》,.!?！？…・]/;
+// かなで書くことが多い「自立した言葉」（ここから新しい文節が始まる）。これ以外のかなだけの語は前の文節に付ける
+const KANA_HEAD = new Set(('でも だから そして それで それから つまり ただ ただし なので しかし けれど けれども ところで ちなみに さらに また まず あと じゃあ では それでは ' +
+  'もし たとえば やっぱり やはり たぶん きっと もう まだ すぐ ずっと もっと とても すごく ちょっと かなり ほんとに ほとんど いつも なぜ なんで どうして どう どこ だれ いつ ' +
+  'この その あの どの こんな そんな あんな どんな ここ そこ あそこ これ それ あれ どれ みんな みなさん わたし ぼく おれ あなた いろいろ ありがとう おはよう こんにちは こんばんは ' +
+  'はい いいえ うん ええ ああ えっと まあ よし さて きょう あした きのう ひとつ ふたつ ひとり ふたり いっしょ ぜひ ぜんぶ').split(' '));
+const CONJ = new Set('でも だから そして それで それから つまり ただ ただし なので しかし けれど けれども ところで ちなみに さらに また まず あと じゃあ では それでは もし たとえば'.split(' '));
+const ENDPUNCT = /[、。，．,!?！？]$/;
+const isKana = (t) => /^[ぁ-ゟー]+$/.test(t);
+// 助詞で終わる文節のあとに、かなの言葉（やめてしまう・ゆるっと・おすすめ）が来たら、そこから新しい文節。助動詞などは前に付ける
+const PART_END = /[でをにがはもとへの]$/;
+const AUX_HEAD = /^(?:ます|です|でし|ない|なか|たい|たかっ|ので|から|けど|けれ|よう|そう|みたい|られ|させ|れる|れた|って|てる|ている|だろ|ござ|くだ|じゃ|ね|よ|な|か|し$)/;
+const kanaWordAfterParticle = (prev, g) => PART_END.test(prev) && [...prev].length >= 2 && !KANA_HEAD.has(prev) && [...g].length >= 2 && !AUX_HEAD.test(g);
+// 文節に分ける：[{ t: 文節の文字, head: 先頭の語, brk: うしろで必ず改行するか }]
+function bunsetsu(text) {
+  const out = [];
+  const push = (t, head) => out.push({ t, head, brk: false });
+  if (!SEG) { // Intl.Segmenter のない古いブラウザ：文字種の変わり目で大まかに
+    let cur = '';
+    for (const ch of text) {
+      const prev = cur.slice(-1);
+      if (cur && charScript(prev) === 'h' && charScript(ch) !== 'h' && !SMALL.test(ch) && !/\s/.test(ch)) { push(cur, cur); cur = ''; }
+      cur += ch;
+    }
+    if (cur) push(cur, cur);
+  } else {
+    let prevSeg = '';
+    for (const { segment: g } of SEG.segment(text)) {
+      const last = out[out.length - 1];
+      const attach = last && (
+        /^\s+$/.test(g) || /^[、。，．,!?！？…」』）)\]】〉》ー]+$/.test(g) || SMALL.test(g) || // 空白・約物・小さい字
+        (isKana(g) && !KANA_HEAD.has(g) && !ENDPUNCT.test(last.t) && !kanaWordAfterParticle(last.t, g)) ||                        // 付属語（助詞・送りがな・助動詞）
+        (/^\d/.test(prevSeg) && /^[一-鿿]{1,2}$/.test(g)) ||                            // 数字のあとの単位（3000人・2倍）
+        (/[一-鿿゠-ヿA-Za-z0-9]$/.test(last.t) && /^[一-鿿゠-ヿ]/.test(g)) ||  // 漢字・カタカナが続く複合語（視聴者・新規顧客・パン屋）
+        (/[A-Za-z0-9] $/.test(last.t) && /^[A-Za-z0-9]/.test(g)) ||                                // 空白でつながる欧文（Web Speech API）
+        (/^[一-鿿゠-ヿA-Za-z0-9]/.test(g) && /[・＆&\-]$/.test(last.t)));       // 中黒などでつながる語
+      if (attach) last.t += g;
+      else push(g, g);
+      prevSeg = g;
     }
   }
+  for (const b of out) b.brk = ENDPUNCT.test(b.t.trim());
+  return out;
+}
+function lineifyJa(text, min, max, final = false) {
+  const bs = bunsetsu(text);
+  const lines = [];
+  let cur = '', curHeads = [];
+  const len = (t) => [...t.trim()].length;
+  const flush = () => { const t = cur.replace(/[、，,。．]$/, '').trim(); if (t) lines.push(t); cur = ''; curHeads = []; };
+  bs.forEach((b, i) => {
+    const lastOne = i === bs.length - 1;
+    const bl = !final && lastOne ? Math.max(len(b.t), Math.ceil(max * 0.45)) : len(b.t); // 伸びている途中の最後の文節は長めに見積もる
+    if (cur && len(cur) + bl > max && !(len(cur) < min && len(cur) + bl <= max + 2)) { // 短すぎる行だけは、2字まではみ出してよい
+      // 接続詞を行末に取り残さない：直前の文節が接続詞なら、それごと次の行へ
+      const lastHead = curHeads[curHeads.length - 1];
+      if (curHeads.length > 1 && CONJ.has(lastHead && lastHead.head)) {
+        const moved = lastHead.t;
+        cur = cur.slice(0, cur.length - moved.length);
+        flush();
+        cur = moved; curHeads = [lastHead];
+      } else flush();
+    }
+    cur += b.t;
+    curHeads.push(b);
+    if (b.brk) flush();
+  });
   flush();
+  // 話し終えたら：最後の行が短すぎれば前の行へ戻す（前の行が句読点で終わっていないときだけ）
+  if (final && lines.length >= 2) {
+    const a = lines[lines.length - 2], z = lines[lines.length - 1];
+    if (len(z) <= 3 && !ENDPUNCT.test(a) && len(a) + len(z) <= max + 3) lines.splice(-2, 2, a + z);
+  }
   return lines;
 }
-// 欧文：単語で切る。まだ話している途中の最後の単語では切らない（区切りが行き来しないように）
-function lineifyEn(text, max) {
+// 欧文：単語で切る。冠詞・前置詞・接続詞などの短い語は行末に残さず、次の行へ送る
+const EN_GLUE = new Set('a an the to of in on at for with by from and or but so as if my your our their his her its this that these those is are was were be not no very'.split(' '));
+function lineifyEn(text, max, final = false) {
   const words = text.trim().split(/\s+/).filter(Boolean);
   const lines = [];
-  let cur = '';
+  let cur = [];
+  const L = () => cur.join(' ').length;
   words.forEach((w, i) => {
     const last = i === words.length - 1;
-    if (cur && !last && (cur.length + 1 + w.length > max)) { lines.push(cur); cur = w; }
-    else if (cur && last && cur.length >= max) { lines.push(cur); cur = w; }
-    else cur = cur ? cur + ' ' + w : w;
-    if (!last && /[.,!?;:]$/.test(w) && cur.length >= max * 0.5) { lines.push(cur); cur = ''; }
+    const wl = !final && last ? Math.max(w.length, 6) : w.length;
+    if (cur.length && L() + 1 + wl > max) {
+      // 行末の短い語（the / to / and …）は次の行へ連れていく
+      const carry = [];
+      while (cur.length > 2 && EN_GLUE.has(cur[cur.length - 1].toLowerCase().replace(/[^a-z]/g, ''))) carry.unshift(cur.pop()); // 2語は残す
+      lines.push(cur.join(' '));
+      cur = carry;
+    }
+    cur.push(w);
+    if (!last && /[.,!?;:]$/.test(w) && L() >= max * 0.45) { lines.push(cur.join(' ')); cur = []; }
   });
-  if (cur) lines.push(cur);
+  if (cur.length) lines.push(cur.join(' '));
+  if (final && lines.length >= 2 && lines[lines.length - 1].length <= 4 && lines[lines.length - 2].length + 5 <= max + 4) lines.splice(-2, 2, lines[lines.length - 2] + ' ' + lines[lines.length - 1]);
   return lines;
 }
 
@@ -300,9 +358,9 @@ export function createMotion(stage) {
     // 乱数は軽量かどうかに関係なく同じ回数だけ引く（プレビューと別窓で、片方だけ軽量になっても組み方がずれないように）
     const st = pickW(rand, STYLE_W[cfg.taste] || STYLE_W.mix), tr = pickW(rand, TRANS_W[cfg.taste] || TRANS_W.mix);
     s.style = lite && HEAVY_STYLE.has(st) ? LITE_STYLE[st] : st;
-    s.tr = !prev ? 'none' : entry.fz ? 'zoom' : lite && HEAVY_TRANS.has(tr) ? 'pan' : tr;
+    s.tr = !prev ? 'none' : entry.fz ? (cfg.calm ? 'zoom' : 'fx') : lite && HEAVY_TRANS.has(tr) ? 'pan' : tr;
     // 場所：横へ＝右隣、下へ＝真下、帯でワイプ＝右隣（帯に隠れたところで飛ぶ）、ほか（粒子・ズーム・落ちる）＝同じ場所に重ねて入れ替える
-    const same = ['dust', 'zoom', 'fall'].includes(s.tr);
+    const same = ['dust', 'zoom', 'fall', 'fx'].includes(s.tr);
     s.x = !prev ? camX : same || s.tr === 'drop' ? prev.x : prev.x + VW;
     s.y = !prev ? camY : s.tr === 'drop' ? prev.y + VH : prev.y;
     s.vertical = s.tr === 'drop';
@@ -994,7 +1052,7 @@ export function createMotion(stage) {
 
   // ---------------------------------------------------------------- 場面の切り替え
   // 場面の切り替えにかかる時間
-  const TR_MS = { none: 0, fade: 320, pan: PAN_MS, drop: PAN_MS, dust: 560, zoom: 640, fall: 600, wipe: 680 };
+  const TR_MS = { none: 0, fade: 320, pan: PAN_MS, drop: PAN_MS, dust: 560, zoom: 640, fall: 600, wipe: 680, fx: 320 };
   function show(i) {
     const entry = plan[i];
     if (!entry) return;
@@ -1013,6 +1071,13 @@ export function createMotion(stage) {
     // 新しい字が出はじめる時刻（s.enterAt）と、カメラが止まる時刻（s.settleAt。粒子が集まる出かたはこれを待つ）
     s.enterAt = t0 + (moving || tr === 'none' || tr === 'fade' ? 0 : tr === 'wipe' ? D * 0.5 : D * 0.5);
     s.settleAt = t0 + (moving ? D : tr === 'wipe' ? D * 0.5 : D * 0.45);
+    // 新語の特別な演出：数秒の演出が終わってから、新語の場面（A×B と新語の箱）が現れる
+    if (tr === 'fx') {
+      entry.fxDur = fzFx(s, entry.fz);
+      s.enterAt = s.settleAt = t0 + entry.fxDur;
+      s.el.style.opacity = '0';
+      after(entry.fxDur - 120, () => { if (s.el.isConnected) { s.el.style.opacity = ''; s.el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260 }); } });
+    }
     const fresh = syncLines(s);
     layout(s, false);
     markKeywords(s);
@@ -1033,7 +1098,7 @@ export function createMotion(stage) {
     }
     // 前の場面から残っている場面（2つ以上前）は外す
     for (const e of [...world.querySelectorAll('.mo-scene')]) if (e !== s.el && (!prev || e !== prev.el)) e.remove();
-    if (entry.fz) fzStage(s, entry.fz);
+    if (entry.fz) fzStage(s, entry.fz, tr === 'fx' ? entry.fxDur : 0);
     else evaluate(s, entry.u.final);
     setText(H.sc, `SC.${pad2(s.n)}`);
   }
@@ -1055,6 +1120,9 @@ export function createMotion(stage) {
     } else if (tr === 'zoom') { // 押し込むように大きく、ぼけて抜ける。新しい場面は奥から
       old.el.animate([{ transform: T, opacity: 1 }, { transform: `${T} scale(1.6)`, opacity: 0 }], { duration: D, easing: 'cubic-bezier(.6,0,.9,.5)', fill: 'forwards' });
       s.el.animate([{ transform: `translate(${s.x}px, ${s.y}px) scale(.72)`, opacity: 0 }, { transform: `translate(${s.x}px, ${s.y}px)`, opacity: 1 }], { duration: D, delay: D * 0.3, easing: EXPO, fill: 'backwards' });
+    } else if (tr === 'fx') { // 新語の演出の前に、いまの場面はすっと消える（粒子の爆発のときは粒になって散る）
+      if (s.fx === 'burst' && !lite) { dust.disperse(parts, { spread: 1.4, life: 900, stagger: 3 }); for (const e of [old.propsEl, old.label, old.num]) fadeOut(e, 200); }
+      else old.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: D, fill: 'forwards' });
     } else if (tr === 'wipe') { // 帯が横切り、隠れたところで場面が替わる
       wipe.animate([{ transform: 'translateX(-102%)', easing: 'cubic-bezier(.7,0,.9,.6)' }, { transform: 'translateX(0)', offset: 0.5, easing: 'cubic-bezier(.1,.4,.3,1)' }, { transform: 'translateX(102%)' }], { duration: D });
     }
@@ -1079,8 +1147,8 @@ export function createMotion(stage) {
   }
   // 見せる長さ：たまっているほど短く（話すのが速いときに追いつく）
   function holdFor(entry, backlog) {
-    if (entry && entry.fz) return 3400;
-    return backlog >= 4 ? 420 : backlog === 3 ? 680 : backlog === 2 ? 950 : 1300;
+    if (entry && entry.fz) return (entry.fxDur || 0) + 3200;
+    return backlog >= 4 ? 600 : backlog === 3 ? 1000 : backlog === 2 ? 1600 : 2500; // 1場面は少なくとも2.5秒見せる（たまってきたら短く）
   }
   function pump() {
     clearTimeout(pumpTimer);
@@ -1115,7 +1183,7 @@ export function createMotion(stage) {
     utt.text = text;
     utt.en = en;
     utt.final = !!final;
-    utt.lines = en ? lineifyEn(text, Math.round(lineMax() * 1.7)) : lineifyJa(text, Math.max(4, lineMax() - 6), lineMax());
+    utt.lines = en ? lineifyEn(text, Math.round(lineMax() * 1.7), !!final) : lineifyJa(text, Math.max(4, lineMax() - 6), lineMax(), !!final);
     // 話す速さ（字数の伸び）と、声の大きさがないときの見せかけの揺れ
     const grow = Math.max(0, [...text].length - prevLen);
     if (grow) { paceLog.push({ t, n: en ? Math.max(1, Math.round(grow / 5)) : grow }); if (t - levelAt > 400) level = Math.max(level, 0.35 + Math.random() * 0.5); }
@@ -1163,7 +1231,7 @@ export function createMotion(stage) {
     shownAt = -1e9;
     pump();
   }
-  function fzStage(s, m) {
+  function fzStage(s, m, d0 = 0) {
     s.label.textContent = `${pad2(s.n)} — NEW WORD`;
     const ln = s.lines[1];
     if (!ln) return;
@@ -1174,11 +1242,149 @@ export function createMotion(stage) {
     ln.el.insertBefore(d.el, ln.el.firstChild);
     for (const c of ln.chars) c.classList.add('kw', 'on-fill');
     s.decos.set('fz', d);
-    if (!cfg.calm) d.el.animate([{ transform: 'scale(0,.1)' }, { transform: 'scale(1.1,1.2)', offset: 0.6 }, { transform: 'none' }], { duration: 560, delay: 380, easing: 'ease-out', fill: 'backwards' });
+    if (!cfg.calm) d.el.animate([{ transform: 'scale(0,.1)' }, { transform: 'scale(1.1,1.2)', offset: 0.6 }, { transform: 'none' }], { duration: 560, delay: d0 + 380, easing: 'ease-out', fill: 'backwards' });
     placeDecos(s);
     s.prop = 'ex';
-    after(420, () => { if (s.el.isConnected) addProp(s, 'ex'); });
-    bigGlyph(m.text);
+    after(d0 + 420, () => { if (s.el.isConnected) addProp(s, 'ex'); });
+    after(d0, () => { if (sc === s) bigGlyph(m.text); });
+  }
+
+  // ---------------------------------------------------------------- 新語の特別な演出（数秒）
+  // コンソールの「新語の出かた」から選ぶ：衝突・集束・花火 → 粒子の爆発／墨 → 波紋／デコード・スキャン → グリッチ／シャッター → タイトル
+  //  burst  ：1px の点が集まって新語になり、閃光とともに点が爆発して飛び散る
+  //  ripple ：水滴が落ちて波紋が広がり、波に乗って1字ずつ浮かぶ
+  //  glitch ：画面が乱れ、横に裂けた字がずれながら、ちらついて決まる
+  //  title  ：暗転した画面に1字ずつ大きく打ち出され、最後に新語がそろう（タイプライターのタイトルのように）
+  // 乱数は新語ごとの種から作るので、プレビューと別窓で同じ演出になる。戻り値は演出の長さ（ミリ秒）
+  const FZ_FX = { collide: 'burst', converge: 'burst', firework: 'burst', ink: 'ripple', decode: 'glitch', scan: 'glitch', shutter: 'title' };
+  const fxl = div('mo-fx'); // 演出の層（計器の下、場面の上）
+  view.insertBefore(fxl, hud);
+  function fzFx(s, m) {
+    const rand = s.rand;
+    const kind = FZ_FX[m.motion] || ['burst', 'ripple', 'glitch', 'title'][Math.floor(rand() * 4)];
+    s.fx = kind;
+    const sp = clamp(+m.k || 1, 0.6, 1.6);
+    const text = String(m.text || '');
+    const chars = [...text];
+    const from = [m.a, m.b].filter(Boolean).join(' × ');
+    const color = typeof m.color === 'string' && /^#[0-9a-f]{6}$/i.test(m.color) ? m.color : cfg.accent2;
+    const darkBg = cfg.transparent ? '#000000' : kind === 'title' ? '#0a0a0a' : s.inv ? cfg.ink : cfg.bg;
+    const col = tuneColor(color, darkBg, 3);
+    const fs = Math.min(VH * 0.34, (VW * 0.8) / Math.max(2, chars.length));
+    const cx = VW / 2, cy = VH / 2;
+    const box = div('mo-fx-box ' + kind);
+    box.style.setProperty('--fxc', col);
+    fxl.appendChild(box);
+    const word = () => { const w = div('mo-fx-word', text); w.style.fontSize = fs + 'px'; return w; };
+    const center = (e) => { e.style.left = cx + 'px'; e.style.top = cy + 'px'; return e; };
+    const local = (x, y) => { const q = dust.toLocal(view.getBoundingClientRect()); return { x: q.x + x * k, y: q.y + y * k }; };
+    let dur;
+    if (kind === 'title') {
+      // 暗転 → 1字ずつ大きく打ち出す（切りかえはすっぱりと、間に一瞬の黒） → 元の2語と新語がそろう
+      box.classList.toggle('clear', !!cfg.transparent);
+      const step = clamp(2400 / Math.max(1, chars.length), 260, 420) * sp;
+      const one = center(div('mo-fx-one'));
+      one.style.fontSize = Math.min(VH * 0.56, VW * 0.5) + 'px';
+      box.appendChild(one);
+      chars.forEach((c, i) => {
+        after(180 + i * step, () => { one.textContent = c; one.style.transform = `translate(-50%, -50%) rotate(${((rand() - 0.5) * 3).toFixed(1)}deg)`; });
+        after(180 + i * step + step * 0.78, () => { one.textContent = ''; });
+      });
+      const t1 = 180 + chars.length * step;
+      after(t1, () => {
+        one.remove();
+        const w = center(word());
+        const sub = center(div('mo-fx-sub', from));
+        sub.style.top = cy - fs * 0.78 + 'px';
+        box.append(sub, w);
+      });
+      dur = t1 + 1300 * sp;
+      after(dur - 260, () => box.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, fill: 'forwards' }));
+    } else if (kind === 'burst') {
+      // 点が集まって字になり、閃光とともに爆発
+      const w = center(word());
+      w.style.opacity = '0';
+      box.appendChild(w);
+      const gather = 760 * sp;
+      requestAnimationFrame(() => { if (w.isConnected) dust.assemble(w, { radius: 360, dur: gather, dl: 0 }); });
+      after(gather, () => {
+        w.style.opacity = '1';
+        w.animate([{ transform: 'translate(-50%, -50%) scale(1.35)' }, { transform: 'translate(-50%, -50%) scale(.94)', offset: 0.6 }, { transform: 'translate(-50%, -50%) scale(1)' }], { duration: 520, easing: 'ease-out' });
+        const flash = center(div('mo-fx-flash'));
+        box.appendChild(flash);
+        flash.animate([{ opacity: 0.9, transform: 'translate(-50%, -50%) scale(.2)' }, { opacity: 0, transform: 'translate(-50%, -50%) scale(2.4)' }], { duration: 520, easing: 'ease-out', fill: 'forwards' });
+        for (let i = 0; i < 2; i++) {
+          const ring = center(div('mo-fx-ring'));
+          ring.style.width = ring.style.height = fs * 1.6 + 'px';
+          box.appendChild(ring);
+          ring.animate([{ opacity: 1, transform: 'translate(-50%, -50%) scale(.3)' }, { opacity: 0, transform: `translate(-50%, -50%) scale(${4 + i * 2})` }], { duration: 900 + i * 300, delay: i * 120, easing: 'cubic-bezier(.1,.7,.2,1)', fill: 'both' });
+        }
+        const q = local(cx, cy);
+        dust.spark(q.x, q.y, { count: lite ? 140 : 420, color: col, speed: 9 * k + 3, life: 1300 });
+        dust.spark(q.x, q.y, { count: lite ? 40 : 120, color: cfg.ink, speed: 5 * k + 2, life: 1000 });
+        box.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-9px,5px)' }, { transform: 'translate(7px,-6px)' }, { transform: 'translate(-4px,3px)' }, { transform: 'translate(0,0)' }], { duration: 300 });
+      });
+      dur = gather + 1700 * sp;
+      after(dur - 300, () => w.animate([{ opacity: 1, transform: 'translate(-50%, -50%) scale(1)' }, { opacity: 0, transform: 'translate(-50%, -50%) scale(.82)' }], { duration: 300, fill: 'forwards' }));
+    } else if (kind === 'ripple') {
+      // 水滴 → 波紋が広がる → 波に乗って1字ずつ浮かぶ
+      const drop = center(div('mo-fx-drop'));
+      box.appendChild(drop);
+      const fall = 480 * sp;
+      drop.animate([{ transform: `translate(-50%, ${-VH * 0.6}px) scaleY(1.6)`, opacity: 1 }, { transform: 'translate(-50%, -50%) scaleY(1)', opacity: 1, offset: 0.92 }, { transform: 'translate(-50%, -50%) scale(1.8, .3)', opacity: 0 }], { duration: fall, easing: 'cubic-bezier(.5,0,1,.6)', fill: 'forwards' });
+      for (let i = 0; i < 6; i++) {
+        const ring = center(div('mo-fx-ring' + (i % 2 ? ' ink' : '')));
+        ring.style.width = ring.style.height = Math.min(VW, VH) * 0.9 + 'px';
+        box.appendChild(ring);
+        ring.animate([{ opacity: 0.95, transform: 'translate(-50%, -50%) scale(.02)' }, { opacity: 0, transform: 'translate(-50%, -50%) scale(1.5)' }], { duration: 1500 * sp, delay: fall + i * 190 * sp, easing: 'cubic-bezier(.2,.6,.3,1)', fill: 'both' });
+      }
+      const w = center(word());
+      w.textContent = '';
+      box.appendChild(w);
+      const mid = (chars.length - 1) / 2;
+      chars.forEach((c, i) => {
+        const e = span('mo-fx-c', c);
+        w.appendChild(e);
+        e.animate([{ opacity: 0, transform: 'translateY(.35em) scale(.4)' }, { opacity: 1, transform: 'translateY(-.08em) scale(1.08)', offset: 0.6 }, { opacity: 1, transform: 'none' }], { duration: 620, delay: fall + 140 + Math.abs(i - mid) * 150 * sp, easing: 'ease-out', fill: 'backwards' });
+      });
+      if (!lite) after(fall, () => { const q = local(cx, cy); dust.spark(q.x, q.y, { count: 60, color: col, speed: 3, life: 900, gravity: 0.06, up: 1.5 }); });
+      dur = fall + 2200 * sp;
+      after(dur - 300, () => w.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }));
+    } else {
+      // グリッチ：横に裂けた字（4枚）がずれながら決まる。色ずれの写しと走る線、1px のノイズ
+      const w = center(word());
+      box.appendChild(w);
+      const ghosts = [['g1', -1], ['g2', 1]].map(([c, d]) => { const g = center(word()); g.classList.add(c); g.style.setProperty('--d', d); box.insertBefore(g, w); return g; });
+      const slices = [0, 1, 2, 3].map((i) => {
+        const sl = center(word());
+        sl.classList.add('slice');
+        sl.style.clipPath = `inset(${i * 25}% 0 ${100 - (i + 1) * 25}% 0)`; // 切り抜きは固定（動かすのは transform だけ）
+        box.appendChild(sl);
+        return sl;
+      });
+      const T = 1300 * sp;
+      w.animate([{ opacity: 0 }, { opacity: 0, offset: 0.25 }, { opacity: 1, offset: 0.3 }, { opacity: 0.15, offset: 0.4 }, { opacity: 1, offset: 0.48 }, { opacity: 0.4, offset: 0.62 }, { opacity: 1, offset: 0.7 }, { opacity: 1 }], { duration: T, easing: 'steps(1, end)', fill: 'both' });
+      slices.forEach((sl, i) => {
+        const kf = [];
+        for (let j = 0; j <= 8; j++) kf.push({ transform: `translate(calc(-50% + ${j === 8 ? 0 : ((rand() - 0.5) * fs * 0.6).toFixed(0)}px), -50%)`, opacity: j === 8 ? 0 : 1, offset: j / 8 });
+        sl.animate(kf, { duration: T, delay: i * 40, easing: 'steps(1, end)', fill: 'both' });
+      });
+      ghosts.forEach((g) => g.animate([{ opacity: 0.9, transform: `translate(calc(-50% + ${g.style.getPropertyValue('--d') * fs * 0.06}px), -50%)` }, { opacity: 0.9, offset: 0.7 }, { opacity: 0, transform: 'translate(-50%, -50%)' }], { duration: T + 400, easing: 'steps(6, end)', fill: 'both' }));
+      for (let i = 0; i < 3; i++) {
+        const bar = div('mo-fx-bar');
+        bar.style.top = (cy - fs * 0.6 + rand() * fs * 1.2).toFixed(0) + 'px';
+        box.appendChild(bar);
+        bar.animate([{ transform: 'translateX(-100%) scaleY(1)' }, { transform: 'translateX(100%) scaleY(.4)' }], { duration: 420, delay: i * 260 * sp + 100, easing: 'steps(7, end)', fill: 'both' });
+      }
+      if (!lite) for (let i = 0; i < 5; i++) after(i * 180 * sp, () => { const q = local(cx + (rand() - 0.5) * fs * chars.length * 0.9, cy + (rand() - 0.5) * fs * 0.8); dust.spark(q.x, q.y, { count: 22, color: i % 2 ? col : cfg.ink, speed: 2.2, life: 420, gravity: 0 }); });
+      dur = T + 1200 * sp;
+      after(dur - 300, () => box.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }));
+    }
+    // 演出のあいだは線路と駅を隠す（大きな字に重ならないように）
+    track.style.opacity = '0';
+    after(dur - 120, () => { track.style.opacity = ''; track.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 }); });
+    after(dur + 40, () => box.remove());
+    return Math.round(dur);
   }
 
   // ---------------------------------------------------------------- 音に反応
@@ -1234,6 +1440,8 @@ export function createMotion(stage) {
   // 消す：いまの場面は字の形のまま粒になって散る
   function clear() {
     if (sc && !cfg.calm) dustScene(sc);
+    fxl.replaceChildren();
+    track.style.opacity = '';
     plan.length = 0; p = -1; utt = null; kws.clear();
     for (const e of [...world.querySelectorAll('.mo-scene')]) fadeOut(e, 300);
     for (const e of [...track.children]) if (e !== head) e.remove();

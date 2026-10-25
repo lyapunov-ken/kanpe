@@ -76,6 +76,10 @@ docs/            調査メモ
   - 字の出かた10通り（`STYLE_W`：blur（名前は残しているが、ぼかしは使わず拡大から浮かぶ）slide pop drop dust flip scan glitch stretch spin）、場面の切り替え6通り（`TRANS_W`：pan drop dust zoom fall wipe。dust・zoom・fall は同じ場所に重ねて入れ替え、wipe は帯に隠れたところでカメラが飛ぶ）。新しい字は `s.enterAt`（粒子は `s.settleAt`）まで待つ。暗転の板は pan / drop では板ごと滑らせ、wipe は隠れたときに切り替え、ほかは opacity で入れ替える
   - 飾りの図形12通り（`addFiller`：bars frame plus ring matrix tri arc ／ blob squiggle zigzag confetti pill）。30秒黙ると場面は粒になって消える（`dustScene`）。消去（Esc）も粒になる
   - 音に反応 `mSound`（voice / room / off。`MOTION_SOUND`）。room はコンソールの `src/console/audio-tap.js`（AudioWorklet。2048 点 FFT・14 帯域・低音の立ち上がりで拍・拍の間隔の中央値で BPM）→ `{t:'aud', l, b, beat, bpm}`（拍はすぐ、ほかは毎秒16回まで）。表示は `onBeat`（画面が脈打つ・駅が光る・点から火花・キーワードが跳ねる）、計器はスペクトラムと BPM。デモ中は `fakeBeat` が 120 BPM の疑似ビートを送る。ONE_SHOT（スマホ・Mac の Safari）とレベル表示を止めている端末では使えない（`soundHint` で案内）
+  - 改行（2026-10-25 改良）：`bunsetsu()` が `Intl.Segmenter('ja')` の語を文節にまとめる（かなだけの付属語は前に付ける。`KANA_HEAD` のかな語・助詞のあとのかな語 `kanaWordAfterParticle` は新しい文節。数字＋単位、漢字・カタカナの複合語、空白でつながる欧文はつなぐ）。`lineifyJa` は文節の途中で切らず、接続詞（`CONJ`）は次の行へ送り、話し終えたら3字以下の最後の行を前へ戻す。欧文は `EN_GLUE` の短い語を行末に残さない
+  - 新語の特別な演出 `fzFx`（場面の切り替え `tr: 'fx'`。`FZ_FX` で新語の出かたから選ぶ：collide/converge/firework→burst、ink→ripple、decode/scan→glitch、shutter→title）。演出の層 `.mo-fx`、演出のあいだ場面と線路は隠し、終わってから `fzStage(s, m, d0)` で A×B と新語の箱。`holdFor` は演出の長さ＋3.2秒。「動きを控えめに」では演出なし
+  - 速さ：1場面は少なくとも2.5秒（`holdFor`）。デモは `simulateSpeech({ pace })` でモーションのときだけ 2.2 倍ゆっくり（console.js と display.js の単体デモ）
+  - 「生まれた新語」（`renderCoins`）は押すと `reshowCoin` で `{t:'fuse', replay:true}` を送り直す（組版・カンペでは画面に残っていても退かせて生まれ直す）。コピーは横の `.coin-copy`
   - テロップ（ticker）は削除。保存値・URL の `layout=ticker` は `motion` に読み替える（console.js の `migrateSettings`、display.js の `fixLayout`）。`tSize` は `mSize` に引き継ぐ
 - 作業中：`feat/compose-overlap`（v1.6.2）組版の「文字の重なり」（`cOverlap`：off / on。`OVERLAP_STEPS`）。縦組みの右に置く（`#optOverlap`、2つ並びは `.step-seg.two`）
   - `display.js` の `place()`：on のときは重なりを点数に入れず（`stack`）、3か所だけ試して中央寄せも弱める（中央に固まらないように）。`ov` を 0 で返すので `clearSpot` でほかの語を退かせない。ロゴと新語（kind: fusion）はいつも避け、新語そのものの置き場所は on でも重ねない

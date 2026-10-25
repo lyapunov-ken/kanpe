@@ -514,6 +514,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px va
 .coins button b { font-size: 13px; }
 .coins button small { font-size: 10.5px; color: var(--faint); }
 .coins button:hover { border-color: var(--demo); }
+/* 新語を押すともう一度画面に出る。右の小さなボタンでコピー */
+.coins li { display: inline-flex; align-items: center; }
+.coins .coin-show { border-top-right-radius: 0; border-bottom-right-radius: 0; padding-right: 8px; cursor: pointer; }
+.coins .coin-show::before { content: "↻"; font-size: 11px; color: var(--demo); margin-right: -2px; }
+.coins .coin-copy { width: 26px; padding: 0; justify-content: center; border-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; font-size: 12px; color: var(--faint); }
+.coins .coin-copy:hover { color: var(--ink); }
 
 /* ---- はじめての人向けの 3 ステップのガイド（ヘルプの「はじめかた」からも開ける） ---- */
 .hp-guide { align-self: flex-start; margin-top: 12px; }

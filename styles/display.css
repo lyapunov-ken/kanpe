@@ -447,6 +447,29 @@ body {
 .mo-pill-dot { position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--acc); }
 .mo-pill-dot.run { animation: mo-run 1.4s cubic-bezier(.65,0,.35,1) infinite alternate; }
 @keyframes mo-run { to { transform: translateX(var(--run)); } }
+/* 新語の特別な演出（数秒）。動かすのは transform / opacity だけ */
+.mo-fx { position: absolute; inset: 0; pointer-events: none; }
+.mo-fx-box { position: absolute; inset: 0; --fxc: var(--mo-acc2); }
+.mo-fx-box.title { background: #0a0a0a; color: #f4f2ec; }
+.mo-fx-box.title.clear { background: transparent; }
+.mo-fx-word, .mo-fx-one, .mo-fx-sub { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); white-space: nowrap; line-height: 1.1; font-weight: var(--w-strong); }
+.mo-fx-word { color: var(--fxc); letter-spacing: .02em; }
+.mo-fx-box.title .mo-fx-word { color: #f4f2ec; }
+.mo-fx-one { line-height: 1; }
+.mo-fx-sub { font-family: var(--mono), var(--font); font-size: 22px; letter-spacing: .3em; font-weight: 600; opacity: .8; }
+.mo-fx-c { display: inline-block; }
+.mo-fx-flash { position: absolute; width: 60vmin; height: 60vmin; border-radius: 50%; background: radial-gradient(circle, var(--fxc) 0 30%, transparent 70%); }
+.mo-fx-ring { position: absolute; box-sizing: border-box; border-radius: 50%; border: 3px solid var(--fxc); }
+.mo-fx-ring.ink { border-color: currentColor; border-width: 1.5px; opacity: .7; }
+.mo-fx-drop { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: var(--fxc); }
+.mo-fx-word.slice { opacity: 0; }
+.mo-fx-word.g1 { color: var(--fxc); opacity: 0; }
+.mo-fx-word.g2 { color: currentColor; opacity: 0; }
+.mo-fx-bar { position: absolute; left: 0; right: 0; height: 6px; background: var(--fxc); }
+.mo.clear .mo-fx-word, .mo.clear .mo-fx-one, .mo.clear .mo-fx-sub { text-shadow: 0 0 .05em #000, 0 0 .1em #000, 0 .05em .16em rgba(0,0,0,.6); }
+.mo-fx-box { color: var(--ink); }
+.mo.is-inv .mo-fx-box:not(.title) { color: var(--bg); }
+
 /* 四隅の計器 */
 .mo-hud { position: absolute; inset: 0; pointer-events: none; font: 600 12.5px/1 var(--mono); letter-spacing: .14em; color: var(--hud-sub); transition: color .4s ease; }
 .mo-hud.off { display: none; }
