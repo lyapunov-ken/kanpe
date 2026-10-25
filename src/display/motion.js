@@ -12,9 +12,9 @@
 // 依存ゼロ。動かすのは transform / opacity だけ（ブラウザが絵を描き直さずに動かせる）。消えた要素はすぐ外す。
 // 重くなる演出（画面全体のぼかし・字ごとのぼかし・clip-path や text-shadow のアニメ・SVG の中の要素の回転）は使わない。
 // 描画が重い端末では自動で軽い演出だけにする（lite）。
-import { charScript } from '../core/extract.js?v=202610251603';
-import { tuneColor, parseColor, contrast } from '../core/color.js?v=202610251603';
-import { createDust } from './dust.js?v=202610251603';
+import { charScript } from '../core/extract.js?v=202610251717';
+import { tuneColor, parseColor, contrast } from '../core/color.js?v=202610251717';
+import { createDust } from './dust.js?v=202610251717';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const REF_W = 1280, REF_H = 720;
@@ -1507,7 +1507,8 @@ export function createMotion(stage) {
   function loop(t) {
     if (destroyed) return;
     requestAnimationFrame(loop);
-    perf(t);
+    perf(t); // フレームの間隔は requestAnimationFrame の時刻で測る
+    t = performance.now(); // ほかは言葉の届いた時刻（performance.now）と同じ時計で比べる（ずれると計器の時計が一瞬マイナスになる）
     // カメラが動いている間、線の上の点から 1px の尾を引く（毎秒20回まで。軽量のときは引かない）
     if (panning) {
       if (t - panning.t0 >= panning.dur) panning = null;
@@ -1532,7 +1533,7 @@ export function createMotion(stage) {
     if (!cfg.hud) return;
     const show = room ? bands : levelHist; // 周りの音ではスペクトラム（低い音→高い音）、声では声の大きさの移り変わり
     H.bars.forEach((b, i) => { const v = Math.round((0.08 + (show[i] || 0) * 0.92) * 20) / 20; if (b._v !== v) { b._v = v; b.style.transform = `scaleY(${v})`; } });
-    const sec = firstAt ? Math.floor((t - firstAt) / 1000) : 0;
+    const sec = firstAt ? Math.max(0, Math.floor((t - firstAt) / 1000)) : 0;
     setText(H.time, `${pad2(Math.floor(sec / 60) % 100)}:${pad2(sec % 60)}`);
     // 右上：周りの音でテンポが取れていれば BPM、ほかは話す速さ（直近20秒の字数を1分あたりに）
     while (paceLog.length && t - paceLog[0].t > 20000) paceLog.shift();

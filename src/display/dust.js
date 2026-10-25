@@ -166,7 +166,10 @@ export function createDust(host) {
   }
 
   const easeOut = (q) => 1 - Math.pow(1 - q, 3);
-  function step(t) {
+  // 粒の生まれた時刻（born）と同じ時計（performance.now）で進める。requestAnimationFrame の時刻は
+  // ブラウザによっては少しずれるので使わない（ずれると、粒が止まって見えたり一気に消えたりする）
+  function step() {
+    const t = performance.now();
     const dt = lastT ? Math.min(100, t - lastT) : 16;
     lastT = t;
     if (!n) { if (drawn) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); drawn = false; } return; }
