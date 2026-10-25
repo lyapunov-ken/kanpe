@@ -815,6 +815,10 @@ html[lang="en"] .slider { grid-template-columns: 104px minmax(0, 1fr) 72px; }
 .coin-inline { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; column-gap: 8px; }
 html[lang="en"] .coin-inline { grid-template-columns: 56px minmax(0, 1fr); }
 .coin-inline .segmented button { height: 26px; font-size: 12px; }
+/* 新語の「速さ」と「頻度」は横に2つ並べる（1280×800 でスクロールなしに収めるため） */
+.coin-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.coin-pair .coin-opt { gap: 4px; min-width: 0; }
+.coin-pair .segmented button { height: 26px; font-size: 11.5px; padding: 0 2px; letter-spacing: -.02em; white-space: nowrap; }
 #fzMotions button { height: 28px; font-size: 12px; padding: 0 2px; white-space: nowrap; }
 #fzMotionNote { min-height: 1.6em; }
 .fz-colors { flex-wrap: nowrap; justify-content: space-between; }

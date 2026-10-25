@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97%20BGMPRcdefhilnotux%E3%82%AF%E3%82%B4%E3%82%B7%E3%83%83%E3%83%88%E3%83%89%E4%B8%B8%E5%A4%AA%E6%98%8E%E6%9C%9D%E6%A5%B5&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="../styles/console.css?v=202610251501">
+<link rel="stylesheet" href="../styles/console.css?v=202610251603">
 </head>
 <body>
 <header class="top">
@@ -156,15 +156,18 @@
           <h2 id="coinH" class="feat-h coin-h"><span class="coin-ic" aria-hidden="true">✦</span>BRAINSTORM MODE<em class="coin-state">ON</em></h2>
           <div class="coin-card">
             <div class="coin-art" aria-hidden="true"><span class="ca-a">Typography</span><span class="ca-x">×</span><span class="ca-b">Browser</span><span class="ca-eq">→</span><span class="ca-c">Typowser</span></div>
-            <label class="switch coin-switch"><span><b>Word mix</b><small>Combines words on screen into brand-new words (automatically when on)</small></span><input id="fusion" type="checkbox" role="switch"></label>
+            <label class="switch coin-switch"><span><b>Word mix</b><small>Blends on-screen words into new ones</small></span><input id="fusion" type="checkbox" role="switch"></label>
             <div class="coin-row">
               <button id="btnFuse" class="btn" type="button">Mix now <kbd>M</kbd></button>
-              <span class="hint">Makes one new word each press</span>
+              <span class="hint">One new word per press</span>
             </div>
             <div class="coin-opts">
               <div class="coin-opt"><span class="lbl">Entrance</span><div id="fzMotions" class="segmented four" role="radiogroup" aria-label="New-word entrance"></div><p id="fzMotionNote" class="hint"></p></div>
               <div class="coin-opt"><span class="lbl">New-word color</span><div id="fzColors" class="accents fz-colors" role="radiogroup" aria-label="New-word color"></div></div>
-              <div class="coin-opt coin-inline"><span class="lbl">Speed</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="New-word speed"></div></div>
+              <div class="coin-pair">
+                <div class="coin-opt"><span class="lbl">Speed</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="New-word speed"></div></div>
+                <div class="coin-opt"><span class="lbl" title="How often words mix automatically while it’s on">Rate</span><div id="fzFreqs" class="segmented" role="radiogroup" aria-label="Automatic mix rate"></div></div>
+              </div>
             </div>
           </div>
         </section>
@@ -278,9 +281,9 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="../src/ui/lang.js?v=202610251501" defer></script>
-<script src="../src/ui/menu.js?v=202610251501" defer></script>
-<script src="../src/ui/mode.js?v=202610251501" defer></script>
-<script type="module" src="../src/console/console.js?v=202610251501"></script>
+<script src="../src/ui/lang.js?v=202610251603" defer></script>
+<script src="../src/ui/menu.js?v=202610251603" defer></script>
+<script src="../src/ui/mode.js?v=202610251603" defer></script>
+<script type="module" src="../src/console/console.js?v=202610251603"></script>
 </body>
 </html>

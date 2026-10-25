@@ -12,9 +12,9 @@
 // 依存ゼロ。動かすのは transform / opacity だけ（ブラウザが絵を描き直さずに動かせる）。消えた要素はすぐ外す。
 // 重くなる演出（画面全体のぼかし・字ごとのぼかし・clip-path や text-shadow のアニメ・SVG の中の要素の回転）は使わない。
 // 描画が重い端末では自動で軽い演出だけにする（lite）。
-import { charScript } from '../core/extract.js?v=202610251501';
-import { tuneColor, parseColor, contrast } from '../core/color.js?v=202610251501';
-import { createDust } from './dust.js?v=202610251501';
+import { charScript } from '../core/extract.js?v=202610251603';
+import { tuneColor, parseColor, contrast } from '../core/color.js?v=202610251603';
+import { createDust } from './dust.js?v=202610251603';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const REF_W = 1280, REF_H = 720;

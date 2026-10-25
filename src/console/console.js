@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, OVERLAP_STEPS, LIFE_STEPS, MOTION_TASTES, MOTION_HUD, MOTION_SOUND, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610251501';
-import { EN, L, tr } from '../core/i18n.js?v=202610251501';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610251501';
-import { createBus } from '../core/bus.js?v=202610251501';
-import { connectObs } from '../core/obs.js?v=202610251501';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610251501';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610251501';
-import { simulateSpeech } from './demo.js?v=202610251501';
-import { initHelp } from './help.js?v=202610251501';
-import { initNews } from './news.js?v=202610251501';
-import { createGuide, guideSeen } from './guide.js?v=202610251501';
-import { coinWord } from '../core/coin.js?v=202610251501';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610251501';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, OVERLAP_STEPS, LIFE_STEPS, MOTION_TASTES, MOTION_HUD, MOTION_SOUND, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, FUSION_FREQS, FUSION_MOTION_GAP, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610251603';
+import { EN, L, tr } from '../core/i18n.js?v=202610251603';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610251603';
+import { createBus } from '../core/bus.js?v=202610251603';
+import { connectObs } from '../core/obs.js?v=202610251603';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610251603';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610251603';
+import { simulateSpeech } from './demo.js?v=202610251603';
+import { initHelp } from './help.js?v=202610251603';
+import { initNews } from './news.js?v=202610251603';
+import { createGuide, guideSeen } from './guide.js?v=202610251603';
+import { coinWord } from '../core/coin.js?v=202610251603';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610251603';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -516,6 +516,7 @@ function pick(container, entries, key, id, def) {
   if (key === 'theme') renderThemes(); else segButtons(container, entries, key);
   if (LAY_KEYS.has(key)) layNote(entries[id], container); // 選んだ段の説明を、レイアウトの説明の場所に少しだけ出す
   if (key === 'fusionMotion') $('#fzMotionNote').textContent = tr(FUSION_MOTIONS[id], 'note');
+  if (key === 'fusionFreq') { toast(L('自動で混ぜる頻度：', 'Auto mix: ') + tr(FUSION_FREQS[id], 'note'), 3000); wordsSinceFuse = Math.min(wordsSinceFuse, FUSION_FREQS[id].words); }
   if (key === 'fusionMotion' || key === 'fusionSpeed') setTimeout(() => fuse(false), 150); // 選んだ見た目をすぐ見せる（言葉が出ていれば）
   updateTrial();
   pushSettings();
@@ -582,6 +583,7 @@ function migrateSettings() {
     S.cLife = ttl <= 5 ? 5 : ttl >= 15 ? 30 : 8;
     S.cVert = S.vertical === false ? 'off' : 'mid';
   }
+  const fromTicker = 'tSize' in S || 'tSpeed' in S || S.layout === 'ticker'; // テロップがあった版の保存値
   if (S.layout === 'ticker') S.layout = 'motion';
   if (S.tSize && !('mSize' in saved0)) S.mSize = S.tSize;
   delete S.tSize; delete S.tSpeed;
@@ -601,7 +603,7 @@ function migrateSettings() {
   if (!CAP_SIZES[S.capSize]) S.capSize = 'm';
   S.capTtl = CAP_TTLS[S.capTtl] ? +S.capTtl : 5;
   S.capLines = CAP_LINES[S.capLines] ? +S.capLines : 1;
-  if (fromOld) saveSettings(S); // 別窓が読む保存値も新しい形に
+  if (fromOld || fromTicker) saveSettings(S); // 別窓が読む保存値も新しい形に
 }
 
 // ---- 書体テーマ（標準 / プレミアム）と、無料プランの1日お試し ----
@@ -923,7 +925,7 @@ $('#capCard').addEventListener('pointerenter', () => send({ t: 'capPeek' }));
 $('#capCard').addEventListener('focusin', (e) => { if (e.target.matches(':focus-visible')) send({ t: 'capPeek' }); });
 bindCheck('reduceMotion');
 bindCheck('fusion');
-$('#fusion').addEventListener('change', () => { if (S.fusion) { fuseAt = performance.now() - FUSE_GAP + 2500; toast(L('新語ミックスをオンにしました。画面に言葉が2つ以上出ると、ときどき掛け合わさって新しい言葉が生まれます', 'Word mix is on. Once two or more words are on screen, they’ll now and then combine into a new word.')); } });
+$('#fusion').addEventListener('change', () => { if (S.fusion) { fuseAt = performance.now() - fuseRule().gap + 2500; toast(L('新語ミックスをオンにしました。画面に言葉が2つ以上出ると、ときどき掛け合わさって新しい言葉が生まれます', 'Word mix is on. Once two or more words are on screen, they’ll now and then combine into a new word.')); } });
 bindText('registered', () => ex.setDict(S));
 bindText('ng', () => ex.setDict(S));
 
@@ -1136,7 +1138,11 @@ renderSpeakers();
 
 // ------------------------------------------------------------ 新語ミックス（ブレスト）
 // 最近画面に出た言葉を2つ選んで掛け合わせ、新しい言葉を表示ビューへ送る。生まれた言葉は「生まれた新語」に残す。
-const FUSE_GAP = 14000;            // 自動で混ぜる間隔の目安
+// 自動で混ぜる間隔と、そのあいだに出ていてほしい新しい言葉の数（「頻度」の設定で決まる）
+function fuseRule() {
+  const f = FUSION_FREQS[S.fusionFreq] || FUSION_FREQS.mid;
+  return { gap: S.layout === 'motion' ? Math.max(f.gap, FUSION_MOTION_GAP) : f.gap, words: f.words };
+}
 const seenWords = new Map();       // 言葉 → 最後に出た時刻
 const coined = [];                 // 生まれた新語 { text, a, b }
 let fuseAt = 0, wordsSinceFuse = 0, lastHeard = 0;
@@ -1234,14 +1240,17 @@ if (!FUSION_COLORS.some((x) => x.c === (S.fusionColor || ''))) S.fusionColor = '
 S.fusionMotion = { bloom: 'converge', glitch: 'scan', type: 'decode', drop: 'shutter' }[S.fusionMotion] || S.fusionMotion; // 以前の出かたは近いものへ
 if (!FUSION_MOTIONS[S.fusionMotion]) S.fusionMotion = 'collide';
 if (!FUSION_SPEEDS[S.fusionSpeed]) S.fusionSpeed = 'mid';
+if (!FUSION_FREQS[S.fusionFreq]) S.fusionFreq = 'mid';
 renderFzColors();
 segButtons('#fzMotions', FUSION_MOTIONS, 'fusionMotion');
 segButtons('#fzSpeeds', FUSION_SPEEDS, 'fusionSpeed');
+segButtons('#fzFreqs', FUSION_FREQS, 'fusionFreq');
 if (!ECHO_SPANS[S.echo]) S.echo = DEFAULTS.echo;
 $('#fzMotionNote').textContent = tr(FUSION_MOTIONS[S.fusionMotion], 'note');
 setInterval(() => { // 話している間だけ、ときどき自動で混ぜる
   const t = performance.now();
-  if (S.fusion && !paused && t - fuseAt > FUSE_GAP && t - lastHeard < 6000 && wordsSinceFuse >= 2) fuse(false);
+  const r = fuseRule();
+  if (S.fusion && !paused && t - fuseAt > r.gap && t - lastHeard < 6000 && wordsSinceFuse >= r.words) fuse(false);
 }, 1000);
 
 // ------------------------------------------------------------ 認識エンジン（無料＝ブラウザ / おトクプラン＝高精度クラウド）

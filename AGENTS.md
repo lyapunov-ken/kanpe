@@ -63,6 +63,7 @@ docs/            調査メモ
 - コミットメッセージは英語で、何を・なぜを短く。1 つのブランチに関係のない変更を混ぜない
 
 ## いまの状態（2026-10-25 時点）
+- 公開前の確認（2026-10-25）：組版・カンペ・VJ のデモと別窓の同期、テロップからの移行、LP の切替、モーションの 書体7×テイスト3・大きさ・音・控えめ・透過/背景画像・ロゴ・英語・スマホ幅、新語の演出4種と再表示、消去、12分の連続（269場面・新語36回で要素数・メモリ横ばい）、本番の CSP で AudioWorklet が読めること
 - 作業中：`feat/motion-mode`（v1.7.0）テロップに代わる新レイアウト「モーション」（`layout: 'motion'`。`src/display/motion.js` の `createMotion(stage)`。VJ と同じく display.js から word / caption / fuse / level を渡す）
   - 主役は字幕の文（caption）。文を行に区切り（和文は `lineifyJa`：長すぎたら行の中の最後の文節の切れ目で折る。伸びている最後の行だけが組み直されるので前の行は動かない。欧文は `lineifyEn`）、2行ずつの「場面」にする。場面は `plan` に積み、`holdFor` の間見せてから次へ（たまったら短く＝追いつく）
   - 場面の切り替え：カメラ（`.mo-world` の translate）が右へ（ときどき下へ）動き、線路（`.mo-track` の polyline）の上を点が進む。明暗反転（`.inv`）は `.mo-plate` を transform（横・下へ）か opacity で出し入れする（`plateSwap` / `setPlate`）。透過・背景画像・カメラでは反転しない
@@ -79,6 +80,7 @@ docs/            調査メモ
   - 改行（2026-10-25 改良）：`bunsetsu()` が `Intl.Segmenter('ja')` の語を文節にまとめる（かなだけの付属語は前に付ける。`KANA_HEAD` のかな語・助詞のあとのかな語 `kanaWordAfterParticle` は新しい文節。数字＋単位、漢字・カタカナの複合語、空白でつながる欧文はつなぐ）。`lineifyJa` は文節の途中で切らず、接続詞（`CONJ`）は次の行へ送り、話し終えたら3字以下の最後の行を前へ戻す。欧文は `EN_GLUE` の短い語を行末に残さない
   - 新語の特別な演出 `fzFx`（場面の切り替え `tr: 'fx'`。`FZ_FX` で新語の出かたから選ぶ：collide/converge/firework→burst、ink→ripple、decode/scan→glitch、shutter→title）。演出の層 `.mo-fx`、演出のあいだ場面と線路は隠し、終わってから `fzStage(s, m, d0)` で A×B と新語の箱。`holdFor` は演出の長さ＋3.2秒。「動きを控えめに」では演出なし
   - 速さ：1場面は少なくとも2.5秒（`holdFor`）。デモは `simulateSpeech({ pace })` でモーションのときだけ 2.2 倍ゆっくり（console.js と display.js の単体デモ）
+  - 新語ミックスの頻度 `fusionFreq`（rare / mid / often。`FUSION_FREQS` の gap と words。モーションでは `FUSION_MOTION_GAP` 12秒以上）。console.js の `fuseRule()`。機能タブでは「速さ」と横に並べている（`.coin-pair`。1280×800 に収めるため。英語は短い文言）
   - 「生まれた新語」（`renderCoins`）は押すと `reshowCoin` で `{t:'fuse', replay:true}` を送り直す（組版・カンペでは画面に残っていても退かせて生まれ直す）。コピーは横の `.coin-copy`
   - テロップ（ticker）は削除。保存値・URL の `layout=ticker` は `motion` に読み替える（console.js の `migrateSettings`、display.js の `fixLayout`）。`tSize` は `mSize` に引き継ぐ
 - 作業中：`feat/compose-overlap`（v1.6.2）組版の「文字の重なり」（`cOverlap`：off / on。`OVERLAP_STEPS`）。縦組みの右に置く（`#optOverlap`、2つ並びは `.step-seg.two`）

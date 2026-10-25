@@ -1,15 +1,15 @@
 // 表示ビュー：受け取った「表示イベント」を日本語タイポグラフィとして描く。
 // 依存ゼロ。アニメーションは transform / opacity（漢字の滲みだけ filter）を Web Animations API で動かす。
 import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, VJ_FONTS, VJ_DETAILS, VJ_FX, LOGO_SIZES, SIZE_STEPS, nearestStep, loadSettings,
-  CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, MOTION_TASTES, MOTION_SOUND, SIZE_KEY } from '../core/settings.js?v=202610251501';
-import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610251501';
-import { createBus } from '../core/bus.js?v=202610251501';
-import { connectObs, BG_KEEP } from '../core/obs.js?v=202610251501';
-import { runs } from '../core/extract.js?v=202610251501';
-import { EN, L, tr } from '../core/i18n.js?v=202610251501';
-import { createVJ } from './vj.js?v=202610251501';
-import { createMotion } from './motion.js?v=202610251501';
-import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610251501';
+  CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, LIFE_STEPS, MOTION_TASTES, MOTION_SOUND, SIZE_KEY } from '../core/settings.js?v=202610251603';
+import { canUse, trialRemainingMs, addTrialUsage } from '../core/plan.js?v=202610251603';
+import { createBus } from '../core/bus.js?v=202610251603';
+import { connectObs, BG_KEEP } from '../core/obs.js?v=202610251603';
+import { runs } from '../core/extract.js?v=202610251603';
+import { EN, L, tr } from '../core/i18n.js?v=202610251603';
+import { createVJ } from './vj.js?v=202610251603';
+import { createMotion } from './motion.js?v=202610251603';
+import { tuneColor, rainbowColor, isLight } from '../core/color.js?v=202610251603';
 
 const P = new URLSearchParams(location.search);
 // OBS の接続先とパスワードは URL の # 以降（サーバーに送られない部分）で受け取る。古い ?obs= 形式も読める
@@ -1793,7 +1793,7 @@ if (P.get('demo') === '1') {
   const deliver = P.get('sp') === '1'
     ? (m) => { const k = SPK[cur]; onMessage({ ...m, sp: cur, spn: k.n, spc: k.c }); if (m.t === 'caption' && m.final) cur = (cur + 1) % SPK.length; }
     : onMessage;
-  import('../console/demo.js?v=202610251501').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
+  import('../console/demo.js?v=202610251603').then(({ runDemo }) => runDemo({ lang: EN ? 'en-US' : S.lang, deliver, registered: S.registered,
     script: ['meeting', 'speech', 'talk'].includes(P.get('script')) ? P.get('script') : '', pace: () => (S.layout === 'motion' ? 2.2 : 1) }));
 }
 

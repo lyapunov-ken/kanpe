@@ -128,9 +128,18 @@ export const FUSION_MOTIONS = {
 };
 export const FUSION_SPEEDS = {
   slow: { label: 'ゆっくり', labelEn: 'Slow', k: 1.6 },
-  mid: { label: 'ふつう', labelEn: 'Normal', k: 1 },
+  mid: { label: 'ふつう', labelEn: 'Mid', k: 1 },
   fast: { label: '速い', labelEn: 'Fast', k: 0.6 },
 };
+
+// 新語ミックス：自動で混ぜる頻度。gap は前の新語からあける時間、words はそのあいだに新しく出た言葉の数（これだけ出たら混ぜる）
+// モーションでは新語ごとに数秒の演出が入るので、motionGap より短くはしない
+export const FUSION_FREQS = {
+  rare: { label: 'ときどき', labelEn: 'Rare', gap: 30000, words: 4, note: '30秒に1回くらい。話の流れを邪魔しない程度に', noteEn: 'About every 30 s, without interrupting the talk' },
+  mid: { label: 'ふつう', labelEn: 'Mid', gap: 14000, words: 2, note: '15秒に1回くらい（初めの値）', noteEn: 'About every 15 s (default)' },
+  often: { label: '多め', labelEn: 'Often', gap: 8000, words: 1, note: '8秒に1回くらい。アイデアをどんどん出したいときに（モーションでは12秒以上あけます）', noteEn: 'About every 8 s, for rapid-fire ideas (at least 12 s apart in Motion)' },
+};
+export const FUSION_MOTION_GAP = 12000;
 
 // カンペ：同じ話の記憶（この時間内のくり返しを数える）
 export const ECHO_SPANS = {
@@ -285,6 +294,7 @@ export const DEFAULTS = {
   fusionColor: '',   // 新語の色（空＝標準。rainbow / random も選べる）
   fusionMotion: 'collide', // 新語の出かた（collide / decode / shutter / converge / scan / random）
   fusionSpeed: 'mid',      // 新語の出る速さ（slow / mid / fast）
+  fusionFreq: 'mid',       // 自動で混ぜる頻度（rare / mid / often。FUSION_FREQS）
   echo: '5',         // カンペ：同じ話の記憶（分）。この時間内にくり返した言葉ほど大きく・長く残り、画面を埋めていく。'0' でオフ
   speakerMode: 'off', // 話者の色分け：off / manual（手動で切り替え）/ auto（声の高さで推定）
   speakerCount: 2,
