@@ -2,6 +2,12 @@
 // type：new＝新機能 / improve＝改善 / fix＝修正。文言は短く、利用者向けのやさしい言葉で（日本語と英語）。
 export const CHANGELOG = [
   {
+    v: '1.7.1', date: '2026-10-25',
+    items: [
+      { type: 'fix', ja: 'モーションで話しはじめた直後に、左上の時計が一瞬「-1:-1」と出ることがあった不具合。あわせて、端末によって 1px の粒子が止まって見えることがないようにしました', en: 'In Motion, the corner clock could briefly show “-1:-1” right after you started talking. Also made sure the 1px particles never appear frozen on some devices' },
+    ],
+  },
+  {
     v: '1.7.0', date: '2026-10-25',
     items: [
       { type: 'new', ja: '新しいレイアウト「モーション」。話した文がその場で1字ずつ現れ、2行ずつの場面になって、線の上を走るカメラで次々と切り替わります。言葉の意味に合わせて図形が動きます（打ち消しには取り消し線、問いかけには大きな「？」、強調には集中線、「まず・次に」には矢印でつながる箱、「でも」には仕切り線など）。キーワードは色や塗りの箱で目立ち、同じ言葉をくり返すと背景に大きな字が浮かびます', en: 'New Motion layout. Your words appear letter by letter as you speak, set two lines at a time, and a camera glides along a line to each new scene. Shapes react to what you say: a strike-through when you say “not”, a big “?” for questions, speed lines for emphasis, arrow-linked boxes for “first… then…”, a divider for “but”, and more. Keywords stand out in color or filled boxes, and words you repeat loom large in the background' },
