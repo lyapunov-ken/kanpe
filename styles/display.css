@@ -328,19 +328,18 @@ body {
 .mo { position: absolute; inset: 0; overflow: hidden; --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace;
   --hud-ink: var(--ink); --hud-sub: var(--sub); --rail: var(--ink); color: var(--ink); }
 .mo.is-inv { --hud-ink: var(--bg); --hud-sub: color-mix(in srgb, var(--bg) 62%, var(--ink)); --rail: var(--bg); }
-.mo-defs { position: absolute; width: 0; height: 0; }
 .mo-view { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
-.mo-plate { position: absolute; inset: 0; background: var(--ink); clip-path: inset(0 100% 0 0); }
-.mo-grid { position: absolute; inset: 0; opacity: .5; pointer-events: none;
+.mo-plate { position: absolute; inset: 0; background: var(--ink); opacity: 0; will-change: transform, opacity; } /* 暗転の板：transform と opacity だけで出し入れする */
+.mo-grid { position: absolute; inset: 0; opacity: .5; pointer-events: none; will-change: opacity;
   background-image: radial-gradient(circle, color-mix(in srgb, var(--sub) 55%, transparent) 1.1px, transparent 1.7px); background-size: 34px 34px; }
 .mo.is-inv .mo-grid { background-image: radial-gradient(circle, color-mix(in srgb, var(--bg) 30%, transparent) 1.1px, transparent 1.7px); }
 .mo.clear .mo-grid, .mo.clear .mo-plate { display: none; }
 .mo-big { position: absolute; inset: 0; pointer-events: none; }
 .mo-giant { position: absolute; line-height: 1; font-weight: var(--w-strong); color: transparent; white-space: nowrap;
   -webkit-text-stroke: 2px color-mix(in srgb, var(--hud-sub) 70%, transparent); opacity: .55; transform-origin: 40% 50%; }
-.mo-cam { position: absolute; inset: 0; transform-origin: 50% 50%; }
+.mo-cam { position: absolute; inset: 0; transform-origin: 50% 50%; will-change: transform; }
 .mo-world { position: absolute; left: 0; top: 0; will-change: transform; }
-.mo-wipe { position: absolute; inset: 0; transform: translateX(-102%); pointer-events: none;
+.mo-wipe { position: absolute; inset: 0; transform: translateX(-102%); pointer-events: none; will-change: transform;
   background: linear-gradient(90deg, var(--ink) 0 5px, var(--mo-acc) 5px calc(100% - 5px), var(--ink) calc(100% - 5px)); }
 .mo.clear .mo-wipe { display: none; }
 .mo-dust { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -409,9 +408,9 @@ body {
 .mo-star.twinkle { animation: mo-twinkle 1.4s ease-in-out infinite; }
 @keyframes mo-twinkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(.6) rotate(45deg); } }
 .mo-wave-wrap { position: absolute; left: 0; top: 0; --amp: .6; transform-origin: 0 120px; }
-.mo-wave-wrap svg { display: block; transform: scaleY(calc(var(--amp) * var(--wk, 1))); transform-origin: 0 120px; transition: transform .2s linear; }
+.mo-wave-wrap svg { display: block; transform: scaleY(calc(var(--amp) * var(--wk, 1))); transform-origin: 0 120px; transition: transform .25s linear; will-change: transform; }
 .mo-wave-wrap.faint { opacity: .35; }
-.mo-wave-l { fill: none; stroke-width: 3; stroke-dasharray: 1 1; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+.mo-wave-l { fill: none; stroke-width: 3; stroke-dasharray: 1 1; stroke-linecap: round; }
 .mo-wave-l.w0 { stroke: var(--acc); stroke-width: 4; }
 .mo-wave-l.w1 { stroke: currentColor; opacity: .7; }
 .mo-wave-l.w2 { stroke: currentColor; opacity: .3; }
@@ -419,8 +418,9 @@ body {
 .mo-bar.acc { background: var(--acc); }
 .mo-plus { position: absolute; font: 600 28px/1 var(--mono); color: currentColor; opacity: .55; }
 .mo-ring circle { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-dasharray: 1 1; opacity: .8; }
-.mo-ring .orb { fill: var(--acc); stroke: none; opacity: 1; transform-box: view-box; transform-origin: calc(var(--r) + 10px) calc(var(--r) + 10px); }
-.mo-ring .orb.spin { animation: mo-spin 3.2s linear infinite; }
+.mo-ring .orb { fill: var(--acc); stroke: none; opacity: 1; }
+/* 輪ごと回す（SVG の中の点だけを回すと、毎フレーム描き直しになるため） */
+.mo-ring.spin { animation: mo-spin 3.2s linear infinite; }
 @keyframes mo-spin { to { transform: rotate(360deg); } }
 .mo-blob { position: absolute; left: 0; top: 0; border-radius: 50%; background: var(--acc); }
 .mo-blob.jelly { animation: mo-jelly 1.6s ease-in-out infinite; }
@@ -471,8 +471,7 @@ body {
 /* 透過（OBS）：映像の上でも読めるように縁取り */
 .mo.clear .mo-scene, .mo.clear .mo-hud { text-shadow: 0 0 .05em var(--stroke), 0 0 .05em var(--stroke), 0 0 .1em var(--stroke), 0 .05em .16em rgba(0,0,0,.55); }
 .mo.clear .mo-hud { text-shadow: 0 0 3px rgba(0,0,0,.9); }
-.mo.clear .mo-rail { stroke: #fff; filter: drop-shadow(0 0 2px rgba(0,0,0,.8)); }
+.mo.clear .mo-rail { stroke: #fff; }
 /* 動きを控えめに */
-.mo.calm .mo-q.wobble, .mo.calm .mo-frame.breathe, .mo.calm .mo-star.twinkle, .mo.calm .orb.spin, .mo.calm .mo-blob.jelly, .mo.calm .mo-live,
-.mo.calm .mo-tri.drift, .mo.calm .mo-prop.nudge, .mo.calm .mo-prop.nudge-l, .mo.calm .mo-pill-dot.run { animation: none; }
-.mo-hud.room .mo-mb { transition: transform .08s linear; }
+.mo.calm .mo-q.wobble, .mo.calm .mo-frame.breathe, .mo.calm .mo-star.twinkle, .mo.calm .mo-blob.jelly, .mo.calm .mo-live,
+.mo.calm .mo-tri.drift, .mo.calm .mo-prop.nudge, .mo.calm .mo-prop.nudge-l, .mo.calm .mo-pill-dot.run, .mo.calm .mo-ring.spin { animation: none; }

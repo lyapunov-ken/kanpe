@@ -9,10 +9,12 @@
 // - 画面の四隅に小さな計器（経過時間・話す速さ・声の大きさ・場面の番号）
 // - 音に反応：声（声の大きさ）／周りの音（BGM や会場の音の帯域と拍。拍で画面が脈打ち、計器はスペクトラムと BPM に）／オフ
 // - 乱数は場面ごとの種から作る（コンソールが文ごとに種を付けて送る）ので、プレビューと別窓で同じ組み・同じ図形になる
-// 依存ゼロ。動かすのは transform / opacity（字の現れとカメラの残像だけ filter）。消えた要素はすぐ外す。
-import { charScript } from '../core/extract.js?v=202610250347';
-import { tuneColor, parseColor, contrast } from '../core/color.js?v=202610250347';
-import { createDust } from './dust.js?v=202610250347';
+// 依存ゼロ。動かすのは transform / opacity だけ（ブラウザが絵を描き直さずに動かせる）。消えた要素はすぐ外す。
+// 重くなる演出（画面全体のぼかし・字ごとのぼかし・clip-path や text-shadow のアニメ・SVG の中の要素の回転）は使わない。
+// 描画が重い端末では自動で軽い演出だけにする（lite）。
+import { charScript } from '../core/extract.js?v=202610251050';
+import { tuneColor, parseColor, contrast } from '../core/color.js?v=202610251050';
+import { createDust } from './dust.js?v=202610251050';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const REF_W = 1280, REF_H = 720;
@@ -131,6 +133,11 @@ const TRANS_W = {
   pop: [['pan', 3], ['drop', 1], ['fall', 2.4], ['wipe', 2], ['zoom', 1.4], ['dust', 1]],
 };
 
+// 軽量のときに使わない演出と、その代わり（どれも transform / opacity だけの軽い動き）
+const HEAVY_STYLE = new Set(['dust']);
+const LITE_STYLE = { dust: 'scan' };
+const HEAVY_TRANS = new Set(['dust', 'fall']);
+
 // ---------------------------------------------------------------- 本体
 export function createMotion(stage) {
   const root = div('mo');
@@ -141,19 +148,13 @@ export function createMotion(stage) {
   const world = div('mo-world');
   const track = svgEl('svg', { class: 'mo-track', width: '1', height: '1', 'aria-hidden': 'true' });
   const hud = div('mo-hud');
-  // カメラが動くあいだの横方向の残像（SVG のぼかしを横だけにかける）
-  const defs = svgEl('svg', { class: 'mo-defs', width: '0', height: '0', 'aria-hidden': 'true' });
-  const filt = svgEl('filter', { id: 'mo-hb', x: '-20%', y: '-5%', width: '140%', height: '110%' });
-  const blurN = svgEl('feGaussianBlur', { stdDeviation: '0 0' });
-  filt.appendChild(blurN);
-  defs.appendChild(filt);
   world.appendChild(track);
   // 拍で画面全体（板と計器を除く）が少しだけ脈打つように、カメラの外側にもう1枚かぶせる
   const camBox = div('mo-cam');
   camBox.append(grid, big, world);
   const wipe = div('mo-wipe'); // 帯でワイプする切り替え
   view.append(plate, camBox, wipe, hud);
-  root.append(defs, view);
+  root.append(view);
   stage.appendChild(root);
   const dust = createDust(root); // 1px の粒子（いちばん手前）
 
@@ -164,6 +165,9 @@ export function createMotion(stage) {
     logo: null, credit: false };
   let k = 1, VW = REF_W, VH = REF_H;
   let destroyed = false;
+  // 軽量（lite）：描画が重いと分かった端末では、粒子で字を組む出かた・字が落ちる切り替え・粒子で散る切り替え・尾・漂う粒を使わない
+  let lite = (navigator.hardwareConcurrency || 8) <= 2;
+  if (lite) root.classList.add('lite');
 
   // ---- 状態
   const kws = new Map();        // キーワード（小文字）→ { text, kind, count, at }
@@ -211,6 +215,8 @@ export function createMotion(stage) {
       return ra && contrast(ra, rb) >= contrast(ra, ri) ? (cfg.transparent ? '#111111' : cfg.bg) : cfg.ink; };
     root.style.setProperty('--mo-acc', acc);
     root.style.setProperty('--mo-acc-inv', accInv);
+    accN = acc; accI = accInv;
+    syncAcc();
     root.style.setProperty('--mo-on-acc', onAcc(acc));
     root.style.setProperty('--mo-on-acc-inv', onAcc(accInv));
     root.style.setProperty('--mo-acc2', tuneColor(cfg.accent2, bg, 3));
@@ -229,7 +235,6 @@ export function createMotion(stage) {
     if (cfg.calm || !dur) return;
     world.animate([{ transform: from }, { transform: world.style.transform }], { duration: dur, easing: SWING });
     panning = { t0: performance.now(), dur, vert };
-    world.style.filter = 'url(#mo-hb)';
   }
 
   // ---------------------------------------------------------------- 線路（場面と場面をつなぐ線と駅）
@@ -292,8 +297,10 @@ export function createMotion(stage) {
     // 組み方
     s.comp = entry.fz ? 'center' : pickW(rand, [['left', 4], ['step', 3], ['center', 2], ['right', 1.4], ['bigsmall', 1.6]]);
     // 字の出かた（10通り）と、場面の切り替え（6通り）。テイストで選びやすさを変える
-    s.style = pickW(rand, STYLE_W[cfg.taste] || STYLE_W.mix);
-    s.tr = !prev ? 'none' : entry.fz ? 'zoom' : pickW(rand, TRANS_W[cfg.taste] || TRANS_W.mix);
+    // 乱数は軽量かどうかに関係なく同じ回数だけ引く（プレビューと別窓で、片方だけ軽量になっても組み方がずれないように）
+    const st = pickW(rand, STYLE_W[cfg.taste] || STYLE_W.mix), tr = pickW(rand, TRANS_W[cfg.taste] || TRANS_W.mix);
+    s.style = lite && HEAVY_STYLE.has(st) ? LITE_STYLE[st] : st;
+    s.tr = !prev ? 'none' : entry.fz ? 'zoom' : lite && HEAVY_TRANS.has(tr) ? 'pan' : tr;
     // 場所：横へ＝右隣、下へ＝真下、帯でワイプ＝右隣（帯に隠れたところで飛ぶ）、ほか（粒子・ズーム・落ちる）＝同じ場所に重ねて入れ替える
     const same = ['dust', 'zoom', 'fall'].includes(s.tr);
     s.x = !prev ? camX : same || s.tr === 'drop' ? prev.x : prev.x + VW;
@@ -375,7 +382,7 @@ export function createMotion(stage) {
         if (!e.isConnected) return;
         const d = dust.assemble(e, { dl: i * stagger * 1.2, dur: 520, radius: 90 + s.rand() * 120 });
         e.style.opacity = '';
-        e.animate([{ opacity: 0, filter: 'blur(3px)' }, { opacity: 1, filter: 'blur(0px)' }], { duration: 260, delay: Math.max(0, d - 150), easing: 'ease-out', fill: 'backwards' });
+        e.animate([{ opacity: 0, transform: 'scale(1.12)' }, { opacity: 1, transform: 'none' }], { duration: 260, delay: Math.max(0, d - 150), easing: 'ease-out', fill: 'backwards' });
       }));
       return;
     }
@@ -396,16 +403,16 @@ export function createMotion(stage) {
           { transform: 'translateY(-.05em) scale(.96,1.06)', offset: 0.78 }, { opacity: 1, transform: 'none' }];
         dur = 560; easing = 'cubic-bezier(.3,0,.3,1)';
       } else if (s.style === 'slide') {
-        kf = [{ opacity: 0, transform: 'translateX(1.2em) skewX(-14deg)', filter: 'blur(6px)' }, { opacity: 1, transform: 'none', filter: 'blur(0px)' }];
+        kf = [{ opacity: 0, transform: 'translateX(1.2em) skewX(-14deg)' }, { opacity: 1, transform: 'skewX(4deg)', offset: 0.7 }, { opacity: 1, transform: 'none' }];
         dur = 460;
-      } else if (s.style === 'scan') { // 下から走査されるように立ち上がる
-        kf = [{ opacity: 0, clipPath: 'inset(100% 0 0 0)', transform: 'translateY(.3em)' }, { opacity: 1, clipPath: 'inset(0% 0 0 0)', transform: 'none' }];
-        dur = 520;
-      } else if (s.style === 'glitch') { // 色がずれて、ちらついて決まる
-        kf = [{ opacity: 0, transform: 'translateX(-.25em) skewX(20deg)', textShadow: '-.07em 0 var(--acc), .07em 0 rgba(0,220,255,.7)' },
+      } else if (s.style === 'scan') { // 下から立ち上がる（足もとを軸に縦に伸びる）
+        e.style.transformOrigin = '50% 100%';
+        kf = [{ opacity: 0, transform: 'scaleY(0)' }, { opacity: 1, transform: 'scaleY(1.12)', offset: 0.65 }, { opacity: 1, transform: 'none' }];
+        dur = 480;
+      } else if (s.style === 'glitch') { // 横にぶれて、ちらついて決まる
+        kf = [{ opacity: 0, transform: 'translateX(-.25em) skewX(20deg)' },
           { opacity: 1, transform: 'translateX(.15em)', offset: 0.2 }, { opacity: 0.2, transform: 'translateX(-.08em) skewX(-10deg)', offset: 0.36 },
-          { opacity: 1, transform: 'translateX(.05em)', offset: 0.55 }, { opacity: 0.55, offset: 0.7 },
-          { opacity: 1, transform: 'none', textShadow: '0 0 transparent, 0 0 transparent' }];
+          { opacity: 1, transform: 'translateX(.05em)', offset: 0.55 }, { opacity: 0.55, offset: 0.7 }, { opacity: 1, transform: 'none' }];
         dur = 440; easing = 'linear';
       } else if (s.style === 'flip') { // 下を軸に、手前へめくれて起き上がる
         e.style.transformOrigin = '50% 100%';
@@ -419,9 +426,10 @@ export function createMotion(stage) {
         kf = [{ opacity: 0, transform: 'rotate(-220deg) scale(0)' }, { opacity: 1, transform: 'rotate(18deg) scale(1.18)', offset: 0.65 }, { transform: 'rotate(-4deg) scale(.97)', offset: 0.85 }, { opacity: 1, transform: 'none' }];
         dur = 620; easing = 'ease-out';
       } else {
-        kf = kanji ? [{ opacity: 0, transform: 'scale(1.35)', filter: 'blur(12px)' }, { opacity: 1, transform: 'none', filter: 'blur(0px)' }]
-          : [{ opacity: 0, transform: 'translateX(.28em)', filter: 'blur(9px)' }, { opacity: 1, transform: 'none', filter: 'blur(0px)' }];
-        dur = kanji ? 640 : 480;
+        // 浮かぶ：漢字は大きく手前から、かなは右から寄って、静かに決まる（以前はぼかしを使っていたが、字ごとのぼかしは重いのでやめた）
+        kf = kanji ? [{ opacity: 0, transform: 'scale(1.45)' }, { opacity: 0.85, transform: 'scale(.97)', offset: 0.7 }, { opacity: 1, transform: 'none' }]
+          : [{ opacity: 0, transform: 'translateX(.32em)' }, { opacity: 1, transform: 'none' }];
+        dur = kanji ? 620 : 460;
       }
       e.animate(kf, { duration: dur, delay: base + i * stagger, easing, fill: 'backwards' });
     });
@@ -547,10 +555,10 @@ export function createMotion(stage) {
             : [{ transform: 'scaleX(0)' }, { transform: 'none' }], { duration: pop ? 480 : 520, delay, easing: pop ? 'ease-out' : EXPO, fill: 'backwards' });
         }
         if (type === 'num' && !cfg.calm) countUp(chars);
-        if (type === 'fill' && !cfg.calm) after(delay + 420, () => { // 箱が塗り終わった右端から火花
+        if (type === 'fill' && !cfg.calm && !lite) after(delay + 420, () => { // 箱が塗り終わった右端から火花
           if (!d.el.isConnected) return;
           const r = d.el.getBoundingClientRect(), q = dust.toLocal(r);
-          dust.spark(q.x + q.w, q.y + q.h / 2, { count: cfg.taste === 'pop' ? 34 : 20, color: getComputedStyle(d.el).backgroundColor, speed: 3.4 });
+          dust.spark(q.x + q.w, q.y + q.h / 2, { count: cfg.taste === 'pop' ? 26 : 16, color: accC, speed: 3.4 });
         });
       } else {
         d.el = span('mo-nil'); // 色だけ（飾りの要素はない。色は CSS の transition で変わる）
@@ -628,7 +636,10 @@ export function createMotion(stage) {
     const q = dust.toLocal(s.el.getBoundingClientRect());
     return { x: q.x + x * k, y: q.y + y * k };
   }
-  const acc = () => (sc ? getComputedStyle(sc.el).getPropertyValue('--acc').trim() : '') || getComputedStyle(root).getPropertyValue('--mo-acc').trim() || cfg.accent;
+  // 粒子の色：いまの場面のアクセント（暗転しているかどうかで変わる）。毎回 getComputedStyle で読まないよう、場面が替わるときに覚えておく
+  let accC = '#ff6600', accN = '#ff6600', accI = '#ff6600';
+  const acc = () => accC;
+  const syncAcc = () => { accC = sc && sc.entry.fz && sc.el.style.getPropertyValue('--fz') ? sc.el.style.getPropertyValue('--fz') : sc && sc.inv ? accI : accN; };
   function evaluate(s, final) {
     if (!s || s.entry.fz) return;
     const t = sceneText(s);
@@ -701,9 +712,8 @@ export function createMotion(stage) {
       }
       g.style.transformOrigin = `${cx}px ${cy}px`;
       put(s, g, 0, 0);
-      if (!cfg.calm) after(140, () => { if (!g.isConnected) return; const q = toScreen(s, cx, cy); dust.spark(q.x, q.y, { count: cfg.taste === 'cool' ? 40 : 70, color: acc(), speed: 5.5, life: 800 }); });
+      if (!cfg.calm) after(140, () => { if (!g.isConnected) return; const q = toScreen(s, cx, cy); dust.spark(q.x, q.y, { count: lite ? 18 : cfg.taste === 'cool' ? 32 : 48, color: accC, speed: 5.5, life: 800 }); });
       if (!cfg.calm) {
-        g.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.03)' }, { transform: 'scale(1)' }], { duration: 520, iterations: 3, delay: 420, easing: 'ease-in-out' });
         s.linesEl.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-7px,3px)' }, { transform: 'translate(6px,-4px)' }, { transform: 'translate(-3px,2px)' }, { transform: 'translate(0,0)' }],
           { duration: 300, delay: 260, easing: 'linear' });
       }
@@ -851,7 +861,7 @@ export function createMotion(stage) {
       box.appendChild(g);
       if (!cfg.calm) {
         c.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 900, easing: EXPO, fill: 'backwards' });
-        o.classList.add('spin');
+        g.classList.add('spin');
       }
       put(s, box, sp.x + rand() * Math.max(0, sp.w - r * 2), sp.y + sp.h / 2 - r - 10);
     } else if (kind === 'blob') {
@@ -978,14 +988,13 @@ export function createMotion(stage) {
     e.style.left = VW * (0.42 + Math.random() * 0.2) + 'px';
     e.style.top = VH * 0.5 - h * 0.58 + 'px';
     big.appendChild(e);
-    e.animate([{ transform: 'scale(1.7)', opacity: 0, filter: 'blur(24px)' }, { transform: 'scale(1)', opacity: 1, filter: 'blur(0px)' }], { duration: 900, easing: EXPO, fill: 'backwards' });
+    e.animate([{ transform: 'scale(1.6)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 900, easing: EXPO, fill: 'backwards' });
     after(5200, () => fadeOut(e, 900));
   }
 
   // ---------------------------------------------------------------- 場面の切り替え
   // 場面の切り替えにかかる時間
   const TR_MS = { none: 0, fade: 320, pan: PAN_MS, drop: PAN_MS, dust: 560, zoom: 640, fall: 600, wipe: 680 };
-  const NONE = 'inset(0 100% 0 0)', FULL = 'inset(0 0 0 0)';
   function show(i) {
     const entry = plan[i];
     if (!entry) return;
@@ -995,6 +1004,7 @@ export function createMotion(stage) {
     const s = makeScene(entry, prev);
     if (cfg.calm && prev) s.tr = 'fade';
     sc = s;
+    syncAcc();
     const t0 = performance.now();
     shownAt = t0;
     idle = false;
@@ -1025,7 +1035,7 @@ export function createMotion(stage) {
     for (const e of [...world.querySelectorAll('.mo-scene')]) if (e !== s.el && (!prev || e !== prev.el)) e.remove();
     if (entry.fz) fzStage(s, entry.fz);
     else evaluate(s, entry.u.final);
-    hud.querySelector('.mo-sc').textContent = `SC.${pad2(s.n)}`;
+    setText(H.sc, `SC.${pad2(s.n)}`);
   }
   // 前の場面の退場（切り替えの種類ごと）
   function leave(old, s, tr, D) {
@@ -1043,32 +1053,28 @@ export function createMotion(stage) {
       });
       for (const e of [old.propsEl, old.label, old.num]) fadeOut(e, 300);
     } else if (tr === 'zoom') { // 押し込むように大きく、ぼけて抜ける。新しい場面は奥から
-      old.el.animate([{ transform: T, opacity: 1, filter: 'blur(0px)' }, { transform: `${T} scale(1.7)`, opacity: 0, filter: 'blur(10px)' }], { duration: D, easing: 'cubic-bezier(.6,0,.9,.5)', fill: 'forwards' });
+      old.el.animate([{ transform: T, opacity: 1 }, { transform: `${T} scale(1.6)`, opacity: 0 }], { duration: D, easing: 'cubic-bezier(.6,0,.9,.5)', fill: 'forwards' });
       s.el.animate([{ transform: `translate(${s.x}px, ${s.y}px) scale(.72)`, opacity: 0 }, { transform: `translate(${s.x}px, ${s.y}px)`, opacity: 1 }], { duration: D, delay: D * 0.3, easing: EXPO, fill: 'backwards' });
     } else if (tr === 'wipe') { // 帯が横切り、隠れたところで場面が替わる
       wipe.animate([{ transform: 'translateX(-102%)', easing: 'cubic-bezier(.7,0,.9,.6)' }, { transform: 'translateX(0)', offset: 0.5, easing: 'cubic-bezier(.1,.4,.3,1)' }, { transform: 'translateX(102%)' }], { duration: D });
     }
   }
-  // 暗転の板：横・下へのときはカメラと同じ速さで差し込む。帯は隠れたところで切り替え、ほかは駅から円が広がる／縮む
+  // 暗転の板：横・下へのときはカメラと同じ速さで、板ごと滑り込む／抜けていく（transform だけ）。帯は隠れたところで切り替え、ほかはふわっと入れ替える（opacity だけ）
+  function setPlate(on) { plate.style.transform = 'none'; plate.style.opacity = on ? '1' : '0'; }
   function plateSwap(prev, s, tr, D) {
     const wasInv = prev ? prev.inv : root.classList.contains('is-inv');
-    const set = () => { plate.style.clipPath = s.inv ? FULL : NONE; root.classList.toggle('is-inv', !!s.inv); };
-    if (cfg.transparent) { plate.style.clipPath = NONE; root.classList.remove('is-inv'); return; }
+    const set = () => { setPlate(s.inv); root.classList.toggle('is-inv', !!s.inv); };
+    if (cfg.transparent) { setPlate(false); root.classList.remove('is-inv'); return; }
     if (s.inv === wasInv) { root.classList.toggle('is-inv', !!s.inv); return; }
     if (!prev || cfg.calm) { set(); return; }
     if (tr === 'pan' || tr === 'drop') {
-      const vert = tr === 'drop';
-      const hide = vert ? 'inset(100% 0 0 0)' : 'inset(0 0 0 100%)', gone = vert ? 'inset(0 0 100% 0)' : NONE;
-      plate.style.clipPath = s.inv ? FULL : gone;
-      plate.animate([{ clipPath: s.inv ? hide : FULL }, { clipPath: s.inv ? FULL : gone }], { duration: D, easing: SWING });
-      root.classList.toggle('is-inv', !!s.inv);
+      const ax = tr === 'drop' ? 'translateY' : 'translateX';
+      set();
+      plate.animate(s.inv ? [{ transform: `${ax}(100%)`, opacity: 1 }, { transform: 'none', opacity: 1 }] : [{ transform: 'none', opacity: 1 }, { transform: `${ax}(-100%)`, opacity: 1 }], { duration: D, easing: SWING });
     } else if (tr === 'wipe') after(D * 0.5, set);
     else {
-      const at = `at ${((s.nodeX / VW) * 100).toFixed(1)}% ${((s.trackY / VH) * 100).toFixed(1)}%`;
-      const small = `circle(0% ${at})`, large = `circle(150% ${at})`;
-      plate.style.clipPath = s.inv ? large : small;
-      plate.animate([{ clipPath: s.inv ? small : large }, { clipPath: s.inv ? large : small }], { duration: D * 1.15, easing: SWING });
-      after(D * 0.5, () => { plate.style.clipPath = s.inv ? FULL : NONE; root.classList.toggle('is-inv', !!s.inv); });
+      set();
+      plate.animate([{ opacity: s.inv ? 0 : 1 }, { opacity: s.inv ? 1 : 0 }], { duration: D, easing: 'ease-in-out' });
     }
   }
   // 見せる長さ：たまっているほど短く（話すのが速いときに追いつく）
@@ -1080,8 +1086,10 @@ export function createMotion(stage) {
     clearTimeout(pumpTimer);
     if (destroyed) return;
     if (p < 0 && plan.length) { show(0); }
-    const backlog = plan.length - 1 - p;
+    let backlog = plan.length - 1 - p;
     if (backlog <= 0) return;
+    // たまりすぎたら（話すのがとても速い・届くのが一度に来た）、途中の場面を飛ばして新しい方へ（切り替えを連発しない）
+    if (backlog > 6) { const cur = plan[p], keep = plan.slice(-2); plan.length = 0; plan.push(cur, ...keep); p = 0; backlog = 2; shownAt = -1e9; }
     const wait = holdFor(plan[p], backlog) - (performance.now() - shownAt);
     if (wait <= 0) { show(p + 1); pump(); return; }
     pumpTimer = after(wait + 5, pump);
@@ -1161,6 +1169,7 @@ export function createMotion(stage) {
     if (!ln) return;
     const color = typeof m.color === 'string' && /^#[0-9a-f]{6}$/i.test(m.color) ? m.color : '';
     if (color) s.el.style.setProperty('--fz', tuneColor(color, s.inv ? cfg.ink : cfg.bg, 3));
+    syncAcc();
     const d = { key: 'fz', type: 'fill', li: 1, i0: 0, i1: ln.chars.length - 1, chars: ln.chars, el: div('mo-box fill fzbox') };
     ln.el.insertBefore(d.el, ln.el.firstChild);
     for (const c of ln.chars) c.classList.add('kw', 'on-fill');
@@ -1195,7 +1204,7 @@ export function createMotion(stage) {
     const q = dust.toLocal(r);
     return { x: q.x + q.w / 2, y: q.y + q.h / 2 };
   }
-  function burstAtHead(n) { const q = headPos(); dust.spark(q.x, q.y, { count: n, color: acc(), speed: 3.6 }); }
+  function burstAtHead(n) { if (!n) return; const q = headPos(); dust.spark(q.x, q.y, { count: n, color: accC, speed: 3.6 }); }
   function shakeScene(px) {
     if (!sc) return;
     sc.linesEl.animate([{ transform: 'none' }, { transform: `translate(${-px}px, ${px / 2}px)` }, { transform: `translate(${px * 0.8}px, ${-px / 2}px)` }, { transform: 'none' }], { duration: 220, easing: 'linear' });
@@ -1207,17 +1216,19 @@ export function createMotion(stage) {
     if (cfg.calm) return;
     const down = beatN % 4 === 1; // 小節の頭は強く
     const pop = cfg.taste === 'pop';
-    camBox.animate([{ transform: `scale(${down ? (pop ? 1.024 : 1.012) : (pop ? 1.012 : 1.006)})` }, { transform: 'scale(1)' }], { duration: 260, easing: 'cubic-bezier(.2,.7,.3,1)' });
-    grid.animate([{ opacity: down ? 1 : 0.85 }, { opacity: 0.5 }], { duration: 320, easing: 'ease-out' });
-    if (sc && sc.rail) sc.rail[2].animate([{ transform: 'scale(1.7)', strokeWidth: 1.5 }, { transform: 'scale(1)' }], { duration: 360, easing: EXPO });
-    burstAtHead(down ? (pop ? 34 : 22) : (pop ? 16 : 10));
-    if (sc && (pop || cfg.taste === 'mix')) { // キーワードが拍で跳ねる
+    // 画面全体の脈打ちは小節の頭だけ（毎拍だと、大きな面を何度も動かすことになるため）
+    if (down) camBox.animate([{ transform: `scale(${pop ? 1.02 : 1.01})` }, { transform: 'scale(1)' }], { duration: 280, easing: 'cubic-bezier(.2,.7,.3,1)' });
+    grid.animate([{ opacity: down ? 1 : 0.8 }, { opacity: 0.5 }], { duration: 300, easing: 'ease-out' });
+    if (sc && sc.rail) sc.rail[2].animate([{ transform: 'scale(1.6)' }, { transform: 'scale(1)' }], { duration: 340, easing: EXPO });
+    burstAtHead(lite ? (down ? 10 : 0) : down ? (pop ? 26 : 16) : (pop ? 10 : 6));
+    if (sc && (pop || cfg.taste === 'mix') && !lite) { // キーワード（塗りの箱）が拍で跳ねる。箱ごと動かす（字を1字ずつ動かさない）
       for (const d of sc.decos.values()) {
-        if (d.type === 'strike') continue;
-        d.chars.forEach((c, i) => c.isConnected && c.animate([{ transform: 'none' }, { transform: `translateY(${pop ? -0.12 : -0.06}em) scale(1.04)`, offset: 0.35 }, { transform: 'none' }], { duration: 240, delay: i * 18, easing: 'ease-out' }));
+        if (d.type !== 'fill' || !d.chars.length) continue;
+        const ln = sc.lines[d.li];
+        if (ln && ln.el.isConnected) ln.el.animate([{ translate: '0 0' }, { translate: `0 ${pop ? -8 : -4}px`, offset: 0.35 }, { translate: '0 0' }], { duration: 220, easing: 'ease-out' });
+        break;
       }
     }
-    for (const g of big.children) g.animate([{ transform: 'scale(1.035)' }, { transform: 'scale(1)' }], { duration: 300, easing: 'ease-out' });
   }
 
   // 消す：いまの場面は字の形のまま粒になって散る
@@ -1228,9 +1239,9 @@ export function createMotion(stage) {
     for (const e of [...track.children]) if (e !== head) e.remove();
     for (const e of [...big.children]) fadeOut(e, 300);
     sc = null; firstAt = 0; paceLog.length = 0; lastKw = '';
-    plate.style.clipPath = NONE;
+    setPlate(false);
     root.classList.remove('is-inv');
-    hud.querySelector('.mo-sc').textContent = 'SC.00';
+    setText(H.sc, 'SC.00');
   }
   function dustScene(s) {
     const parts = [];
@@ -1240,6 +1251,7 @@ export function createMotion(stage) {
   }
 
   // ---------------------------------------------------------------- 計器（四隅）
+  let H = null;
   function buildHud() {
     hud.innerHTML = '';
     const tl = div('mo-h tl'), tr = div('mo-h tr'), bl = div('mo-h bl'), br = div('mo-h br');
@@ -1252,6 +1264,9 @@ export function createMotion(stage) {
     bl.append(meter, span('mo-h-s mo-in', 'INPUT — VOICE'));
     br.append(span('mo-sc', 'SC.00'), span('mo-kw', ''));
     hud.append(tl, tr, bl, br);
+    // 毎回探さなくてよいように、書きかえる要素を覚えておく
+    H = { bars: [...hud.querySelectorAll('.mo-mb')], time: hud.querySelector('.mo-time'), pace: hud.querySelector('.mo-pace'), unit: hud.querySelector('.tr .mo-h-s'),
+      sq: [...hud.querySelectorAll('.mo-sq')], kw: hud.querySelector('.mo-kw'), sc: hud.querySelector('.mo-sc'), bi: -1 };
   }
   function placeHud() {
     hud.classList.toggle('off', !cfg.hud);
@@ -1263,19 +1278,32 @@ export function createMotion(stage) {
     const inp = hud.querySelector('.mo-in');
     if (inp) inp.textContent = cfg.sound === 'room' ? 'INPUT — ROOM' : cfg.sound === 'off' ? 'INPUT — OFF' : 'INPUT — VOICE';
   }
-  let hudAt = 0, trailAt = 0;
+  let hudAt = 0, trailAt = 0, hudTick = 0;
+  const setText = (e, v) => { if (e && e.textContent !== v) e.textContent = v; }; // 変わったときだけ書きかえる
+  // 描画の重さを見張る：いちばん速いフレームの間隔を基準に、それより大きく遅いフレームが続いたら軽量（lite）に。
+  // 基準を端末ごとに取るので、30fps で描く OBS などでも誤って軽量にならない。軽量になったら粒の数も減らす
+  let bestDt = 1e9, slowN = 0, lastFrame = 0;
+  function perf(t) {
+    const dt = lastFrame ? t - lastFrame : 0;
+    lastFrame = t;
+    if (!dt || dt > 250 || document.hidden) return; // 裏に回っていた・止まっていた間は数えない
+    bestDt = Math.min(bestDt, Math.max(6, dt));
+    const slow = dt > Math.max(bestDt * 1.8, bestDt + 14);
+    slowN = slow ? slowN + 1 : Math.max(0, slowN - 0.25);
+    if (slowN > 24) { // 重い：まず粒を減らし、それでも重ければ軽い演出だけに
+      slowN = 0;
+      if (dust.budget() > 0.25) dust.setBudget(dust.budget() / 2);
+      else if (!lite) { lite = true; root.classList.add('lite'); }
+    }
+  }
   function loop(t) {
     if (destroyed) return;
     requestAnimationFrame(loop);
-    // カメラの残像：動き始めと終わりは弱く、真ん中で強く（横方向だけ）。動いている間、線の上の点から 1px の尾を引く
+    perf(t);
+    // カメラが動いている間、線の上の点から 1px の尾を引く（毎秒20回まで。軽量のときは引かない）
     if (panning) {
-      const q = (t - panning.t0) / panning.dur;
-      if (q >= 1) { panning = null; blurN.setAttribute('stdDeviation', '0 0'); world.style.filter = ''; }
-      else {
-        const b = (Math.pow(Math.sin(q * Math.PI), 2) * 12).toFixed(1);
-        blurN.setAttribute('stdDeviation', panning.vert ? `0 ${b}` : `${b} 0`);
-        if (t - trailAt > 16) { trailAt = t; const h = headPos(); dust.spark(h.x, h.y, { count: 3, color: acc(), speed: 0.8, life: 500, gravity: 0 }); }
-      }
+      if (t - panning.t0 >= panning.dur) panning = null;
+      else if (!lite && t - trailAt > 50) { trailAt = t; const h = headPos(); dust.spark(h.x, h.y, { count: 4, color: accC, speed: 0.8, life: 500, gravity: 0 }); }
     }
     dust.step(t);
     if (t - hudAt < 66) return;
@@ -1287,27 +1315,28 @@ export function createMotion(stage) {
     levelHist.push(cfg.sound === 'off' ? 0 : clamp(level + fake, 0, 1));
     levelHist.shift();
     // 周りの音が鳴っているあいだ、話していなくても粒がゆっくり漂う
-    if (room && !cfg.calm && level > 0.08) dust.drift(Math.min(1, level * 1.4), acc());
-    if (sc && sc.wave) sc.wave.style.setProperty('--amp', (0.35 + (room ? (bands[1] + bands[3] + bands[6]) / 3 : level) * 0.9).toFixed(2));
+    if (room && !cfg.calm && !lite && level > 0.08 && (hudTick & 1)) dust.drift(Math.min(1, level * 1.2), accC);
+    hudTick++;
+    if (sc && sc.wave && (hudTick & 1)) { // 波形の振れ幅（変わったときだけ書きかえる）
+      const amp = Math.round((0.35 + (room ? (bands[1] + bands[3] + bands[6]) / 3 : level) * 0.9) * 20) / 20;
+      if (amp !== sc.waveAmp) { sc.waveAmp = amp; sc.wave.style.setProperty('--amp', String(amp)); }
+    }
     if (!cfg.hud) return;
     const show = room ? bands : levelHist; // 周りの音ではスペクトラム（低い音→高い音）、声では声の大きさの移り変わり
-    hud.querySelectorAll('.mo-mb').forEach((b, i) => { b.style.transform = `scaleY(${(0.08 + (show[i] || 0) * 0.92).toFixed(2)})`; });
-    const tm = hud.querySelector('.mo-time');
-    if (tm) { const sec = firstAt ? Math.floor((t - firstAt) / 1000) : 0; tm.textContent = `${pad2(Math.floor(sec / 60) % 100)}:${pad2(sec % 60)}`; }
+    H.bars.forEach((b, i) => { const v = Math.round((0.08 + (show[i] || 0) * 0.92) * 20) / 20; if (b._v !== v) { b._v = v; b.style.transform = `scaleY(${v})`; } });
+    const sec = firstAt ? Math.floor((t - firstAt) / 1000) : 0;
+    setText(H.time, `${pad2(Math.floor(sec / 60) % 100)}:${pad2(sec % 60)}`);
     // 右上：周りの音でテンポが取れていれば BPM、ほかは話す速さ（直近20秒の字数を1分あたりに）
     while (paceLog.length && t - paceLog[0].t > 20000) paceLog.shift();
     const span20 = firstAt ? Math.min(20000, Math.max(4000, t - firstAt)) : 20000;
     const showBpm = room && bpm > 0;
     const target = showBpm ? bpm : paceLog.reduce((a, b) => a + b.n, 0) * (60000 / span20);
     paceShown += (target - paceShown) * (showBpm ? 0.35 : 0.2);
-    const pe = hud.querySelector('.mo-pace');
-    if (pe) pe.textContent = String(Math.round(paceShown)).padStart(3, '0');
-    const unit = hud.querySelector('.tr .mo-h-s');
-    if (unit) unit.textContent = showBpm ? 'BPM' : utt && utt.en ? 'WPM' : 'CPM';
+    setText(H.pace, String(Math.round(paceShown)).padStart(3, '0'));
+    setText(H.unit, showBpm ? 'BPM' : utt && utt.en ? 'WPM' : 'CPM');
     const bi = room ? (beatN + 3) % 4 : beat % 4;
-    hud.querySelectorAll('.mo-sq').forEach((q, i) => q.classList.toggle('on', i === bi));
-    const kwEl = hud.querySelector('.mo-kw');
-    if (kwEl && kwEl.textContent !== lastKw) kwEl.textContent = lastKw ? `/ ${lastKw}` : '';
+    if (H.bi !== bi) { H.bi = bi; H.sq.forEach((q, i) => q.classList.toggle('on', i === bi)); }
+    setText(H.kw, lastKw ? `/ ${lastKw}` : '');
     // 長く黙っていたら、場面は字の形のまま粒になって消える（次に話すと新しい場面から）
     if (sc && !idle && utt && utt.final && t - lastCapAt > 30000) {
       idle = true;
@@ -1327,7 +1356,7 @@ export function createMotion(stage) {
       root.dataset.taste = cfg.taste;
       applyColors();
       placeHud();
-      if (cfg.transparent) { plate.style.clipPath = NONE; root.classList.remove('is-inv'); }
+      if (cfg.transparent) { setPlate(false); root.classList.remove('is-inv'); }
       if (sc) {
         const f = fs0();
         const want = sc.comp === 'bigsmall' ? [f * 0.62, f * 1.12] : sc.entry.fz ? [f * 0.5, f * 1.15] : [f, f];
