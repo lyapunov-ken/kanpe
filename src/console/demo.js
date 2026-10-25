@@ -1,5 +1,5 @@
 // マイクなしで試すためのデモ。音声認識の途中結果が少しずつ伸びる様子を再現する。
-import { Extractor, cleanCaption } from '../core/extract.js?v=202610221431';
+import { Extractor, cleanCaption } from '../core/extract.js?v=202610251603';
 
 export const DEMO_LINES = {
   ja: [
@@ -94,7 +94,9 @@ export const SCRIPTS = {
   },
 };
 
-export async function simulateSpeech({ lang = 'ja-JP', onInterim, onFinal, shouldStop = () => false, loop = false, script = '' }) {
+// pace：ゆっくりさ（1＝ふつう）。関数なら毎回たずねる（デモの途中でレイアウトを変えても、すぐに合わせる）。モーションでは 2.2 ほど（ふつうに話す速さ）にして、展開を落ち着かせる
+export async function simulateSpeech({ lang = 'ja-JP', onInterim, onFinal, shouldStop = () => false, loop = false, script = '', pace = 1 }) {
+  const k = () => Math.max(0.5, Math.min(3, +(typeof pace === 'function' ? pace() : pace) || 1));
   const set = SCRIPTS[script] || DEMO_LINES;
   const lines = set[lang.startsWith('en') ? 'en' : 'ja'];
   let n = 0;
@@ -106,21 +108,22 @@ export async function simulateSpeech({ lang = 'ja-JP', onInterim, onFinal, shoul
       let i = 0;
       while (i < chars.length) {
         if (shouldStop()) return;
-        i = Math.min(chars.length, i + 2 + Math.floor(Math.random() * 3));
+        const kk = k();
+        i = Math.min(chars.length, i + (kk > 1.3 ? 1 : 2) + Math.floor(Math.random() * 3));
         onInterim(id, chars.slice(0, i).join(''));
-        await new Promise((r) => setTimeout(r, 85 + Math.random() * 60));
+        await new Promise((r) => setTimeout(r, (85 + Math.random() * 60) * kk));
       }
       onFinal(id, line);
-      await new Promise((r) => setTimeout(r, 650 + Math.random() * 700));
+      await new Promise((r) => setTimeout(r, (650 + Math.random() * 700) * k() * 1.15));
     }
   } while (loop && !shouldStop());
 }
 
 // 表示ビュー単体で回すデモ（display.html?demo=1）
-export function runDemo({ lang = 'ja-JP', deliver, registered = '', script = '' }) {
+export function runDemo({ lang = 'ja-JP', deliver, registered = '', script = '', pace = 1 }) {
   const ex = new Extractor({ lang, registered });
   simulateSpeech({
-    lang, loop: true, script,
+    lang, loop: true, script, pace,
     onInterim: (id, t) => {
       for (const e of ex.interim(id, t)) deliver({ t: 'word', ...e });
       deliver({ t: 'caption', text: cleanCaption(t), final: false });

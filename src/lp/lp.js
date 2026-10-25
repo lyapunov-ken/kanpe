@@ -20,8 +20,8 @@
   const label = $('monLabel');
   const EN = (document.documentElement.lang || '').startsWith('en');
   const names = EN
-    ? { sumi: 'Sumi', yoru: 'Night', pop: 'Pop', yawaraka: 'Soft', compose: 'Compose', kanpe: 'Cue', ticker: 'Ticker' }
-    : { sumi: '墨', yoru: '夜', pop: 'ポップ', yawaraka: 'やわらか', compose: '組版', kanpe: 'カンペ', ticker: 'テロップ' };
+    ? { sumi: 'Sumi', yoru: 'Night', pop: 'Pop', yawaraka: 'Soft', compose: 'Compose', kanpe: 'Cue', motion: 'Motion' }
+    : { sumi: '墨', yoru: '夜', pop: 'ポップ', yawaraka: 'やわらか', compose: '組版', kanpe: 'カンペ', motion: 'モーション' };
   const demoBase = frame ? frame.getAttribute('src').split('?')[0] : 'display.html'; // 英語版は ../display.html
   const state = { theme: 'yoru', layout: 'compose' };
   const load = () => {

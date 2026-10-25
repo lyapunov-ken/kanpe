@@ -24,7 +24,7 @@
 | OBS オーバーレイ | `display.html?theme=clear&obs=…` | 透過背景。コンソールの「URLをコピー」で作る |
 | 単体デモ | `display.html?demo=1` | マイクなしで表示だけ確認 |
 
-URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / ticker / vj）、`vj`（micro＝1px / led / neon / pixel）、`vjfont`（gothic / maru / mincho / pop / dot）、`detail`（coarse / mid / fine）・`fx`（low / mid / high）（コンソールの画面からは外し、標準に固定）、`size`、`fonts=local`（Web フォントを読まず OS の書体を使う）、`demo=1&sp=1`（話者の色分けの見本）。
+URL パラメータ：`theme`（sumi / yoru / pop / yawaraka / clear / fude / dot）、`layout`（compose / kanpe / motion / vj。以前の ticker は motion として開く）、`vj`（micro＝1px / led / neon / pixel）、`vjfont`（gothic / maru / mincho / pop / dot）、`detail`（coarse / mid / fine）・`fx`（low / mid / high）（コンソールの画面からは外し、標準に固定）、`size`、`fonts=local`（Web フォントを読まず OS の書体を使う）、`demo=1&sp=1`（話者の色分けの見本）。
 
 ## データとセキュリティ
 

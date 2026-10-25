@@ -73,13 +73,6 @@ body {
 .calm.layout-kanpe .flow { transition: none; }
 .layout-kanpe .w { position: relative; transform-origin: 50% 50%; }
 
-/* ---- テロップ：下部を横に流れる ---- */
-.ticker { position: absolute; left: 0; right: 0; bottom: 7vh; height: calc(var(--base) * 2.2); }
-.layout-ticker.has-cap .ticker { bottom: max(7vh, var(--cap-res, 15vh)); }
-.track { position: absolute; inset: 0; }
-/* 1語ずつ横位置（translateX）を display.js が毎フレーム動かす。下端でそろえる */
-.layout-ticker .w { position: absolute; left: 0; top: auto; bottom: 0; will-change: transform; }
-
 /* ---- 字幕ライン（画面の最下部：聞き取った文を1文1行で。大きさ・行数・表示時間はコンソールの「字幕ライン」） ---- */
 #caption {
   position: fixed; left: 6vw; right: 6vw; bottom: 4.5vh;
@@ -94,7 +87,6 @@ body {
 .cap-l { max-width: 100%; white-space: nowrap; overflow: hidden; transition: color .4s ease, opacity .4s ease; }
 .cap-l.final { color: var(--ink); }
 .cap-l.old { opacity: .55; font-size: .9em; } /* 少し前の文は控えめに */
-.layout-ticker #caption { bottom: 3vh; }
 /* プレビューで字幕ラインの設定にふれたとき：最下部の字幕の場所を枠で示す */
 #caption.peek { outline: 2px dashed var(--accent); outline-offset: .35em; border-radius: .3em; transition: none; }
 
@@ -233,7 +225,7 @@ body {
 }
 .theme-clear .sp-tag { color: #111; }
 .w.v .sp-tag { left: 50%; transform: translateX(-50%); }
-.layout-kanpe .sp-tag, .layout-ticker .sp-tag { font-size: max(11px, .28em); }
+.layout-kanpe .sp-tag { font-size: max(11px, .28em); }
 .cap-sp {
   display: inline-block; margin-right: .6em; padding: .12em .6em .14em; border-radius: 999px; vertical-align: .08em;
   font-size: .78em; font-weight: 900; letter-spacing: .04em; color: var(--bg); background: var(--spc);
@@ -282,8 +274,8 @@ body {
   color: var(--sub); -webkit-text-stroke: 0;
 }
 .fz-caret { position: absolute; left: 0; top: .14em; width: max(2px, .05em); height: 1em; background: var(--fz, var(--accent2)); pointer-events: none; }
-.layout-kanpe .fz-badge, .layout-ticker .fz-badge { font-size: max(9px, .18em); }
-.layout-kanpe .fz-from, .layout-ticker .fz-from { display: none; }
+.layout-kanpe .fz-badge { font-size: max(9px, .18em); }
+.layout-kanpe .fz-from { display: none; }
 .fz-parent { color: var(--fzp, var(--accent2)); transition: color .3s ease; }
 .fz-ghost { pointer-events: none; }
 .fz-ghost .bar, .fz-ghost .sp-tag, .fz-ghost .fz-badge, .fz-ghost .fz-from { display: none; }
@@ -329,3 +321,180 @@ body {
 #fx .fz-rocket { stroke: var(--fzs, var(--accent2)); stroke-width: 2; stroke-linecap: round; }
 #fx .fz-spark { fill: color-mix(in srgb, var(--fzs, var(--accent2)) 45%, #fff); }
 .bg-light #fx .fz-spark { fill: var(--fzs, var(--accent2)); }
+
+/* ---- モーション：話した文が1字ずつ現れ、図形が動くモーショングラフィックス（src/display/motion.js） ----
+   1280×720 を基準に組んだ .mo-view を、窓に合わせて拡縮する。--mo-acc などの色は motion.js が背景に合わせて整える */
+.layout-motion #caption { display: none; }        /* 文そのものが主役なので、最下部の字幕ラインは出さない */
+.mo { position: absolute; inset: 0; overflow: hidden; --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace;
+  --hud-ink: var(--ink); --hud-sub: var(--sub); --rail: var(--ink); color: var(--ink); }
+.mo.is-inv { --hud-ink: var(--bg); --hud-sub: color-mix(in srgb, var(--bg) 62%, var(--ink)); --rail: var(--bg); }
+.mo-view { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.mo-plate { position: absolute; inset: 0; background: var(--ink); opacity: 0; will-change: transform, opacity; } /* 暗転の板：transform と opacity だけで出し入れする */
+.mo-grid { position: absolute; inset: 0; opacity: .5; pointer-events: none; will-change: opacity;
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--sub) 55%, transparent) 1.1px, transparent 1.7px); background-size: 34px 34px; }
+.mo.is-inv .mo-grid { background-image: radial-gradient(circle, color-mix(in srgb, var(--bg) 30%, transparent) 1.1px, transparent 1.7px); }
+.mo.clear .mo-grid, .mo.clear .mo-plate { display: none; }
+.mo-big { position: absolute; inset: 0; pointer-events: none; }
+.mo-giant { position: absolute; line-height: 1; font-weight: var(--w-strong); color: transparent; white-space: nowrap;
+  -webkit-text-stroke: 2px color-mix(in srgb, var(--hud-sub) 70%, transparent); opacity: .55; transform-origin: 40% 50%; }
+.mo-cam { position: absolute; inset: 0; transform-origin: 50% 50%; will-change: transform; }
+.mo-world { position: absolute; left: 0; top: 0; will-change: transform; }
+.mo-wipe { position: absolute; inset: 0; transform: translateX(-102%); pointer-events: none; will-change: transform;
+  background: linear-gradient(90deg, var(--ink) 0 5px, var(--mo-acc) 5px calc(100% - 5px), var(--ink) calc(100% - 5px)); }
+.mo.clear .mo-wipe { display: none; }
+.mo-dust { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.mo-track { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.mo-rail { fill: none; stroke: var(--rail); stroke-width: 2.4; stroke-dasharray: 1 1; stroke-linejoin: round; transition: stroke .4s ease; }
+.mo-rail.lead { opacity: .5; }
+.mo-node { fill: var(--bg); stroke: var(--mo-acc); stroke-width: 3.5; transform-box: fill-box; transform-origin: center; }
+.mo.is-inv .mo-node { fill: var(--ink); stroke: var(--mo-acc-inv); }
+.mo-node-in, .mo-head { fill: var(--mo-acc); }
+.mo.is-inv .mo-node-in, .mo.is-inv .mo-head { fill: var(--mo-acc-inv); }
+.mo.clear .mo-node { fill: rgba(0, 0, 0, .55); }
+
+.mo-scene { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; color: var(--ink); --acc: var(--mo-acc); --on: var(--mo-on-acc); transition: opacity 1.5s ease; }
+.mo-scene.inv { color: var(--bg); --acc: var(--mo-acc-inv); --on: var(--mo-on-acc-inv); }
+.mo-scene.fz { --acc: var(--fz, var(--mo-acc2)); }
+.mo-scene.idle { opacity: .22; }
+.mo-props, .mo-lines { position: absolute; inset: 0; }
+.mo-prop { position: absolute; left: 0; top: 0; }
+.mo-line { position: absolute; left: 0; top: 0; white-space: nowrap; line-height: 1.22; font-weight: var(--w-strong);
+  letter-spacing: -.02em; transform-origin: 0 0; isolation: isolate; }
+.mo-line.glide { transition: transform .45s cubic-bezier(.16,1,.3,1); }
+.mo-c { display: inline-block; transform-origin: 50% 70%; transition: color .3s ease, opacity .3s ease; }
+.mo-c.s-h { font-size: .78em; }
+.mo-c.s-p { font-weight: var(--w-light); }
+.mo-c.kw { color: var(--acc); }
+.mo-c.on-fill { color: var(--on); }
+.mo-c.struck { opacity: .42; }
+.mo-box { position: absolute; z-index: -1; transform-origin: 0 50%; border-radius: .04em; }
+.mo-box.fill { background: var(--acc); }
+.mo-box.line { border: max(3px, .06em) solid var(--acc); box-sizing: border-box; }
+.mo-under { position: absolute; height: .08em; background: var(--acc); transform-origin: 0 50%; }
+.mo-strike { position: absolute; z-index: 2; height: .11em; margin-top: -.055em; background: var(--acc); transform-origin: 0 50%; border-radius: .02em; rotate: -4deg; }
+.mo-strike.on-fill { background: var(--on); }
+.mo-c.on-fill.struck { opacity: .7; }
+.mo-end { display: inline-block; width: .2em; height: .2em; margin-left: .12em; border-radius: 50%; background: var(--acc); }
+.mo-label, .mo-num { position: absolute; left: 0; top: 0; font-family: var(--mono), var(--font); white-space: nowrap; color: var(--sub); }
+.mo-label { font-size: 13px; letter-spacing: .2em; font-weight: 600; }
+.mo-num { font-size: 12px; letter-spacing: .1em; }
+.mo-scene.inv .mo-label, .mo-scene.inv .mo-num { color: color-mix(in srgb, var(--bg) 62%, var(--ink)); }
+/* 図形 */
+.mo-q { display: inline-block; line-height: 1; font-weight: var(--w-strong); color: transparent; -webkit-text-stroke: 4px var(--acc); transform-origin: 50% 85%; }
+.mo-q.wobble { animation: mo-wobble 2.6s ease-in-out infinite; }
+@keyframes mo-wobble { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(6deg) translateY(-4px); } }
+.mo-burst { position: absolute; left: 0; top: 0; overflow: visible; }
+.mo-burst line { stroke: var(--acc); stroke-width: 4.5; stroke-linecap: round; transform-box: fill-box; transform-origin: center; }
+.mo-split { position: absolute; left: 0; top: 0; width: 3px; background: currentColor; transform-origin: 50% 0; }
+.mo-split-dot { position: absolute; left: -8.5px; top: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--acc); }
+.mo-chain { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 14px; white-space: nowrap; transform-origin: 0 50%; }
+.mo-chip { display: inline-block; padding: .14em .5em .18em; background: var(--acc); color: var(--on); font-size: 36px; font-weight: var(--w-strong); line-height: 1.1; }
+.mo-arrow { display: inline-block; color: currentColor; font-size: 30px; font-weight: var(--w-strong); }
+.mo-frame { position: absolute; left: 0; top: 0; }
+.mo-frame.breathe { animation: mo-breathe 1.8s ease-in-out infinite; }
+@keyframes mo-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025); } }
+.mo-corner { position: absolute; width: 30px; height: 30px; border: 0 solid var(--acc); }
+.mo-corner.tl { left: 0; top: 0; border-left-width: 5px; border-top-width: 5px; }
+.mo-corner.tr { right: 0; top: 0; border-right-width: 5px; border-top-width: 5px; }
+.mo-corner.bl { left: 0; bottom: 0; border-left-width: 5px; border-bottom-width: 5px; }
+.mo-corner.br { right: 0; bottom: 0; border-right-width: 5px; border-bottom-width: 5px; }
+.mo-frame.thin .mo-corner { border-color: currentColor; opacity: .55; border-width: 0; width: 22px; height: 22px; }
+.mo-frame.thin .tl { border-left-width: 2px; border-top-width: 2px; }
+.mo-frame.thin .tr { border-right-width: 2px; border-top-width: 2px; }
+.mo-frame.thin .bl { border-left-width: 2px; border-bottom-width: 2px; }
+.mo-frame.thin .br { border-right-width: 2px; border-bottom-width: 2px; }
+.mo-star { position: absolute; left: 0; top: 0; background: var(--acc);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); }
+.mo-star.twinkle { animation: mo-twinkle 1.4s ease-in-out infinite; }
+@keyframes mo-twinkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(.6) rotate(45deg); } }
+.mo-wave-wrap { position: absolute; left: 0; top: 0; --amp: .6; transform-origin: 0 120px; }
+.mo-wave-wrap svg { display: block; transform: scaleY(calc(var(--amp) * var(--wk, 1))); transform-origin: 0 120px; transition: transform .25s linear; will-change: transform; }
+.mo-wave-wrap.faint { opacity: .35; }
+.mo-wave-l { fill: none; stroke-width: 3; stroke-dasharray: 1 1; stroke-linecap: round; }
+.mo-wave-l.w0 { stroke: var(--acc); stroke-width: 4; }
+.mo-wave-l.w1 { stroke: currentColor; opacity: .7; }
+.mo-wave-l.w2 { stroke: currentColor; opacity: .3; }
+.mo-bar { position: absolute; left: 0; height: 10px; background: currentColor; transform-origin: 0 50%; }
+.mo-bar.acc { background: var(--acc); }
+.mo-plus { position: absolute; font: 600 28px/1 var(--mono); color: currentColor; opacity: .55; }
+.mo-ring circle { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-dasharray: 1 1; opacity: .8; }
+.mo-ring .orb { fill: var(--acc); stroke: none; opacity: 1; }
+/* 輪ごと回す（SVG の中の点だけを回すと、毎フレーム描き直しになるため） */
+.mo-ring.spin { animation: mo-spin 3.2s linear infinite; }
+@keyframes mo-spin { to { transform: rotate(360deg); } }
+.mo-blob { position: absolute; left: 0; top: 0; border-radius: 50%; background: var(--acc); }
+.mo-blob.jelly { animation: mo-jelly 1.6s ease-in-out infinite; }
+@keyframes mo-jelly { 0%, 100% { transform: scale(1, 1); } 25% { transform: scale(1.12, .88); } 50% { transform: scale(.92, 1.08); } 75% { transform: scale(1.04, .97); } }
+.mo-squiggle path { fill: none; stroke: var(--acc); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 1 1; }
+.mo-px { position: absolute; width: 3px; height: 3px; background: currentColor; }
+.mo-px.acc { background: var(--acc); }
+.mo-tri polygon { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-dasharray: 1 1; stroke-linejoin: round; }
+.mo-tri { overflow: visible; }
+.mo-tri.drift { animation: mo-spin 14s linear infinite; }
+.mo-arc { overflow: visible; }
+.mo-arc path { fill: none; stroke: currentColor; stroke-width: 3; stroke-dasharray: 1 1; opacity: .75; }
+.mo-arc path.acc { stroke: var(--acc); opacity: 1; stroke-width: 5; }
+.mo-zig { overflow: visible; }
+.mo-zig path { fill: none; stroke: var(--acc); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; }
+.mo-zig path.tip { stroke-dasharray: none; }
+.mo-prop.nudge { animation: mo-nudge .9s ease-in-out infinite; }
+.mo-prop.nudge-l { animation: mo-nudge-l .9s ease-in-out infinite; }
+@keyframes mo-nudge { 50% { translate: 10px 0; } }
+@keyframes mo-nudge-l { 50% { translate: -10px 0; } }
+.mo-conf { position: absolute; width: 14px; height: 22px; background: var(--acc); }
+.mo-conf.ink { background: currentColor; width: 10px; height: 10px; }
+.mo-pill { position: relative; height: 30px; box-sizing: border-box; border: 3px solid currentColor; border-radius: 15px; transform-origin: 0 50%; }
+.mo-pill-dot { position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--acc); }
+.mo-pill-dot.run { animation: mo-run 1.4s cubic-bezier(.65,0,.35,1) infinite alternate; }
+@keyframes mo-run { to { transform: translateX(var(--run)); } }
+/* 新語の特別な演出（数秒）。動かすのは transform / opacity だけ */
+.mo-fx { position: absolute; inset: 0; pointer-events: none; }
+.mo-fx-box { position: absolute; inset: 0; --fxc: var(--mo-acc2); }
+.mo-fx-box.title { background: #0a0a0a; color: #f4f2ec; }
+.mo-fx-box.title.clear { background: transparent; }
+.mo-fx-word, .mo-fx-one, .mo-fx-sub { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); white-space: nowrap; line-height: 1.1; font-weight: var(--w-strong); }
+.mo-fx-word { color: var(--fxc); letter-spacing: .02em; }
+.mo-fx-box.title .mo-fx-word { color: #f4f2ec; }
+.mo-fx-one { line-height: 1; }
+.mo-fx-sub { font-family: var(--mono), var(--font); font-size: 22px; letter-spacing: .3em; font-weight: 600; opacity: .8; }
+.mo-fx-c { display: inline-block; }
+.mo-fx-flash { position: absolute; width: 60vmin; height: 60vmin; border-radius: 50%; background: radial-gradient(circle, var(--fxc) 0 30%, transparent 70%); }
+.mo-fx-ring { position: absolute; box-sizing: border-box; border-radius: 50%; border: 3px solid var(--fxc); }
+.mo-fx-ring.ink { border-color: currentColor; border-width: 1.5px; opacity: .7; }
+.mo-fx-drop { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: var(--fxc); }
+.mo-fx-word.slice { opacity: 0; }
+.mo-fx-word.g1 { color: var(--fxc); opacity: 0; }
+.mo-fx-word.g2 { color: currentColor; opacity: 0; }
+.mo-fx-bar { position: absolute; left: 0; right: 0; height: 6px; background: var(--fxc); }
+.mo.clear .mo-fx-word, .mo.clear .mo-fx-one, .mo.clear .mo-fx-sub { text-shadow: 0 0 .05em #000, 0 0 .1em #000, 0 .05em .16em rgba(0,0,0,.6); }
+.mo-fx-box { color: var(--ink); }
+.mo.is-inv .mo-fx-box:not(.title) { color: var(--bg); }
+
+/* 四隅の計器 */
+.mo-hud { position: absolute; inset: 0; pointer-events: none; font: 600 12.5px/1 var(--mono); letter-spacing: .14em; color: var(--hud-sub); transition: color .4s ease; }
+.mo-hud.off { display: none; }
+.mo-h { position: absolute; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.mo-h.tl { left: 40px; top: 34px; }
+.mo-h.tr { right: 40px; top: 34px; }
+.mo-h.bl { left: 40px; bottom: 32px; }
+.mo-h.br { right: 40px; bottom: 32px; }
+.mo-hud.credit .mo-h.br { bottom: 64px; }
+.mo-live { width: 9px; height: 9px; border-radius: 50%; background: var(--mo-acc); animation: mo-blink 1.6s steps(2, jump-none) infinite; }
+.mo.is-inv .mo-live { background: var(--mo-acc-inv); }
+@keyframes mo-blink { 50% { opacity: .25; } }
+.mo-time, .mo-pace, .mo-sc { color: var(--hud-ink); font-weight: 700; }
+.mo-beat { display: flex; gap: 4px; }
+.mo-sq { width: 9px; height: 9px; box-sizing: border-box; border: 1.5px solid currentColor; }
+.mo-sq.on { background: var(--mo-acc); border-color: var(--mo-acc); }
+.mo.is-inv .mo-sq.on { background: var(--mo-acc-inv); border-color: var(--mo-acc-inv); }
+.mo-meter { display: flex; align-items: flex-end; gap: 2px; height: 16px; }
+.mo-mb { width: 3px; height: 16px; background: currentColor; transform-origin: 50% 100%; transform: scaleY(.08); }
+.mo-mb:nth-last-child(-n+3) { background: var(--mo-acc); }
+.mo-kw { color: var(--hud-ink); max-width: 18em; overflow: hidden; text-overflow: ellipsis; }
+/* 透過（OBS）：映像の上でも読めるように縁取り */
+.mo.clear .mo-scene, .mo.clear .mo-hud { text-shadow: 0 0 .05em var(--stroke), 0 0 .05em var(--stroke), 0 0 .1em var(--stroke), 0 .05em .16em rgba(0,0,0,.55); }
+.mo.clear .mo-hud { text-shadow: 0 0 3px rgba(0,0,0,.9); }
+.mo.clear .mo-rail { stroke: #fff; }
+/* 動きを控えめに */
+.mo.calm .mo-q.wobble, .mo.calm .mo-frame.breathe, .mo.calm .mo-star.twinkle, .mo.calm .mo-blob.jelly, .mo.calm .mo-live,
+.mo.calm .mo-tri.drift, .mo.calm .mo-prop.nudge, .mo.calm .mo-prop.nudge-l, .mo.calm .mo-pill-dot.run, .mo.calm .mo-ring.spin { animation: none; }

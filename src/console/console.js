@@ -1,17 +1,17 @@
 // 操作コンソール：音声認識 → キーワード抽出 → 表示イベント送信、設定と文字起こしの管理。
-import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, OVERLAP_STEPS, LIFE_STEPS, TICKER_SPEEDS, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610221431';
-import { EN, L, tr } from '../core/i18n.js?v=202610221431';
-import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610221431';
-import { createBus } from '../core/bus.js?v=202610221431';
-import { connectObs } from '../core/obs.js?v=202610221431';
-import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610221431';
-import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610221431';
-import { simulateSpeech } from './demo.js?v=202610221431';
-import { initHelp } from './help.js?v=202610221431';
-import { initNews } from './news.js?v=202610221431';
-import { createGuide, guideSeen } from './guide.js?v=202610221431';
-import { coinWord } from '../core/coin.js?v=202610221431';
-import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610221431';
+import { THEMES, LAYOUTS, DEFAULTS, DEFAULT_THEME, ACCENTS, LOGO_SIZES, CAP_SIZES, CAP_TTLS, CAP_LINES, LAYOUT_SIZES, GROW_STEPS, JUMP_STEPS, VERT_STEPS, OVERLAP_STEPS, LIFE_STEPS, MOTION_TASTES, MOTION_HUD, MOTION_SOUND, SIZE_KEY, VJ_STYLES, VJ_FONTS, FUSION_COLORS, FUSION_MOTIONS, FUSION_SPEEDS, FUSION_FREQS, FUSION_MOTION_GAP, ECHO_SPANS, SPEAKER_COLORS, MAX_SPEAKERS, DEFAULT_SPEAKERS, loadSettings, saveSettings } from '../core/settings.js?v=202610251603';
+import { EN, L, tr } from '../core/i18n.js?v=202610251603';
+import { detectPitch, SpeakerTracker, calibrate } from './speakers.js?v=202610251603';
+import { createBus } from '../core/bus.js?v=202610251603';
+import { connectObs } from '../core/obs.js?v=202610251603';
+import { Extractor, cleanCaption, maskNg } from '../core/extract.js?v=202610251603';
+import { Recognizer, IS_MOBILE, IS_IOS, IS_ANDROID, ONE_SHOT } from './recognizer.js?v=202610251603';
+import { simulateSpeech } from './demo.js?v=202610251603';
+import { initHelp } from './help.js?v=202610251603';
+import { initNews } from './news.js?v=202610251603';
+import { createGuide, guideSeen } from './guide.js?v=202610251603';
+import { coinWord } from '../core/coin.js?v=202610251603';
+import { PRO, PLANS, canUse, currentPlan, trialRemainingMs, addTrialUsage, trialStarted, licenseInfo, clearLicense, activateFromSession, activateFromCode, activateDev, requestLicenseEmail, refreshLicense, startCheckout, openPortal } from '../core/plan.js?v=202610251603';
 
 const $ = (s) => document.querySelector(s);
 const PLUS_LABEL = L(`${PLANS.plus.label}（月${PLANS.plus.yen}）`, `the ${PLANS.plus.labelEn} plan (${PLANS.plus.yen}/mo)`);
@@ -45,6 +45,7 @@ const clock = () => { if (t0 === null) t0 = performance.now(); return (performan
 const recent = []; // { at, m }
 let layoutAt = performance.now(), lastLayout = S.layout; // レイアウトを切り替えた時刻（その窓は画面が作り直される）
 let caps = []; // 最近の字幕（話している途中の文と、少し前の文。あとから開いた窓に渡す）
+let capSeed = 0, capDone = true; // 文ごとの種（モーションの組み方・図形を、プレビューと別窓でそろえる）
 const newSeed = () => (Math.random() * 4294967296) >>> 0;
 function logEvent(m) {
   const t = performance.now();
@@ -57,6 +58,9 @@ function send(m) {
   if (m.t === 'word' || m.t === 'fuse') { m = { ...m, seed: newSeed(), ts: Date.now() }; logEvent(m); } // ts：言った時刻（どの窓も同じ時刻を使う）
   else if (m.t === 'clear') recent.length = 0;
   else if (m.t === 'caption') {
+    if (capDone) capSeed = newSeed(); // 新しい文が始まったら、新しい種
+    capDone = !!m.final;
+    m = { ...m, useed: capSeed };
     const last = caps[caps.length - 1];
     if (last && !last.m.final) caps.pop();
     caps.push({ at: performance.now(), m });
@@ -335,6 +339,7 @@ async function startMeter() {
     an.fftSize = 2048; // 声の高さ（話者の推定）にも使うので長めに取る
     src.connect(an);
     meterAnalyser = an;
+    startTap(meterCtx, src);
     const buf = new Float32Array(an.fftSize);
     const bar = $('#meter');
     let frame = 0, lvlAt = 0;
@@ -348,7 +353,7 @@ async function startMeter() {
       diagLevel(v);
       const t = performance.now();
       // VJ モードには声の大きさを送る（イコライザー用・毎秒20回まで）
-      if (S.layout === 'vj' && t - lvlAt > 50 && !paused) { lvlAt = t; send({ t: 'lvl', v: Math.min(1, v * 1.6) }); }
+      if ((S.layout === 'vj' || S.layout === 'motion') && t - lvlAt > 50 && !paused) { lvlAt = t; send({ t: 'lvl', v: Math.min(1, v * 1.6) }); }
       // 話者の自動推定（声の高さ）
       if (S.speakerMode === 'auto' && speakersOn() && (frame++ & 1) === 0) {
         const i = tracker.push(detectPitch(buf, meterCtx.sampleRate), t);
@@ -361,10 +366,56 @@ async function startMeter() {
 }
 function stopMeter() {
   cancelAnimationFrame(meterRaf);
+  try { tapNode && tapNode.disconnect(); } catch { /* noop */ }
+  tapNode = null;
   try { meterStream && meterStream.getTracks().forEach((t) => t.stop()); } catch { /* noop */ }
   try { meterCtx && meterCtx.close(); } catch { /* noop */ }
   meterStream = meterCtx = meterAnalyser = null;
   $('#meter').style.transform = 'scaleX(0)';
+}
+
+// ---- 周りの音（モーションの「音に反応：周りの音」）
+// マイクの音を AudioWorklet（audio-tap.js）で聞き分け、帯域・拍・テンポを表示ビューへ送る。
+// 音声の処理スレッドで動くので、コンソールが裏に回っていても止まらない。音はこの端末の中だけで使い、どこにも送らない
+let tapNode = null, audAt = 0, fakeAud = 0;
+async function startTap(ctx, src) {
+  try {
+    if (!ctx.audioWorklet) return;
+    await ctx.audioWorklet.addModule(new URL('./audio-tap.js' + new URL(import.meta.url).search, import.meta.url));
+    if (meterCtx !== ctx) return; // 待っている間にマイクが止まった
+    tapNode = new AudioWorkletNode(ctx, 'kanpe-tap', { numberOfOutputs: 1 });
+    const mute = ctx.createGain();
+    mute.gain.value = 0; // 解析のためだけにつなぐ（音は鳴らさない）
+    src.connect(tapNode);
+    tapNode.connect(mute);
+    mute.connect(ctx.destination);
+    tapNode.port.onmessage = (e) => sendAud(e.data);
+  } catch { /* 周りの音への反応は任意 */ }
+}
+function sendAud(d) {
+  if (S.layout !== 'motion' || S.mSound !== 'room' || paused || !d) return;
+  const t = performance.now();
+  if (!d.beat && t - audAt < 60) return; // 拍はすぐ、ほかは毎秒16回まで
+  audAt = t;
+  send({ t: 'aud', l: Math.round((d.l || 0) * 1000) / 1000, b: (d.b || []).map((v) => Math.round(v * 100)), beat: !!d.beat, bpm: d.bpm || 0 });
+}
+// デモ中はマイクを使わないので、120 BPM の疑似ビートで見た目を確かめられるように
+function fakeBeat() {
+  if (S.layout !== 'motion' || S.mSound !== 'room' || meterAnalyser) return;
+  const t = performance.now(), ph = (t % 500) / 500, kick = Math.pow(1 - ph, 3);
+  const b = Array.from({ length: 14 }, (_, i) => Math.max(0, Math.min(1, (i < 3 ? 0.35 + kick * 0.6 : 0.55 - i * 0.025) + (Math.random() - 0.5) * 0.18 + Math.sin(t / 900 + i) * 0.06)));
+  const beat = ph < fakeBeat.last; // 拍の頭を通りすぎた
+  fakeBeat.last = ph;
+  sendAud({ l: 0.25 + kick * 0.45, b, beat, bpm: 120 });
+}
+fakeBeat.last = 1;
+// 「周りの音」を選んだときの案内
+function soundHint() {
+  if (ONE_SHOT || meterOff()) {
+    toast(L('この端末では音声認識とマイクを同時に開けないため、周りの音には反応できません（デモでは疑似ビートで見た目を確かめられます）', 'On this device the mic can’t be shared with speech recognition, so room sound can’t be used (the demo shows it with a simulated beat).'), 7000);
+  } else if (!rec.wanted && !demoRunning) {
+    toast(L('マイクを始めると、BGM や会場の音の拍に合わせて画面が脈打ちます。マイクに音楽が聞こえる場所で使ってください（音はこの端末の中だけで使います）', 'Start the mic and the screen pulses to the beat of music or room sound. Make sure the mic can hear the music (audio stays on this device).'), 7000);
+  }
 }
 
 $('#meterOn').addEventListener('click', () => {
@@ -376,16 +427,18 @@ syncMeterNote();
 
 // ------------------------------------------------------------ デモとテキスト入力
 let demoRunning = false;
-function stopDemo() { demoRunning = false; $('#btnDemo').textContent = L('デモを流す', 'Play demo'); }
+function stopDemo() { demoRunning = false; clearInterval(fakeAud); fakeAud = 0; $('#btnDemo').textContent = L('デモを流す', 'Play demo'); }
 $('#btnDemo').addEventListener('click', async () => {
   if (demoRunning) { stopDemo(); return; }
   if (rec.wanted) { rec.stop(); setMic(false); stopMeter(); }
   demoRunning = true;
+  clearInterval(fakeAud);
+  fakeAud = setInterval(fakeBeat, 50); // 「周りの音」のときだけ疑似ビートを送る（ほかは何もしない）
   $('#btnDemo').textContent = L('デモを止める', 'Stop demo');
   setStatus('demo', L('デモ再生中', 'Demo playing'));
   // 話者の色分けがオンなら、デモでは話者を交互に切り替える
   const demoFinal = (id, t) => { onFinal(id, t); if (speakersOn()) setSpeaker((curSp + 1) % S.speakerCount); };
-  await simulateSpeech({ lang: S.lang, onInterim, onFinal: demoFinal, shouldStop: () => !demoRunning, loop: true });
+  await simulateSpeech({ lang: S.lang, onInterim, onFinal: demoFinal, shouldStop: () => !demoRunning, loop: true, pace: () => (S.layout === 'motion' ? 2.2 : 1) });
   stopDemo();
   setStatus('', L('待機中', 'Idle'));
 });
@@ -456,12 +509,14 @@ function pick(container, entries, key, id, def) {
     toast(L('スマホでは「声で自動」は使えません。手動で切り替えてください', 'Voice-based switching isn’t available on phones. Please switch speakers manually.'));
     return;
   }
+  if (key === 'mSound' && id === 'room') soundHint();
   if (key === 'speakerCount') { S[key] = +id; renderSpeakers(); pushSettings(); return; }
   if (key === 'speakerMode') { S[key] = id; renderSpeakers(); updateTrial(); pushSettings(); return; }
   S[key] = NUM_KEYS.has(key) ? +id : id; // 回数・秒数・行数は数で持つ
   if (key === 'theme') renderThemes(); else segButtons(container, entries, key);
   if (LAY_KEYS.has(key)) layNote(entries[id], container); // 選んだ段の説明を、レイアウトの説明の場所に少しだけ出す
   if (key === 'fusionMotion') $('#fzMotionNote').textContent = tr(FUSION_MOTIONS[id], 'note');
+  if (key === 'fusionFreq') { toast(L('自動で混ぜる頻度：', 'Auto mix: ') + tr(FUSION_FREQS[id], 'note'), 3000); wordsSinceFuse = Math.min(wordsSinceFuse, FUSION_FREQS[id].words); }
   if (key === 'fusionMotion' || key === 'fusionSpeed') setTimeout(() => fuse(false), 150); // 選んだ見た目をすぐ見せる（言葉が出ていれば）
   updateTrial();
   pushSettings();
@@ -472,7 +527,7 @@ function pick(container, entries, key, id, def) {
 const NUM_KEYS = new Set(['cGrow', 'kGrow', 'cLife', 'capTtl', 'capLines']);
 // 言葉が消えるまでの秒数（組版は「残る時間」。表示ビューの lifeSec と同じ）
 function lifeSec() { return S.layout === 'compose' && LIFE_STEPS[S.cLife] ? +S.cLife : S.ttl; }
-const LAY_KEYS = new Set(['cSize', 'kSize', 'tSize', 'cGrow', 'kGrow', 'cJump', 'cVert', 'cOverlap', 'cLife', 'tSpeed', 'echo', 'vjStyle', 'vjFont']);
+const LAY_KEYS = new Set(['cSize', 'kSize', 'mSize', 'cGrow', 'kGrow', 'cJump', 'cVert', 'cOverlap', 'cLife', 'mTaste', 'mHud', 'mSound', 'echo', 'vjStyle', 'vjFont']);
 const CAP_KEYS = new Set(['capSize', 'capTtl', 'capLines']);
 // レイアウトの説明。いまのレイアウトだけに効く設定だと分かるように、名前を添える
 const COLON = L('：', ': ');
@@ -498,12 +553,13 @@ function renderLayOpts() {
   $('#vjOpts').hidden = lay !== 'vj';
   for (const o of document.querySelectorAll('#layGrid .opt[data-lay]')) o.hidden = !o.dataset.lay.split(' ').includes(lay);
   document.body.classList.toggle('is-vj', lay === 'vj'); // VJ では効かない設定を隠す
+  document.body.classList.toggle('is-motion', lay === 'motion'); // モーションでは字幕ラインを使わない
   if (lay === 'vj') return;
   segButtons('#optSize', LAYOUT_SIZES, SIZE_KEY[lay]);
   if (lay === 'compose' || lay === 'kanpe') segButtons('#optGrow', GROW_STEPS, lay === 'kanpe' ? 'kGrow' : 'cGrow');
   if (lay === 'compose') { segButtons('#optJump', JUMP_STEPS, 'cJump'); segButtons('#optVert', VERT_STEPS, 'cVert'); segButtons('#optOverlap', OVERLAP_STEPS, 'cOverlap'); segButtons('#optLife', LIFE_STEPS, 'cLife'); }
   if (lay === 'kanpe') segButtons('#echoSpans', ECHO_SPANS, 'echo');
-  if (lay === 'ticker') segButtons('#optSpeed', TICKER_SPEEDS, 'tSpeed');
+  if (lay === 'motion') { segButtons('#optTaste', MOTION_TASTES, 'mTaste'); segButtons('#optHud', MOTION_HUD, 'mHud'); segButtons('#optSound', MOTION_SOUND, 'mSound'); }
 }
 function renderCapOpts() {
   segButtons('#capSizes', CAP_SIZES, 'capSize');
@@ -512,7 +568,8 @@ function renderCapOpts() {
   $('#capCard').classList.toggle('off', !S.caption);
 }
 // 以前の設定を、新しい設定に移す（1回だけ）。
-// 以前の「文字サイズ」は言葉全体の大きさだったので、各レイアウトの文字の大きさへ。「表示時間」はテロップの流れる速さへ。
+// 以前の「文字サイズ」は言葉全体の大きさだったので、各レイアウトの文字の大きさへ。
+// 「テロップ」はモーションに置き換わったので、テロップを選んでいた人はモーションへ（文字の大きさも引き継ぐ）。
 // 言葉の基準の大きさ・表示時間・同時に出す語は、コンソールからは変えない（固定の値に戻す）
 let migrated = false;
 function migrateSettings() {
@@ -521,27 +578,32 @@ function migrateSettings() {
   if (fromOld) {
     const old = +S.baseSize || DEFAULTS.baseSize;
     const sz = old <= 30 ? 's' : old >= 42 ? 'l' : 'm';
-    S.cSize = S.kSize = S.tSize = sz;
+    S.cSize = S.kSize = S.mSize = sz;
     const ttl = +S.ttl || DEFAULTS.ttl;
-    S.tSpeed = ttl <= 6 ? 'fast' : ttl >= 15 ? 'slow' : 'mid';
     S.cLife = ttl <= 5 ? 5 : ttl >= 15 ? 30 : 8;
     S.cVert = S.vertical === false ? 'off' : 'mid';
   }
+  const fromTicker = 'tSize' in S || 'tSpeed' in S || S.layout === 'ticker'; // テロップがあった版の保存値
+  if (S.layout === 'ticker') S.layout = 'motion';
+  if (S.tSize && !('mSize' in saved0)) S.mSize = S.tSize;
+  delete S.tSize; delete S.tSpeed;
   S.baseSize = DEFAULTS.baseSize;
   S.ttl = DEFAULTS.ttl;
   S.maxWords = DEFAULTS.maxWords;
-  for (const k of ['cSize', 'kSize', 'tSize']) if (!LAYOUT_SIZES[S[k]]) S[k] = 'm';
+  for (const k of ['cSize', 'kSize', 'mSize']) if (!LAYOUT_SIZES[S[k]]) S[k] = 'm';
   for (const k of ['cGrow', 'kGrow']) S[k] = GROW_STEPS[S[k]] ? +S[k] : 1;
   if (!JUMP_STEPS[S.cJump]) S.cJump = 'mid';
   if (!VERT_STEPS[S.cVert]) S.cVert = 'mid';
   if (!OVERLAP_STEPS[S.cOverlap]) S.cOverlap = 'off';
   S.cLife = LIFE_STEPS[S.cLife] ? +S.cLife : 8;
   S.vertical = S.cVert !== 'off'; // 古い窓（vertical を見る）とも合わせる
-  if (!TICKER_SPEEDS[S.tSpeed]) S.tSpeed = 'mid';
+  if (!MOTION_TASTES[S.mTaste]) S.mTaste = 'mix';
+  if (!MOTION_HUD[S.mHud]) S.mHud = 'on';
+  if (!MOTION_SOUND[S.mSound]) S.mSound = 'voice';
   if (!CAP_SIZES[S.capSize]) S.capSize = 'm';
   S.capTtl = CAP_TTLS[S.capTtl] ? +S.capTtl : 5;
   S.capLines = CAP_LINES[S.capLines] ? +S.capLines : 1;
-  if (fromOld) saveSettings(S); // 別窓が読む保存値も新しい形に
+  if (fromOld || fromTicker) saveSettings(S); // 別窓が読む保存値も新しい形に
 }
 
 // ---- 書体テーマ（標準 / プレミアム）と、無料プランの1日お試し ----
@@ -863,7 +925,7 @@ $('#capCard').addEventListener('pointerenter', () => send({ t: 'capPeek' }));
 $('#capCard').addEventListener('focusin', (e) => { if (e.target.matches(':focus-visible')) send({ t: 'capPeek' }); });
 bindCheck('reduceMotion');
 bindCheck('fusion');
-$('#fusion').addEventListener('change', () => { if (S.fusion) { fuseAt = performance.now() - FUSE_GAP + 2500; toast(L('新語ミックスをオンにしました。画面に言葉が2つ以上出ると、ときどき掛け合わさって新しい言葉が生まれます', 'Word mix is on. Once two or more words are on screen, they’ll now and then combine into a new word.')); } });
+$('#fusion').addEventListener('change', () => { if (S.fusion) { fuseAt = performance.now() - fuseRule().gap + 2500; toast(L('新語ミックスをオンにしました。画面に言葉が2つ以上出ると、ときどき掛け合わさって新しい言葉が生まれます', 'Word mix is on. Once two or more words are on screen, they’ll now and then combine into a new word.')); } });
 bindText('registered', () => ex.setDict(S));
 bindText('ng', () => ex.setDict(S));
 
@@ -1076,7 +1138,11 @@ renderSpeakers();
 
 // ------------------------------------------------------------ 新語ミックス（ブレスト）
 // 最近画面に出た言葉を2つ選んで掛け合わせ、新しい言葉を表示ビューへ送る。生まれた言葉は「生まれた新語」に残す。
-const FUSE_GAP = 14000;            // 自動で混ぜる間隔の目安
+// 自動で混ぜる間隔と、そのあいだに出ていてほしい新しい言葉の数（「頻度」の設定で決まる）
+function fuseRule() {
+  const f = FUSION_FREQS[S.fusionFreq] || FUSION_FREQS.mid;
+  return { gap: S.layout === 'motion' ? Math.max(f.gap, FUSION_MOTION_GAP) : f.gap, words: f.words };
+}
 const seenWords = new Map();       // 言葉 → 最後に出た時刻
 const coined = [];                 // 生まれた新語 { text, a, b }
 let fuseAt = 0, wordsSinceFuse = 0, lastHeard = 0;
@@ -1123,18 +1189,32 @@ function renderCoins() {
     const li = document.createElement('li');
     const b = document.createElement('button');
     b.type = 'button';
-    b.title = L(`${c.a} × ${c.b}（押すとコピー）`, `${c.a} × ${c.b} (click to copy)`);
+    b.className = 'coin-show';
+    b.title = L(`${c.a} × ${c.b}（押すと、もう一度画面に出します）`, `${c.a} × ${c.b} (click to show it again)`);
     b.innerHTML = '<b></b><small></small>';
     b.firstChild.textContent = c.text;
     b.lastChild.textContent = `${c.a}×${c.b}`;
-    b.addEventListener('click', async () => {
+    b.addEventListener('click', () => reshowCoin(c));
+    const cp = document.createElement('button'); // コピーは小さなボタンで
+    cp.type = 'button';
+    cp.className = 'coin-copy';
+    cp.textContent = '⧉';
+    cp.title = L(`「${c.text}」をコピー`, `Copy “${c.text}”`);
+    cp.setAttribute('aria-label', cp.title);
+    cp.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(c.text); toast(L(`「${c.text}」をコピーしました`, `Copied “${c.text}”`)); } catch { /* noop */ }
     });
-    li.appendChild(b);
+    li.append(b, cp);
     return li;
   }));
 }
 $('#btnFuse').addEventListener('click', () => fuse(true));
+// 「生まれた新語」を押したとき：同じ新語を、もう一度プレビュー（と別窓・OBS）に出す。見た目（出かた・色）はいまの設定で選び直す
+function reshowCoin(c) {
+  if (paused) { toast(L('表示を一時停止中です', 'The display is paused')); return; }
+  send({ t: 'fuse', text: c.text, a: c.a, b: c.b, replay: true, ...fusionLook() });
+  toast(L(`「${c.text}」をもう一度出しました`, `Showing “${c.text}” again`), 2200);
+}
 // 新語の色：標準・各色・虹・ランダム
 function renderFzColors() {
   const box = $('#fzColors');
@@ -1160,14 +1240,17 @@ if (!FUSION_COLORS.some((x) => x.c === (S.fusionColor || ''))) S.fusionColor = '
 S.fusionMotion = { bloom: 'converge', glitch: 'scan', type: 'decode', drop: 'shutter' }[S.fusionMotion] || S.fusionMotion; // 以前の出かたは近いものへ
 if (!FUSION_MOTIONS[S.fusionMotion]) S.fusionMotion = 'collide';
 if (!FUSION_SPEEDS[S.fusionSpeed]) S.fusionSpeed = 'mid';
+if (!FUSION_FREQS[S.fusionFreq]) S.fusionFreq = 'mid';
 renderFzColors();
 segButtons('#fzMotions', FUSION_MOTIONS, 'fusionMotion');
 segButtons('#fzSpeeds', FUSION_SPEEDS, 'fusionSpeed');
+segButtons('#fzFreqs', FUSION_FREQS, 'fusionFreq');
 if (!ECHO_SPANS[S.echo]) S.echo = DEFAULTS.echo;
 $('#fzMotionNote').textContent = tr(FUSION_MOTIONS[S.fusionMotion], 'note');
 setInterval(() => { // 話している間だけ、ときどき自動で混ぜる
   const t = performance.now();
-  if (S.fusion && !paused && t - fuseAt > FUSE_GAP && t - lastHeard < 6000 && wordsSinceFuse >= 2) fuse(false);
+  const r = fuseRule();
+  if (S.fusion && !paused && t - fuseAt > r.gap && t - lastHeard < 6000 && wordsSinceFuse >= r.words) fuse(false);
 }, 1000);
 
 // ------------------------------------------------------------ 認識エンジン（無料＝ブラウザ / おトクプラン＝高精度クラウド）

@@ -32,7 +32,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700&family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../styles/lp.css?v=202610221431">
+<link rel="stylesheet" href="../styles/lp.css?v=202610251603">
 <script>document.documentElement.classList.add('js');</script>
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://kanpe.yoneken.xyz/#website","url":"https://kanpe.yoneken.xyz/","name":"KANPE","alternateName":"KANPE リアルタイムカンペ","inLanguage":["ja","en"]},{"@type":"WebApplication","@id":"https://kanpe.yoneken.xyz/en/#app","name":"KANPE","url":"https://kanpe.yoneken.xyz/en/","description":"Real-time cue cards that turn what you say on stream into live Japanese typography. Runs in the browser with just a mic — free, no sign-up.","applicationCategory":"MultimediaApplication","operatingSystem":"Web browser","browserRequirements":"A browser with a microphone and speech recognition (Web Speech API): Chrome, Edge or Safari","inLanguage":"en","isAccessibleForFree":true,"image":"https://kanpe.yoneken.xyz/assets/og-en.png?v=1","isPartOf":{"@id":"https://kanpe.yoneken.xyz/#website"},"offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"JPY","url":"https://kanpe.yoneken.xyz/en/#pricing"},{"@type":"Offer","name":"Plus (monthly)","price":"480","priceCurrency":"JPY","url":"https://kanpe.yoneken.xyz/en/#pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"480","priceCurrency":"JPY","billingDuration":"P1M","unitCode":"MON"}},{"@type":"Offer","name":"Plus (yearly)","price":"4800","priceCurrency":"JPY","url":"https://kanpe.yoneken.xyz/en/#pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"4800","priceCurrency":"JPY","billingDuration":"P1Y","unitCode":"ANN"}}]}]}</script>
@@ -106,7 +106,7 @@
           <div class="seg" id="layoutChips">
             <button type="button" data-layout-id="compose" aria-pressed="true">Compose</button>
             <button type="button" data-layout-id="kanpe">Cue</button>
-            <button type="button" data-layout-id="ticker">Ticker</button>
+            <button type="button" data-layout-id="motion">Motion</button>
           </div>
         </div>
       </div>
@@ -328,7 +328,7 @@
       </ol>
       <ul class="uses" aria-label="Great for">
         <li class="reveal link"><a href="#noface"><b>Solo chat streams</b><span>Even camera-off, your topics stay visible</span></a></li>
-        <li class="reveal"><b>Game streams</b><span>A ticker band that stays out of the way</span></li>
+        <li class="reveal"><b>Game streams</b><span>Motion graphics that make your commentary pop</span></li>
         <li class="reveal link"><a href="#business"><b>Brainstorming meetings</b><span>Everyone sees the ideas as they come</span></a></li>
         <li class="reveal link"><a href="#business"><b>Speeches &amp; talks</b><span>Your points stack up in front of you</span></a></li>
       </ul>
@@ -459,7 +459,7 @@
         </details>
         <details>
           <summary>Can I use it for a faceless stream?</summary>
-          <p>Yes — it’s one of the best ways to use it. KANPE never uses your camera; it runs on your microphone alone. Bring the display view into OBS and the full-screen typography becomes your stream screen. Add a background image or custom logo to make it feel like your channel (Plus plan). To layer it over a VTuber avatar or gameplay, the Ticker layout or the Clear typeface works well (Clear is a Plus typeface).</p>
+          <p>Yes — it’s one of the best ways to use it. KANPE never uses your camera; it runs on your microphone alone. Bring the display view into OBS and the full-screen typography becomes your stream screen. Add a background image or custom logo to make it feel like your channel (Plus plan). To layer it over a VTuber avatar or gameplay, pair the Clear typeface with the Motion or Compose layout (Clear is a Plus typeface).</p>
         </details>
         <details>
           <summary>Is what I say stored anywhere?</summary>
@@ -518,10 +518,10 @@
 <div class="dock" id="dock" aria-hidden="true">
   <a class="btn btn-ink block" href="app.html?welcome=1" tabindex="-1">Start free in your browser<span class="arrow" aria-hidden="true">→</span></a>
 </div>
-<script src="../src/ui/lang.js?v=202610221431" defer></script>
-<script src="../src/ui/menu.js?v=202610221431" defer></script>
-<script src="../src/ui/mode.js?v=202610221431" defer></script>
-<script src="../src/lp/lp.js?v=202610221431" defer></script>
-<script type="module" src="../src/lp/analytics.js?v=202610221431"></script>
+<script src="../src/ui/lang.js?v=202610251603" defer></script>
+<script src="../src/ui/menu.js?v=202610251603" defer></script>
+<script src="../src/ui/mode.js?v=202610251603" defer></script>
+<script src="../src/lp/lp.js?v=202610251603" defer></script>
+<script type="module" src="../src/lp/analytics.js?v=202610251603"></script>
 </body>
 </html>

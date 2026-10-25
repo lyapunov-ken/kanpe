@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@900&family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@900&family=Yuji+Boku&family=DotGothic16&text=%E5%AD%97%20BGMPRcdefhilnotux%E3%82%AF%E3%82%B4%E3%82%B7%E3%83%83%E3%83%88%E3%83%89%E4%B8%B8%E5%A4%AA%E6%98%8E%E6%9C%9D%E6%A5%B5&display=swap">
 <script>try{var t=localStorage.getItem('kanpe.ui');t=(t==='light'||t==='dark')?t:null;if(t)document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=t||'light'}catch(e){}</script>
 <meta name="theme-color" content="#f3f3f0">
-<link rel="stylesheet" href="styles/console.css?v=202610221431">
+<link rel="stylesheet" href="styles/console.css?v=202610251603">
 </head>
 <body>
 <header class="top">
@@ -125,7 +125,9 @@
               <div class="opt" data-lay="compose"><span class="lbl">縦組み</span><div id="optVert" class="segmented step-seg four" role="radiogroup" aria-label="縦組みの量"></div></div>
               <div class="opt" data-lay="compose"><span class="lbl" title="オンにすると、言葉の上に言葉が重なります">文字の重なり</span><div id="optOverlap" class="segmented step-seg two" role="radiogroup" aria-label="文字の重なり"></div></div>
               <div class="opt" data-lay="kanpe" id="kanpeOpts"><span class="lbl" title="この時間内にくり返した言葉ほど大きく、長く残ります">同じ話の記憶</span><div id="echoSpans" class="segmented step-seg" role="radiogroup" aria-label="同じ話の記憶"></div></div>
-              <div class="opt" data-lay="ticker"><span class="lbl">流れる速さ</span><div id="optSpeed" class="segmented step-seg" role="radiogroup" aria-label="流れる速さ"></div></div>
+              <div class="opt" data-lay="motion"><span class="lbl" title="字の現れかたと、図形の選びかた">テイスト</span><div id="optTaste" class="segmented step-seg" role="radiogroup" aria-label="モーションのテイスト"></div></div>
+              <div class="opt" data-lay="motion"><span class="lbl" title="四隅の経過時間・話す速さ・声の大きさ・場面の番号">計器</span><div id="optHud" class="segmented step-seg two" role="radiogroup" aria-label="四隅の計器"></div></div>
+              <div class="opt" data-lay="motion"><span class="lbl" title="声の大きさや、BGM・会場の音の拍に合わせて画面が動きます（マイクの音はこの端末の中だけで使います）">音に反応</span><div id="optSound" class="segmented step-seg" role="radiogroup" aria-label="音に反応"></div></div>
             </div>
             <div id="vjOpts" class="vj-opts" hidden>
               <span class="lbl">スタイル<em class="plus-mark" title="お手軽プランの機能"><b aria-hidden="true">+</b><span class="vh">（お手軽プランの機能）</span></em></span>
@@ -138,7 +140,7 @@
         <section id="capCard" class="cap-card" aria-labelledby="capH">
           <label class="cap-head">
             <span class="cap-ic" aria-hidden="true"><i></i></span>
-            <span class="cap-tt"><b id="capH">字幕ライン</b><small>画面の最下部・聞き取った文</small></span>
+            <span class="cap-tt"><b id="capH">字幕ライン</b><small>画面の最下部・聞き取った文</small><small class="cap-mo" title="モーションでは、話した文そのものが画面の主役になるので、字幕ラインは出ません">モーションでは出ません</small></span>
             <input id="caption" type="checkbox" role="switch" aria-describedby="capH">
           </label>
           <div id="capOpts" class="opt-grid three">
@@ -162,7 +164,10 @@
             <div class="coin-opts">
               <div class="coin-opt"><span class="lbl">出かた</span><div id="fzMotions" class="segmented four" role="radiogroup" aria-label="新語の出かた"></div><p id="fzMotionNote" class="hint"></p></div>
               <div class="coin-opt"><span class="lbl">新語の色</span><div id="fzColors" class="accents fz-colors" role="radiogroup" aria-label="新語の色"></div></div>
-              <div class="coin-opt coin-inline"><span class="lbl">速さ</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="新語の出る速さ"></div></div>
+              <div class="coin-pair">
+                <div class="coin-opt"><span class="lbl">速さ</span><div id="fzSpeeds" class="segmented" role="radiogroup" aria-label="新語の出る速さ"></div></div>
+                <div class="coin-opt"><span class="lbl" title="オンのとき、自動で新語を混ぜる頻度">頻度</span><div id="fzFreqs" class="segmented" role="radiogroup" aria-label="自動で混ぜる頻度"></div></div>
+              </div>
             </div>
           </div>
         </section>
@@ -276,9 +281,9 @@
   </section>
 </main>
 <div id="toast" class="toast"></div>
-<script src="src/ui/lang.js?v=202610221431" defer></script>
-<script src="src/ui/menu.js?v=202610221431" defer></script>
-<script src="src/ui/mode.js?v=202610221431" defer></script>
-<script type="module" src="src/console/console.js?v=202610221431"></script>
+<script src="src/ui/lang.js?v=202610251603" defer></script>
+<script src="src/ui/menu.js?v=202610251603" defer></script>
+<script src="src/ui/mode.js?v=202610251603" defer></script>
+<script type="module" src="src/console/console.js?v=202610251603"></script>
 </body>
 </html>

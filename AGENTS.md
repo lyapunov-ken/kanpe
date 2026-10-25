@@ -35,6 +35,8 @@ src/core/    changelog.js（更新履歴・いまのバージョン）plan.js（
 src/console/ console.js（操作・設定・新語ミックスの発火）recognizer.js speakers.js demo.js
              help.js（ヘルプ・シーン別プリセット）guide.js（初回の3ステップガイド）news.js（更新情報）
 src/display/ display.js（組版描画・新語の誕生演出・依存ゼロ）vj.js（VJ モード：1px / LED / ネオン / ピクセル）
+             motion.js（モーション：文が1字ずつ現れ、図形が動くモーショングラフィックス）dust.js（1px の粒子）
+src/console/ audio-tap.js（AudioWorklet：周りの音の帯域・拍・BPM）
 src/lp/ src/ui/  LP のデモ・アクセス解析（analytics.js）、言語切替、表示モード、スマホのメニュー
 functions/api/   checkout.js license.js license-email.js portal.js stripe-webhook.js dev.js（開発者モード）_lib.js
 tools/           bump-version.sh make-headers.py make-sitemap.py make-en-app.py make-legal.py stripe-setup.mjs test-api.mjs og/
@@ -60,7 +62,27 @@ docs/            調査メモ
 - 機能とプランの対応は `src/core/plan.js` の `REQUIRES`（free / plus / pro）で管理する
 - コミットメッセージは英語で、何を・なぜを短く。1 つのブランチに関係のない変更を混ぜない
 
-## いまの状態（2026-10-22 時点）
+## いまの状態（2026-10-25 時点）
+- 公開前の確認（2026-10-25）：組版・カンペ・VJ のデモと別窓の同期、テロップからの移行、LP の切替、モーションの 書体7×テイスト3・大きさ・音・控えめ・透過/背景画像・ロゴ・英語・スマホ幅、新語の演出4種と再表示、消去、12分の連続（269場面・新語36回で要素数・メモリ横ばい）、本番の CSP で AudioWorklet が読めること
+- 作業中：`feat/motion-mode`（v1.7.0）テロップに代わる新レイアウト「モーション」（`layout: 'motion'`。`src/display/motion.js` の `createMotion(stage)`。VJ と同じく display.js から word / caption / fuse / level を渡す）
+  - 主役は字幕の文（caption）。文を行に区切り（和文は `lineifyJa`：長すぎたら行の中の最後の文節の切れ目で折る。伸びている最後の行だけが組み直されるので前の行は動かない。欧文は `lineifyEn`）、2行ずつの「場面」にする。場面は `plan` に積み、`holdFor` の間見せてから次へ（たまったら短く＝追いつく）
+  - 場面の切り替え：カメラ（`.mo-world` の translate）が右へ（ときどき下へ）動き、線路（`.mo-track` の polyline）の上を点が進む。明暗反転（`.inv`）は `.mo-plate` を transform（横・下へ）か opacity で出し入れする（`plateSwap` / `setPlate`）。透過・背景画像・カメラでは反転しない
+  - 意味の図形（`RX`）：問い q（大きな「？」）／強調 ex（集中線と揺れ）／逆接 but（仕切り線）／流れ flow（キーワードを矢印でつないだ箱）／要点 focus（四隅の枠）／笑い fun（跳ねる字と星）／声・音 voice（波形）。なければ少し待って飾り（`addFiller`：棒・枠・十字・輪・丸・ぐにゃ線）。打ち消しはキーワードの後ろ数文字の `NEG_JA` などで取り消し線
+  - キーワード（word）は `kws` に覚え、場面の行の中で見つけた場所に飾り（`kwStyle`：色・塗りの箱・枠・下線・数）。3回くり返した語は背景に巨大な輪郭の字（`bigGlyph`）。新語ミックス（fuse）は割り込みの場面（A×B → 新語の箱と集中線）
+  - 同期：コンソールが caption に文ごとの種 `useed` を付ける（`capSeed`。前の文が final なら新しい種）。場面の乱数は `useed` と場面の番号から作るので、プレビューと別窓で同じ組み・同じ図形。あとから開いた窓の追いつき（replay）はしない（VJ と同じ）
+  - 設定：`mSize`（文字の大きさ。`SIZE_KEY.motion`）・`mTaste`（cool / mix / pop。`MOTION_TASTES`）・`mHud`（四隅の計器 on / off。`MOTION_HUD`）。字幕ラインはモーションでは出さない（`#caption` を隠し、コンソールの字幕ラインの枠は `.is-motion` で薄くする）。声の大きさ `lvl` は VJ とモーションのときに送る
+  - **軽さのきまり（2026-10-25 に最適化）**：動かすのは transform / opacity だけ。画面全体や字ごとの `filter: blur`、clip-path・text-shadow のアニメ、SVG の中の要素の CSS 回転（回すなら `<svg>` ごと）、`vector-effect: non-scaling-stroke` は使わない。全画面の脈打ちは小節の頭だけ。計器は要素を覚えて（`H`）変わったときだけ書きかえる。`getComputedStyle` を毎フレーム呼ばない（粒子の色は `accC`）。4倍遅い CPU（ポップ・周りの音）で 41fps・50ms 超のフレーム111回・長いタスク17回 → 全部の演出のままで 58fps・4回・2回（軽量なら 59fps・1回）
+  - 重さの見張り（`perf`）：いちばん速いフレーム間隔を基準に、遅いフレームが続いたら粒の上限を半分ずつ（`dust.setBudget`）、それでも重ければ `lite`（粒子で組む出かた・粒子／字が落ちる切り替え・尾・漂う粒を使わない。乱数は同じ回数引くので組み方はずれない）。端末の性能は推測せず、実際のフレームで判断する。場面が7つ以上たまったら途中を飛ばす
+  - 1px の粒子は `src/display/dust.js`（`createDust(root)`。canvas 1枚、上限 3500 粒。同じ色・濃さ8段ごとにまとめて1回で塗る。字の形の点は字・書体・大きさごとにキャッシュ。位置はまとめて読んでからまとめて隠す）。disperse（字形を点に起こして散らす）／assemble（集まって字になる）／spark（火花）／drift（周りの音で漂う）。描画は motion.js の rAF から `dust.step(t)`
+  - 字の出かた10通り（`STYLE_W`：blur（名前は残しているが、ぼかしは使わず拡大から浮かぶ）slide pop drop dust flip scan glitch stretch spin）、場面の切り替え6通り（`TRANS_W`：pan drop dust zoom fall wipe。dust・zoom・fall は同じ場所に重ねて入れ替え、wipe は帯に隠れたところでカメラが飛ぶ）。新しい字は `s.enterAt`（粒子は `s.settleAt`）まで待つ。暗転の板は pan / drop では板ごと滑らせ、wipe は隠れたときに切り替え、ほかは opacity で入れ替える
+  - 飾りの図形12通り（`addFiller`：bars frame plus ring matrix tri arc ／ blob squiggle zigzag confetti pill）。30秒黙ると場面は粒になって消える（`dustScene`）。消去（Esc）も粒になる
+  - 音に反応 `mSound`（voice / room / off。`MOTION_SOUND`）。room はコンソールの `src/console/audio-tap.js`（AudioWorklet。2048 点 FFT・14 帯域・低音の立ち上がりで拍・拍の間隔の中央値で BPM）→ `{t:'aud', l, b, beat, bpm}`（拍はすぐ、ほかは毎秒16回まで）。表示は `onBeat`（画面が脈打つ・駅が光る・点から火花・キーワードが跳ねる）、計器はスペクトラムと BPM。デモ中は `fakeBeat` が 120 BPM の疑似ビートを送る。ONE_SHOT（スマホ・Mac の Safari）とレベル表示を止めている端末では使えない（`soundHint` で案内）
+  - 改行（2026-10-25 改良）：`bunsetsu()` が `Intl.Segmenter('ja')` の語を文節にまとめる（かなだけの付属語は前に付ける。`KANA_HEAD` のかな語・助詞のあとのかな語 `kanaWordAfterParticle` は新しい文節。数字＋単位、漢字・カタカナの複合語、空白でつながる欧文はつなぐ）。`lineifyJa` は文節の途中で切らず、接続詞（`CONJ`）は次の行へ送り、話し終えたら3字以下の最後の行を前へ戻す。欧文は `EN_GLUE` の短い語を行末に残さない
+  - 新語の特別な演出 `fzFx`（場面の切り替え `tr: 'fx'`。`FZ_FX` で新語の出かたから選ぶ：collide/converge/firework→burst、ink→ripple、decode/scan→glitch、shutter→title）。演出の層 `.mo-fx`、演出のあいだ場面と線路は隠し、終わってから `fzStage(s, m, d0)` で A×B と新語の箱。`holdFor` は演出の長さ＋3.2秒。「動きを控えめに」では演出なし
+  - 速さ：1場面は少なくとも2.5秒（`holdFor`）。デモは `simulateSpeech({ pace })` でモーションのときだけ 2.2 倍ゆっくり（console.js と display.js の単体デモ）
+  - 新語ミックスの頻度 `fusionFreq`（rare / mid / often。`FUSION_FREQS` の gap と words。モーションでは `FUSION_MOTION_GAP` 12秒以上）。console.js の `fuseRule()`。機能タブでは「速さ」と横に並べている（`.coin-pair`。1280×800 に収めるため。英語は短い文言）
+  - 「生まれた新語」（`renderCoins`）は押すと `reshowCoin` で `{t:'fuse', replay:true}` を送り直す（組版・カンペでは画面に残っていても退かせて生まれ直す）。コピーは横の `.coin-copy`
+  - テロップ（ticker）は削除。保存値・URL の `layout=ticker` は `motion` に読み替える（console.js の `migrateSettings`、display.js の `fixLayout`）。`tSize` は `mSize` に引き継ぐ
 - 作業中：`feat/compose-overlap`（v1.6.2）組版の「文字の重なり」（`cOverlap`：off / on。`OVERLAP_STEPS`）。縦組みの右に置く（`#optOverlap`、2つ並びは `.step-seg.two`）
   - `display.js` の `place()`：on のときは重なりを点数に入れず（`stack`）、3か所だけ試して中央寄せも弱める（中央に固まらないように）。`ov` を 0 で返すので `clearSpot` でほかの語を退かせない。ロゴと新語（kind: fusion）はいつも避け、新語そのものの置き場所は on でも重ねない
 - 本番：`main` = v1.6.1（2026-10-22 公開。`fix/long-session-freeze`）1時間ほどで固まる・言葉が出なくなる不具合の修正
