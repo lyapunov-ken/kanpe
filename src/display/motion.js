@@ -12,9 +12,9 @@
 // 依存ゼロ。動かすのは transform / opacity だけ（ブラウザが絵を描き直さずに動かせる）。消えた要素はすぐ外す。
 // 重くなる演出（画面全体のぼかし・字ごとのぼかし・clip-path や text-shadow のアニメ・SVG の中の要素の回転）は使わない。
 // 描画が重い端末では自動で軽い演出だけにする（lite）。
-import { charScript } from '../core/extract.js?v=202610251050';
-import { tuneColor, parseColor, contrast } from '../core/color.js?v=202610251050';
-import { createDust } from './dust.js?v=202610251050';
+import { charScript } from '../core/extract.js?v=202610251056';
+import { tuneColor, parseColor, contrast } from '../core/color.js?v=202610251056';
+import { createDust } from './dust.js?v=202610251056';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const REF_W = 1280, REF_H = 720;
@@ -166,8 +166,8 @@ export function createMotion(stage) {
   let k = 1, VW = REF_W, VH = REF_H;
   let destroyed = false;
   // 軽量（lite）：描画が重いと分かった端末では、粒子で字を組む出かた・字が落ちる切り替え・粒子で散る切り替え・尾・漂う粒を使わない
-  let lite = (navigator.hardwareConcurrency || 8) <= 2;
-  if (lite) root.classList.add('lite');
+  // （端末の性能を推測では決めず、実際に描いてみて重いと分かったときだけ切りかえる）
+  let lite = false;
 
   // ---- 状態
   const kws = new Map();        // キーワード（小文字）→ { text, kind, count, at }
